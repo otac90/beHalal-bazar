@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-brand-yellow: #F4C430;
+  --color-brand-green: #123D2A;
+  --color-brand-cream: #F5F1E8;
+  --color-brand-ink: #171A17;
+  --color-brand-sec-green: #CBD9C6;
+  --color-brand-soft-yellow: #FAF2CC;
+  
+  --color-brand-dark-bg: #111511;
+  --color-brand-dark-sec: #191E19;
+  --color-brand-dark-cream: #252A24;
+  --color-brand-dark-text: #F4F1E8;
+  
+  --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Instrument Serif', Georgia, serif;
+}
+
+@layer base {
+  :root {
+    --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
+    --font-heading: 'Manrope', system-ui, -apple-system, sans-serif;
+    
+    /* BE HALAL brand tokens */
+    --color-primary: #123D2A;
+    --color-primary-dark: #0D2C1E;
+    --color-primary-light: #1E5C41;
+    --color-accent: #F4C430;
+    --color-accent-hover: #E4B528;
+    --color-accent-light: #FAF2CC;
+  }
+
+  body {
+    font-family: var(--font-sans);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #171A17;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #ffffff;
+}
+
+/* Glassmorphism token - strictly limited */
+.liquid-glass {
+  background: rgba(245, 241, 232, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(18, 61, 42, 0.05);
+}
+
+.dark .liquid-glass {
+  background: rgba(17, 21, 17, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(244, 241, 232, 0.05);
+}
+
+.liquid-glass-subtle {
+  background: rgba(245, 241, 232, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(18, 61, 42, 0.03);
+}
+
+.dark .liquid-glass-subtle {
+  background: rgba(17, 21, 17, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(244, 241, 232, 0.03);
+}
+
+
+/* Cross-browser custom scrollbar for elements with .custom-scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #171A17 transparent;
+}
+.dark .custom-scrollbar {
+  scrollbar-color: #ffffff transparent;
+}

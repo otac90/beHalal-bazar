@@ -1,0 +1,6 @@
+{
+  "name": "BE HALAL – Online Bazar",
+  "description": "Exklusiver, sicherer und moderner Community-Marktplatz für den Kauf, Verkauf und das Verschenken von Produkten innerhalb der BE HALAL Community mit intelligenter Moderation, Messenger und Mehrsprachigkeit.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
