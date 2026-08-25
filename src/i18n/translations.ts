@@ -72,7 +72,7 @@ export const TRANSLATIONS = {
 
     // Home / Marketplace Discovery
     welcomeBack: 'Salam & Willkommen zurück',
-    heroSearchTitle: 'Finde nützliche Dinge & gib Bewährtes weiter',
+    heroSearchTitle: 'Dein Marktplatz\nSuchen | Verkaufen | Verschenken',
     heroSearchSubtitle: 'Der respektvolle, übersichtliche Basar exklusiv für unsere Gemeinschaft.',
     recentListings: 'Neu eingestellt',
     nearbyListings: 'In deiner Nähe',
