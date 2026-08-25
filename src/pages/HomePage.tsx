@@ -1,8 +1,22 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Search, SlidersHorizontal, ArrowRight, X, Gift,
-  Car, Smartphone, Sofa, Shirt, Baby, Grid, Briefcase, Book, Heart, Package, Home
+  SlidersHorizontal, X
 } from 'lucide-react';
+import {
+  Armchair,
+  Baby,
+  Bicycle,
+  BookOpen,
+  CarProfile,
+  CookingPot,
+  DeviceMobile,
+  DotsThreeOutline,
+  GameController,
+  Gift,
+  TShirt,
+  Toolbox,
+  type Icon,
+} from '@phosphor-icons/react';
 import { useApp } from '../context/AppContext';
 import { storage } from '../services/storage';
 import { ListingType, ListingCondition, DeliveryType } from '../types';
@@ -10,18 +24,23 @@ import { ListingGrid, SortOption } from '../components/marketplace/ListingGrid';
 import { FilterSidebar } from '../components/marketplace/FilterSidebar';
 
 
-const CategoryIcon = ({ iconName, className }: { iconName: string, className: string }) => {
-  switch (iconName) {
-    case 'Car': return <Car className={className} />;
-    case 'Smartphone': return <Smartphone className={className} />;
-    case 'Sofa': return <Sofa className={className} />;
-    case 'Shirt': return <Shirt className={className} />;
-    case 'Baby': return <Baby className={className} />;
-    case 'Briefcase': return <Briefcase className={className} />;
-    case 'Book': return <Book className={className} />;
-    case 'Home': return <Home className={className} />;
-    default: return <Grid className={className} />;
-  }
+const CATEGORY_ICONS: Record<string, Icon> = {
+  'fashion-accessories': TShirt,
+  'baby-kids': Baby,
+  electronics: DeviceMobile,
+  household: CookingPot,
+  'furniture-living': Armchair,
+  'sports-leisure': Bicycle,
+  'books-media': BookOpen,
+  gaming: GameController,
+  'auto-accessories': CarProfile,
+  'garden-tools': Toolbox,
+  other: DotsThreeOutline,
+};
+
+const CategoryIcon = ({ categoryId, className }: { categoryId: string, className: string }) => {
+  const IconComponent = CATEGORY_ICONS[categoryId] ?? DotsThreeOutline;
+  return <IconComponent className={className} weight="duotone" />;
 };
 
 export const HomePage: React.FC = () => {
@@ -155,9 +174,8 @@ export const HomePage: React.FC = () => {
               }`}
             >
               
-              <div className="flex justify-between items-start w-full">
-                <span className={`text-[10px] sm:text-xs font-bold tracking-widest uppercase ${(!selectedCategory && selectedType === 'FREE') ? 'text-[#123D2A]/70' : 'text-[#F4C430]'}`}>00</span>
-                <Gift className={`w-5 h-5 ${(!selectedCategory && selectedType === 'FREE') ? 'text-[#123D2A]' : 'text-[#F5F1E8]/50 group-hover:text-[#F4C430]'}`} />
+              <div className="flex justify-end items-start w-full">
+                <Gift className={`w-8 h-8 sm:w-9 sm:h-9 ${(!selectedCategory && selectedType === 'FREE') ? 'text-[#123D2A]' : 'text-[#F4C430]'}`} weight="duotone" />
               </div>
 
               <span className="text-xl sm:text-2xl font-serif font-bold">
@@ -178,11 +196,8 @@ export const HomePage: React.FC = () => {
                   }`}
                 >
                   
-                  <div className="flex justify-between items-start w-full">
-                    <span className={`text-[10px] sm:text-xs font-bold tracking-widest uppercase ${isActive ? 'text-[#123D2A]/70' : 'text-[#F4C430]'}`}>
-                      {String(idx + 1).padStart(2, '0')}
-                    </span>
-                    <CategoryIcon iconName={c.icon} className={`w-5 h-5 ${isActive ? 'text-[#123D2A]' : 'text-[#F5F1E8]/50 group-hover:text-[#F4C430]'}`} />
+                  <div className="flex justify-end items-start w-full">
+                    <CategoryIcon categoryId={c.id} className={`w-8 h-8 sm:w-9 sm:h-9 ${isActive ? 'text-[#123D2A]' : 'text-[#F4C430]'}`} />
                   </div>
 
                   <span className="text-xl sm:text-2xl font-serif font-bold">

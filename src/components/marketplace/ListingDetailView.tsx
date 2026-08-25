@@ -172,7 +172,19 @@ export const ListingDetailView: React.FC = () => {
             
             {/* IMAGE GALLERY */}
             <div className="space-y-4">
-              <div className="w-full relative aspect-video bg-[#F5F1E8] dark:bg-[#111511] overflow-hidden border border-[#123D2A]/10 dark:border-white/10 group">
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => setIsFullscreen(true)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setIsFullscreen(true);
+                  }
+                }}
+                className="w-full relative aspect-video bg-[#F5F1E8] dark:bg-[#111511] overflow-hidden border border-[#123D2A]/10 dark:border-white/10 group cursor-zoom-in"
+                aria-label="Bild in Vollbildansicht öffnen"
+              >
                 <img
                   src={images[activeImageIndex]?.url}
                   alt={listing.title}
@@ -181,13 +193,19 @@ export const ListingDetailView: React.FC = () => {
                 {images.length > 1 && (
                   <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
-                      onClick={() => setActiveImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+                      }}
                       className="p-3 bg-[#123D2A] text-[#F4C430] hover:bg-[#F4C430] hover:text-[#123D2A] transition-colors"
                     >
                       <ChevronLeft className="w-6 h-6" />
                     </button>
                     <button
-                      onClick={() => setActiveImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+                      }}
                       className="p-3 bg-[#123D2A] text-[#F4C430] hover:bg-[#F4C430] hover:text-[#123D2A] transition-colors"
                     >
                       <ChevronRight className="w-6 h-6" />

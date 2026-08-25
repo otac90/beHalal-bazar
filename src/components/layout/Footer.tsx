@@ -18,9 +18,11 @@ export const Footer: React.FC = () => {
           {/* BRAND COL */}
           <div className="space-y-6">
             <div className="flex items-center gap-4">
-              <div className="w-8 h-8 bg-[#123D2A] text-[#F4C430] font-bold text-xl flex items-center justify-center rounded pt-0.5">
-                حلال
-              </div>
+              <img
+                src="/assets/Logo.png"
+                alt="BE HALAL Logo"
+                className="w-10 h-10 object-contain"
+              />
               <div className="flex flex-col">
                 <span className="font-serif font-bold text-2xl text-[#F5F1E8] uppercase">ONLINE BAZAR</span>
               </div>

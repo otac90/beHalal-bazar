@@ -82,8 +82,13 @@ export const MarketplaceHeader: React.FC = () => {
           <div 
             id="brand-logo-button"
             onClick={() => navigate('home')}
-            className="flex items-center gap-2 cursor-pointer group shrink-0"
+            className="flex items-center gap-2.5 cursor-pointer group shrink-0"
           >
+            <img
+              src="/assets/Logo.png"
+              alt="BE HALAL Logo"
+              className="w-9 h-9 md:w-10 md:h-10 object-contain"
+            />
             <span className="font-extrabold text-xl md:text-2xl tracking-tighter text-[#123D2A] dark:text-[#F4F1E8] leading-none uppercase">
               ONLINE BAZAR
             </span>

@@ -154,7 +154,12 @@ export const FilterSidebar: React.FC<FilterProps> = ({
               'WANTED': t.typeWanted
             };
             return (
-              <label key={type} className="flex items-center gap-3 cursor-pointer group">
+              <button
+                key={type}
+                type="button"
+                onClick={() => setSelectedType(type as ListingType | 'ALL')}
+                className="flex items-center gap-3 cursor-pointer group text-left"
+              >
                 <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
                   isSelected ? 'border-[#123D2A] dark:border-white' : 'border-gray-400 group-hover:border-gray-600'
                 }`}>
@@ -163,7 +168,7 @@ export const FilterSidebar: React.FC<FilterProps> = ({
                 <span className={`text-sm ${isSelected ? 'font-bold text-[#123D2A] dark:text-white' : 'font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white'}`}>
                   {labels[type as keyof typeof labels]}
                 </span>
-              </label>
+              </button>
             )
           })}
         </div>
@@ -261,7 +266,11 @@ export const FilterSidebar: React.FC<FilterProps> = ({
           />
         </div>
 
-        <label className="flex items-center gap-3 pt-4 cursor-pointer group">
+        <button
+          type="button"
+          onClick={() => setOnlyFree(!onlyFree)}
+          className="flex items-center gap-3 pt-4 cursor-pointer group text-left"
+        >
           <div className={`w-4 h-4 rounded-sm border flex items-center justify-center transition-colors ${
             onlyFree ? 'bg-[#123D2A] border-[#123D2A] dark:bg-[#F4C430] dark:border-[#F4C430]' : 'border-gray-400 group-hover:border-gray-600'
           }`}>
@@ -270,7 +279,7 @@ export const FilterSidebar: React.FC<FilterProps> = ({
           <span className={`text-sm ${onlyFree ? 'font-bold text-[#123D2A] dark:text-white' : 'font-medium text-gray-600 dark:text-gray-400'}`}>
             {t.onlyFree}
           </span>
-        </label>
+        </button>
       </div>
 
       {/* STANDORT / ORT */}
