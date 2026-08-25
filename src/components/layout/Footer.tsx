@@ -19,7 +19,7 @@ export const Footer: React.FC = () => {
           <div className="space-y-6">
             <div className="flex items-center gap-4">
               <img
-                src="/assets/behalal-logo.svg"
+                src="/assets/Logo.png"
                 alt="BE HALAL Logo"
                 className="w-10 h-10 object-contain"
               />

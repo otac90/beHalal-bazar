@@ -85,7 +85,7 @@ export const MarketplaceHeader: React.FC = () => {
             className="flex items-center gap-2.5 cursor-pointer group shrink-0"
           >
             <img
-              src="/assets/behalal-logo.svg"
+              src="/assets/Logo.png"
               alt="BE HALAL Logo"
               className="w-9 h-9 md:w-10 md:h-10 object-contain"
             />
