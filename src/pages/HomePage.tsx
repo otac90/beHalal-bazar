@@ -107,36 +107,34 @@ export const HomePage: React.FC = () => {
       {/* ==================================================== */}
       {/* EDITORIAL HERO SECTION */}
       {/* ==================================================== */}
-      <section className="relative overflow-hidden pt-12 pb-16 md:pt-20 md:pb-24 bg-[#F5F1E8] dark:bg-[#111511] border-y border-[#123D2A]/10 dark:border-[#F4C430]/15">
-        <div className="absolute inset-x-0 top-0 h-2 bg-[#F4C430]" />
-        <div className="absolute inset-x-0 bottom-0 h-px bg-[#123D2A]/20 dark:bg-[#F4C430]/20" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="pt-12 pb-16 md:pt-20 md:pb-24 bg-[#F5F1E8] dark:bg-transparent">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-end">
-            <div className="md:col-span-8 lg:col-span-9 max-w-4xl min-w-0">
-              <h1 className="max-w-[21rem] sm:max-w-full break-words font-bangers text-[2.35rem] sm:text-[4.4rem] md:text-[5.6rem] lg:text-[6.6rem] leading-[0.96] sm:leading-[0.92] text-[#123D2A] dark:text-white tracking-normal drop-shadow-[4px_4px_0_rgba(244,196,48,0.34)]">
+            <div className="md:col-span-8 lg:col-span-9 max-w-4xl">
+              <h1 className="text-[3rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem] leading-[0.95] font-serif text-[#123D2A] dark:text-white tracking-tight">
                 {t.heroSearchTitle}
               </h1>
             </div>
-            <div className="md:col-span-4 lg:col-span-3 min-w-0 pb-2 md:pb-4">
-              <p className="max-w-[21rem] sm:max-w-full break-words text-base md:text-lg text-[#171A17]/80 dark:text-gray-300 font-medium">
+            <div className="md:col-span-4 lg:col-span-3 pb-2 md:pb-4">
+              <p className="text-base md:text-lg text-[#171A17]/80 dark:text-gray-300 font-medium">
                 {t.heroSearchSubtitle}
               </p>
             </div>
           </div>
 
           {/* EDITORIAL CATEGORY STRIP */}
-          <div className="mt-16 md:mt-24 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-5 flex overflow-x-auto gap-4 md:gap-6 bg-[#123D2A] dark:bg-[#0D2C1E] border-y border-[#F4C430]/50 scrollbar-hide snap-x">
+          <div className="mt-16 md:mt-24 flex overflow-x-auto gap-8 md:gap-16 pb-6 scrollbar-hide snap-x">
             
             <button
               onClick={() => {
                 setSelectedCategory(null);
                 setSelectedType('FREE');
               }}
-              className="flex-shrink-0 group snap-start min-w-[190px] text-left border-l-4 border-[#F4C430] bg-[#F4C430] px-5 py-4 text-[#123D2A] transition-colors hover:bg-white"
+              className="flex-shrink-0 group snap-start text-left"
             >
-              <span className="block text-sm font-bold mb-2 tracking-widest uppercase">00</span>
-              <span className="block font-bangers text-3xl md:text-4xl tracking-normal">
+              <span className="block text-sm font-bold text-[#F4C430] mb-2 tracking-widest uppercase">00</span>
+              <span className="block text-3xl md:text-4xl font-serif text-[#171A17] dark:text-white group-hover:opacity-60 transition-opacity">
                 {t.sadaqahTag}
               </span>
             </button>
@@ -145,16 +143,12 @@ export const HomePage: React.FC = () => {
               <button
                 key={c.id}
                 onClick={() => setSelectedCategory(c.id)}
-                className={`flex-shrink-0 group snap-start min-w-[190px] text-left border-l-4 px-5 py-4 transition-colors ${
-                  selectedCategory === c.id
-                    ? 'border-[#F4C430] bg-[#F4C430] text-[#123D2A]'
-                    : 'border-[#F4C430]/40 bg-white/5 text-white hover:border-[#F4C430] hover:bg-[#F4C430]/12'
-                }`}
+                className={`flex-shrink-0 group snap-start text-left ${selectedCategory === c.id ? 'opacity-100' : 'opacity-70 dark:opacity-60'} hover:opacity-100 transition-opacity`}
               >
-                <span className={`block text-sm font-bold mb-2 tracking-widest uppercase ${selectedCategory === c.id ? 'text-[#123D2A]/70' : 'text-[#F4C430]'}`}>
+                <span className="block text-sm font-bold text-[#123D2A]/40 dark:text-white/40 mb-2 tracking-widest uppercase">
                   {String(idx + 1).padStart(2, '0')}
                 </span>
-                <span className="block font-bangers text-3xl md:text-4xl tracking-normal">
+                <span className="block text-3xl md:text-4xl font-serif text-[#123D2A] dark:text-white">
                   {c.name[language]}
                 </span>
               </button>
@@ -173,7 +167,7 @@ export const HomePage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-12">
           <div className="flex flex-wrap items-center gap-3">
             {searchQuery && (
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-none bg-[#F4C430]/25 dark:bg-[#F4C430]/15 border border-[#F4C430]/60 text-[#123D2A] dark:text-white text-sm font-bold">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-none bg-[#CBD9C6]/30 dark:bg-white/5 text-[#123D2A] dark:text-white text-sm font-bold">
                 <span>Suche: {searchQuery}</span>
                 <button onClick={() => setSearchQuery('')} className="hover:opacity-60">
                   <X className="w-4 h-4" />
@@ -182,7 +176,7 @@ export const HomePage: React.FC = () => {
             )}
 
             {selectedCategory && (
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-none bg-[#F4C430]/25 dark:bg-[#F4C430]/15 border border-[#F4C430]/60 text-[#123D2A] dark:text-white text-sm font-bold">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-none bg-[#CBD9C6]/30 dark:bg-white/5 text-[#123D2A] dark:text-white text-sm font-bold">
                 <span>{categories.find(c => c.id === selectedCategory)?.name[language]}</span>
                 <button onClick={() => setSelectedCategory(null)} className="hover:opacity-60">
                   <X className="w-4 h-4" />
