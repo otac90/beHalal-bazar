@@ -138,28 +138,28 @@ export const MessengerView: React.FC = () => {
   const otherParticipantId = isSeller ? activeConversation?.buyerId : activeConversation?.sellerId;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 h-[calc(100vh-80px)] min-h-[600px] flex">
+    <div className="max-w-7xl mx-auto px-4 py-4 md:py-8 h-[calc(100dvh-220px)] min-h-0 md:h-[calc(100dvh-88px)] md:min-h-[620px] flex">
       
-      <div className="flex-1 border-t border-b border-gray-200 dark:border-white/10 flex overflow-hidden">
+      <div className="flex-1 min-h-0 border border-[#123D2A]/10 dark:border-white/10 flex overflow-hidden bg-white/75 dark:bg-[#111511]/80 shadow-[0_18px_60px_rgba(18,61,42,0.08)]">
         
         {/* ==================================================== */}
         {/* LEFT COLUMN: CONVERSATION LIST */}
         {/* ==================================================== */}
-        <div className={`w-full md:w-96 border-r border-gray-200 dark:border-white/10 flex flex-col ${
+        <div className={`w-full md:w-96 bg-[#F5F1E8] dark:bg-[#151B15] border-r border-[#123D2A]/15 dark:border-white/10 flex flex-col min-h-0 ${
           activeConversationId ? 'hidden md:flex' : 'flex'
         }`}>
           {/* HEADER */}
-          <div className="py-6 pr-6 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
-            <h2 className="font-serif font-bold text-3xl text-[#171A17] dark:text-white">
+          <div className="py-6 px-6 border-b border-[#123D2A]/15 dark:border-white/10 flex items-center justify-between bg-[#123D2A] text-[#F5F1E8]">
+            <h2 className="font-serif font-bold text-3xl text-[#F5F1E8]">
               {t.messages}
             </h2>
-            <span className="font-serif font-bold text-xl text-[#123D2A] dark:text-[#F4C430]">
+            <span className="font-serif font-bold text-xl text-[#F4C430]">
               {conversations.length}
             </span>
           </div>
 
           {/* LIST */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 min-h-0 overflow-y-auto">
             {conversations.length > 0 ? (
               conversations.map((conv) => {
                 const isConvSeller = conv.sellerId === user.id;
@@ -174,10 +174,10 @@ export const MessengerView: React.FC = () => {
                       setActiveConversationId(conv.id);
                       setMessages(storage.getMessages(conv.id));
                     }}
-                    className={`w-full py-6 pr-6 text-left flex items-start gap-4 transition-colors border-b border-gray-100 dark:border-white/5 ${
+                    className={`w-full p-5 text-left flex items-start gap-4 transition-colors border-b border-[#123D2A]/10 dark:border-white/5 ${
                       isSelected
-                        ? 'bg-[#CBD9C6]/20 dark:bg-[#1E5C41]/20'
-                        : 'hover:bg-gray-50/30 dark:hover:bg-white/5'
+                        ? 'bg-[#F4C430]/28 dark:bg-[#F4C430]/15'
+                        : 'hover:bg-white/70 dark:hover:bg-white/5'
                     }`}
                   >
                     <img
@@ -220,10 +220,10 @@ export const MessengerView: React.FC = () => {
         {/* RIGHT COLUMN: ACTIVE CHAT & LISTING CONTEXT */}
         {/* ==================================================== */}
         {activeConversation ? (
-          <div className="flex-1 flex flex-col h-full bg-transparent">
+          <div className="flex-1 min-w-0 min-h-0 flex flex-col h-full bg-white dark:bg-[#0E140F]">
             
             {/* CHAT TOP BAR WITH LISTING CONTEXT */}
-            <div className="py-6 px-6 md:px-12 border-b border-gray-200 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="shrink-0 py-5 px-6 md:px-10 border-b border-[#123D2A]/10 dark:border-white/10 bg-[#FAF2CC]/70 dark:bg-[#191E19] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               
               <div className="flex items-center gap-4">
                 <button
@@ -278,7 +278,7 @@ export const MessengerView: React.FC = () => {
             </div>
 
             {/* SAFETY NOTICE BANNER */}
-            <div className="px-6 md:px-12 py-3 border-b border-gray-200 dark:border-white/10 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-gray-500">
+            <div className="shrink-0 px-6 md:px-10 py-3 border-b border-[#123D2A]/10 dark:border-white/10 bg-[#CBD9C6]/25 dark:bg-white/5 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-gray-500">
               <div className="flex items-center gap-3">
                 <ShieldCheck className="w-4 h-4 text-[#123D2A] dark:text-[#F4C430] shrink-0" />
                 <span>{t.safetyBoxTips}</span>
@@ -292,7 +292,7 @@ export const MessengerView: React.FC = () => {
             </div>
 
             {/* MESSAGES THREAD */}
-            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-6 md:px-12 py-8 space-y-6">
+            <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto px-6 md:px-10 py-8 space-y-6 bg-white dark:bg-[#0E140F]">
               {messages.map((msg) => {
                 const isMe = msg.senderId === user.id;
                 return (
@@ -321,14 +321,14 @@ export const MessengerView: React.FC = () => {
             {/* MESSAGE INPUT BAR */}
             <form
               onSubmit={handleSendMessage}
-              className="px-6 md:px-12 py-6 border-t border-gray-200 dark:border-white/10 flex items-end gap-4"
+              className="shrink-0 px-6 md:px-10 py-5 border-t border-[#123D2A]/15 dark:border-white/10 bg-[#F5F1E8] dark:bg-[#151B15] flex items-end gap-4"
             >
               <textarea
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
                 placeholder={t.typeMessagePlaceholder}
                 rows={1}
-                className="flex-1 py-3 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors resize-none placeholder:font-sans placeholder:text-[10px] placeholder:uppercase placeholder:tracking-widest"
+                className="flex-1 max-h-28 min-h-12 px-4 py-3 bg-white dark:bg-[#0E140F] border border-[#123D2A]/15 dark:border-white/15 text-sm text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors resize-none placeholder:font-sans placeholder:text-[10px] placeholder:uppercase placeholder:tracking-widest"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -339,7 +339,8 @@ export const MessengerView: React.FC = () => {
               <button
                 type="submit"
                 disabled={!messageText.trim()}
-                className="pb-3 text-[#F4C430] hover:text-[#E4B528] disabled:opacity-30 transition-colors"
+                className="h-12 w-12 shrink-0 flex items-center justify-center bg-[#F4C430] text-[#123D2A] hover:bg-[#E4B528] disabled:opacity-40 disabled:hover:bg-[#F4C430] transition-colors"
+                aria-label="Nachricht senden"
               >
                 <Send className="w-6 h-6" />
               </button>

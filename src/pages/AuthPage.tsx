@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Lock, Mail, ShieldCheck, UserCheck, ArrowRight, 
-  Sparkles, CheckCircle2, UserIcon, KeyRound 
+  Sparkles, CheckCircle2, UserIcon, KeyRound, AlertTriangle, X
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { storage } from '../services/storage';
@@ -28,6 +28,8 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
   const [regPostalCode, setRegPostalCode] = useState('1100');
   const [regCity, setRegCity] = useState('Wien');
   const [regAcceptRules, setRegAcceptRules] = useState(false);
+  const [hasReadRules, setHasReadRules] = useState(false);
+  const [showRulesModal, setShowRulesModal] = useState(false);
 
   const sampleUsers = storage.getUsers();
 
@@ -58,6 +60,11 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
     e.preventDefault();
     if (!regFirstName || !regLastName || !regEmail || !regUsername || !regPassword) {
       showToast('Bitte fülle alle Pflichtfelder aus.', 'warning');
+      return;
+    }
+    if (!hasReadRules) {
+      showToast('Bitte lies die Community-Regeln vor der Registrierung.', 'warning');
+      setShowRulesModal(true);
       return;
     }
     if (!regAcceptRules) {
@@ -96,7 +103,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-16 space-y-16">
+    <div className="max-w-6xl mx-auto px-4 pt-16 pb-32 md:py-16 space-y-16">
       
       <div className="text-center space-y-6 max-w-2xl mx-auto">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#123D2A] text-[#F5F1E8] dark:bg-[#123D2A] dark:text-[#F5F1E8] text-[10px] uppercase tracking-widest font-bold">
@@ -273,7 +280,27 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                 />
               </div>
 
-              <label className="flex items-start gap-4 pt-4 cursor-pointer">
+              <div className="pt-4 space-y-4">
+                <button
+                  type="button"
+                  onClick={() => setShowRulesModal(true)}
+                  className="w-full flex items-center justify-between gap-4 border border-[#123D2A]/20 dark:border-white/15 bg-[#FAF2CC]/70 dark:bg-white/5 px-5 py-4 text-left hover:border-[#F4C430] transition-colors"
+                >
+                  <span className="flex items-center gap-3">
+                    <ShieldCheck className="w-5 h-5 text-[#123D2A] dark:text-[#F4C430] shrink-0" />
+                    <span>
+                      <span className="block text-xs font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">
+                        Community-Regeln lesen
+                      </span>
+                      <span className="block text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        Bitte öffne die Regeln, lies sie durch und bestätige sie anschließend.
+                      </span>
+                    </span>
+                  </span>
+                  {hasReadRules && <CheckCircle2 className="w-5 h-5 text-[#123D2A] dark:text-[#F4C430] shrink-0" />}
+                </button>
+
+                <label className={`flex items-start gap-4 cursor-pointer ${hasReadRules ? '' : 'opacity-60'}`}>
                 <div className={`w-5 h-5 border flex items-center justify-center transition-colors shrink-0 mt-0.5 ${
                   regAcceptRules ? 'bg-[#123D2A] border-[#123D2A] dark:bg-white dark:border-white' : 'border-gray-400'
                 }`}>
@@ -285,11 +312,13 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                 <input
                   type="checkbox"
                   required
+                  disabled={!hasReadRules}
                   checked={regAcceptRules}
                   onChange={(e) => setRegAcceptRules(e.target.checked)}
                   className="sr-only"
                 />
-              </label>
+                </label>
+              </div>
 
               <button
                 type="submit"
@@ -350,6 +379,85 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
         </div>
 
       </div>
+
+      {showRulesModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#111511]/75 px-4 py-6 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[88vh] overflow-hidden bg-[#F5F1E8] dark:bg-[#111511] border border-[#123D2A]/20 dark:border-white/15 shadow-2xl">
+            <div className="flex items-start justify-between gap-6 border-b border-[#123D2A]/15 dark:border-white/10 bg-[#123D2A] px-6 py-5 text-[#F5F1E8]">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#F4C430]">
+                  Vor der Registrierung
+                </p>
+                <h2 className="mt-1 font-serif font-bold text-2xl">
+                  {t.communityRules}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowRulesModal(false)}
+                className="p-2 text-[#F5F1E8]/70 hover:text-[#F5F1E8] transition-colors"
+                aria-label="Community-Regeln schließen"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="max-h-[58vh] overflow-y-auto px-6 py-6 space-y-8">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300 leading-relaxed">
+                {t.rulesIntro}
+              </p>
+
+              <section className="space-y-4">
+                <h3 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-red-600 dark:text-red-400">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span>{t.rulesNotAllowedTitle}</span>
+                </h3>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {[t.rulesProhibited1, t.rulesProhibited2, t.rulesProhibited3, t.rulesProhibited4, t.rulesProhibited5, t.rulesProhibited6, t.rulesProhibited7, t.rulesProhibited8].map((rule) => (
+                    <li key={rule} className="flex items-start gap-3">
+                      <span className="mt-0.5 font-bold text-red-600">×</span>
+                      <span>{rule}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="space-y-4">
+                <h3 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{t.rulesBehaviorTitle}</span>
+                </h3>
+                <div className="space-y-3 text-sm font-medium text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <p><strong className="text-[#171A17] dark:text-white">{t.rulesHonestTitle}</strong> {t.rulesHonestDesc}</p>
+                  <p><strong className="text-[#171A17] dark:text-white">{t.rule1Title}</strong> {t.rule1Desc}</p>
+                  <p><strong className="text-[#171A17] dark:text-white">{t.rule2Title}</strong> {t.rule2Desc}</p>
+                </div>
+              </section>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 border-t border-[#123D2A]/15 dark:border-white/10 bg-white/70 dark:bg-white/5 px-6 py-5">
+              <button
+                type="button"
+                onClick={() => setShowRulesModal(false)}
+                className="px-5 py-3 border border-[#123D2A]/20 text-[#123D2A] dark:border-white/20 dark:text-white text-[11px] font-bold uppercase tracking-widest hover:bg-[#123D2A]/5 transition-colors"
+              >
+                Nochmals lesen
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setHasReadRules(true);
+                  setRegAcceptRules(true);
+                  setShowRulesModal(false);
+                }}
+                className="flex-1 px-5 py-3 bg-[#F4C430] text-[#123D2A] text-[11px] font-bold uppercase tracking-widest hover:bg-[#E4B528] transition-colors"
+              >
+                Regeln gelesen und akzeptieren
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
