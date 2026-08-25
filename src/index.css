@@ -17,12 +17,14 @@
   
   --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
   --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-bangers: 'Bangers', system-ui, sans-serif;
 }
 
 @layer base {
   :root {
     --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
     --font-heading: 'Manrope', system-ui, -apple-system, sans-serif;
+    --font-bangers: 'Bangers', system-ui, sans-serif;
     
     /* BE HALAL brand tokens */
     --color-primary: #123D2A;
