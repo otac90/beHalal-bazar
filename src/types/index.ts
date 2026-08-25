@@ -2,7 +2,7 @@ export type Role = 'USER' | 'MEMBER' | 'MODERATOR' | 'ADMIN';
 
 export type UserStatus = 'ACTIVE' | 'WARNED' | 'TEMPORARILY_SUSPENDED' | 'BANNED';
 
-export type Language = 'de' | 'bs' | 'en' | 'tr' | 'ar' | 'sq' | 'ru';
+export type Language = 'de' | 'en';
 
 export interface User {
   id: string;

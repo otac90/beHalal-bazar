@@ -35,7 +35,7 @@ export const INITIAL_USERS: User[] = [
     country: 'Österreich',
     postalCode: '8020',
     city: 'Graz',
-    language: 'bs',
+    language: 'de',
     role: 'USER',
     status: 'ACTIVE',
     emailVerified: true,

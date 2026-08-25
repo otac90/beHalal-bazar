@@ -612,7 +612,7 @@ class StorageService {
   // --- Language & Theme ---
   public getLanguage(): Language {
     const lang = localStorage.getItem(STORAGE_KEYS.LANGUAGE) as Language;
-    return lang || 'de';
+    return lang === 'en' || lang === 'de' ? lang : 'de';
   }
 
   public setLanguage(lang: Language) {

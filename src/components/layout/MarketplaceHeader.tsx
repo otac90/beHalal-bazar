@@ -225,23 +225,8 @@ export const MarketplaceHeader: React.FC = () => {
                   <button onClick={() => { setLanguage('de'); setShowLangMenu(false); }} className={`w-full px-5 py-3 text-left text-xs font-bold uppercase tracking-widest flex items-center gap-3 transition-colors border-b border-gray-100 dark:border-white/5 ${language === 'de' ? 'bg-gray-50 dark:bg-white/10 text-[#171A17] dark:text-white' : 'text-gray-500 hover:text-[#171A17] dark:hover:text-white'}`}>
                     <span>🇩🇪</span> DE
                   </button>
-                  <button onClick={() => { setLanguage('bs'); setShowLangMenu(false); }} className={`w-full px-5 py-3 text-left text-xs font-bold uppercase tracking-widest flex items-center gap-3 transition-colors border-b border-gray-100 dark:border-white/5 ${language === 'bs' ? 'bg-gray-50 dark:bg-white/10 text-[#171A17] dark:text-white' : 'text-gray-500 hover:text-[#171A17] dark:hover:text-white'}`}>
-                    <span>🇧🇦</span> BS
-                  </button>
-                  <button onClick={() => { setLanguage('en'); setShowLangMenu(false); }} className={`w-full px-5 py-3 text-left text-xs font-bold uppercase tracking-widest flex items-center gap-3 transition-colors border-b border-gray-100 dark:border-white/5 ${language === 'en' ? 'bg-gray-50 dark:bg-white/10 text-[#171A17] dark:text-white' : 'text-gray-500 hover:text-[#171A17] dark:hover:text-white'}`}>
+                  <button onClick={() => { setLanguage('en'); setShowLangMenu(false); }} className={`w-full px-5 py-3 text-left text-xs font-bold uppercase tracking-widest flex items-center gap-3 transition-colors ${language === 'en' ? 'bg-gray-50 dark:bg-white/10 text-[#171A17] dark:text-white' : 'text-gray-500 hover:text-[#171A17] dark:hover:text-white'}`}>
                     <span>🇬🇧</span> EN
-                  </button>
-                  <button onClick={() => { setLanguage('tr'); setShowLangMenu(false); }} className={`w-full px-5 py-3 text-left text-xs font-bold uppercase tracking-widest flex items-center gap-3 transition-colors border-b border-gray-100 dark:border-white/5 ${language === 'tr' ? 'bg-gray-50 dark:bg-white/10 text-[#171A17] dark:text-white' : 'text-gray-500 hover:text-[#171A17] dark:hover:text-white'}`}>
-                    <span>🇹🇷</span> TR
-                  </button>
-                  <button onClick={() => { setLanguage('ar'); setShowLangMenu(false); }} className={`w-full px-5 py-3 text-left text-xs font-bold uppercase tracking-widest flex items-center gap-3 transition-colors border-b border-gray-100 dark:border-white/5 ${language === 'ar' ? 'bg-gray-50 dark:bg-white/10 text-[#171A17] dark:text-white' : 'text-gray-500 hover:text-[#171A17] dark:hover:text-white'}`}>
-                    <span>🇸🇦</span> AR
-                  </button>
-                  <button onClick={() => { setLanguage('sq'); setShowLangMenu(false); }} className={`w-full px-5 py-3 text-left text-xs font-bold uppercase tracking-widest flex items-center gap-3 transition-colors border-b border-gray-100 dark:border-white/5 ${language === 'sq' ? 'bg-gray-50 dark:bg-white/10 text-[#171A17] dark:text-white' : 'text-gray-500 hover:text-[#171A17] dark:hover:text-white'}`}>
-                    <span>🇦🇱</span> SQ
-                  </button>
-                  <button onClick={() => { setLanguage('ru'); setShowLangMenu(false); }} className={`w-full px-5 py-3 text-left text-xs font-bold uppercase tracking-widest flex items-center gap-3 transition-colors ${language === 'ru' ? 'bg-gray-50 dark:bg-white/10 text-[#171A17] dark:text-white' : 'text-gray-500 hover:text-[#171A17] dark:hover:text-white'}`}>
-                    <span>🇷🇺</span> RU
                   </button>
                 </div>
               )}
