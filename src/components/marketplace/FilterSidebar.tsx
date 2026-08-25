@@ -109,7 +109,7 @@ export const FilterSidebar: React.FC<FilterProps> = ({
       
       {/* HEADER & RESET */}
       <div className="flex items-center justify-between pb-4 border-b border-[#123D2A]/10 dark:border-white/10">
-        <div className="flex items-center gap-2 font-serif text-xl text-[#123D2A] dark:text-white">
+        <div className="flex items-center gap-2 font-serif font-bold text-xl text-[#123D2A] dark:text-white">
           <SlidersHorizontal className="w-5 h-5" />
           <span>{t.filterResults}</span>
           {activeFiltersCount > 0 && (
@@ -263,7 +263,7 @@ export const FilterSidebar: React.FC<FilterProps> = ({
 
         <label className="flex items-center gap-3 pt-4 cursor-pointer group">
           <div className={`w-4 h-4 rounded-sm border flex items-center justify-center transition-colors ${
-            onlyFree ? 'bg-[#123D2A] border-[#123D2A] dark:bg-white dark:border-white' : 'border-gray-400 group-hover:border-gray-600'
+            onlyFree ? 'bg-[#123D2A] border-[#123D2A] dark:bg-[#F4C430] dark:border-[#F4C430]' : 'border-gray-400 group-hover:border-gray-600'
           }`}>
             {onlyFree && <Check className="w-3 h-3 text-white dark:text-[#171A17] stroke-[3]" />}
           </div>

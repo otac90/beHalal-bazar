@@ -24,7 +24,7 @@ export const AccountPage: React.FC = () => {
   if (!user) {
     return (
       <div className="max-w-md mx-auto py-32 px-4 text-center space-y-8">
-        <h2 className="font-serif text-3xl text-[#171A17] dark:text-white">
+        <h2 className="font-serif font-bold text-3xl text-[#171A17] dark:text-white">
           {t.closedCommunityNotice}
         </h2>
         <p className="font-sans text-sm text-gray-500 uppercase tracking-widest">
@@ -123,7 +123,7 @@ const handleSaveProfile = (e: React.FormEvent) => {
           />
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <h1 className="font-serif text-4xl text-[#123D2A] dark:text-white">
+              <h1 className="font-serif font-bold text-4xl text-[#123D2A] dark:text-white">
                 {user.firstName} {user.lastName}
               </h1>
               {user.emailVerified && (
@@ -166,7 +166,7 @@ const handleSaveProfile = (e: React.FormEvent) => {
             onClick={() => setActiveTab(tab.id as any)}
             className={`pb-4 border-b-2 transition-colors whitespace-nowrap flex items-center gap-2 text-xs font-bold uppercase tracking-widest ${
               activeTab === tab.id
-                ? 'border-[#123D2A] dark:border-white text-[#123D2A] dark:text-white'
+                ? 'border-[#F4C430] text-[#123D2A] dark:text-[#F4C430]'
                 : 'border-transparent text-gray-400 hover:text-[#171A17] dark:hover:text-gray-300'
             }`}
             style={{ marginBottom: '-18px' }}
@@ -193,7 +193,7 @@ const handleSaveProfile = (e: React.FormEvent) => {
                     <div className="flex-1 flex flex-col justify-between">
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-sans text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">
+                          <span className={`px-2 py-0.5 font-sans text-[9px] font-bold uppercase tracking-widest ${lst.status === 'ACTIVE' ? 'bg-[#CBD9C6] text-[#123D2A]' : lst.status === 'RESERVED' ? 'bg-[#FAF2CC] text-[#123D2A]' : 'bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}>
                             {lst.status === 'ACTIVE' ? 'Aktiv' : lst.status === 'RESERVED' ? 'Reserviert' : 'Verkauft'}
                           </span>
                           <span className="text-[10px] uppercase tracking-widest text-gray-400">
@@ -202,7 +202,7 @@ const handleSaveProfile = (e: React.FormEvent) => {
                         </div>
                         <h3
                           onClick={() => navigate('listing-detail', { id: lst.id })}
-                          className="font-serif text-xl text-[#171A17] dark:text-white cursor-pointer hover:underline line-clamp-1"
+                          className="font-serif font-bold text-xl text-[#171A17] dark:text-white cursor-pointer hover:underline line-clamp-1"
                         >
                           {lst.title}
                         </h3>
@@ -288,7 +288,7 @@ const handleSaveProfile = (e: React.FormEvent) => {
                         </span>
                         <span className="text-[10px] uppercase tracking-widest text-gray-400">{lst.city}</span>
                       </div>
-                      <h3 className="font-serif text-lg text-[#171A17] dark:text-white group-hover:underline line-clamp-1">
+                      <h3 className="font-serif font-bold text-lg text-[#171A17] dark:text-white group-hover:underline line-clamp-1">
                         {lst.title}
                       </h3>
                     </div>
@@ -315,7 +315,7 @@ const handleSaveProfile = (e: React.FormEvent) => {
                     className="pb-6 border-b border-[#123D2A]/10 dark:border-white/10 flex items-start justify-between gap-6"
                   >
                     <div className="space-y-2">
-                      <h4 className="font-serif text-2xl text-[#171A17] dark:text-white">
+                      <h4 className="font-serif font-bold text-2xl text-[#171A17] dark:text-white">
                         {s.title}
                       </h4>
                       <p className="font-sans text-[10px] uppercase tracking-widest text-gray-500">
@@ -369,7 +369,7 @@ const handleSaveProfile = (e: React.FormEvent) => {
                   </label>
                 </div>
                 <div className="space-y-2 text-center sm:text-left">
-                  <h3 className="font-serif text-xl text-[#171A17] dark:text-white">{t.profilePicture}</h3>
+                  <h3 className="font-serif font-bold text-xl text-[#171A17] dark:text-white">{t.profilePicture}</h3>
                   <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">{t.profilePictureSize}</p>
                 </div>
               </div>
@@ -450,11 +450,11 @@ const handleSaveProfile = (e: React.FormEvent) => {
             {/* PRIVACY & DATA EXPORT */}
             <div className="pt-16 border-t border-[#123D2A]/10 dark:border-white/10 space-y-6">
               <div className="space-y-2">
-                <h3 className="font-serif text-2xl text-[#171A17] dark:text-white">
+                <h3 className="font-serif font-bold text-2xl text-[#171A17] dark:text-white">
                   Datenschutz & DSGVO
                 </h3>
                 <p className="font-sans text-sm text-gray-500 leading-relaxed max-w-lg">
-                  Du hast das Recht, jederzeit eine Kopie deiner bei BE HALAL gespeicherten Daten (Profil, Inserate, Favoriten) herunterzuladen.
+                  Du hast das Recht, jederzeit eine Kopie deiner bei ONLINE BAZAR gespeicherten Daten (Profil, Inserate, Favoriten) herunterzuladen.
                 </p>
               </div>
               <button

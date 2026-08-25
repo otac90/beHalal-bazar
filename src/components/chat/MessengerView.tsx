@@ -100,7 +100,7 @@ export const MessengerView: React.FC = () => {
   if (!user) {
     return (
       <div className="max-w-md mx-auto py-32 px-4 text-center space-y-8 animate-fade-in">
-        <h2 className="font-serif text-3xl text-[#171A17] dark:text-white">
+        <h2 className="font-serif font-bold text-3xl text-[#171A17] dark:text-white">
           {t.closedCommunityNotice}
         </h2>
         <p className="font-sans text-sm text-gray-500 uppercase tracking-widest leading-relaxed">
@@ -108,7 +108,7 @@ export const MessengerView: React.FC = () => {
         </p>
         <button
           onClick={() => navigate('login')}
-          className="px-8 py-4 bg-[#123D2A] dark:bg-white text-white dark:text-[#171A17] text-[11px] font-bold uppercase tracking-widest hover:opacity-80 transition-opacity"
+          className="px-8 py-4 bg-[#F4C430] text-[#123D2A] text-[11px] font-bold uppercase tracking-widest hover:opacity-80 transition-opacity"
         >
           {t.login}
         </button>
@@ -150,10 +150,10 @@ export const MessengerView: React.FC = () => {
         }`}>
           {/* HEADER */}
           <div className="py-6 pr-6 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
-            <h2 className="font-serif text-3xl text-[#171A17] dark:text-white">
+            <h2 className="font-serif font-bold text-3xl text-[#171A17] dark:text-white">
               {t.messages}
             </h2>
-            <span className="font-serif text-xl text-[#123D2A] dark:text-[#F4C430]">
+            <span className="font-serif font-bold text-xl text-[#123D2A] dark:text-[#F4C430]">
               {conversations.length}
             </span>
           </div>
@@ -176,7 +176,7 @@ export const MessengerView: React.FC = () => {
                     }}
                     className={`w-full py-6 pr-6 text-left flex items-start gap-4 transition-colors border-b border-gray-100 dark:border-white/5 ${
                       isSelected
-                        ? 'bg-gray-50/50 dark:bg-white/5'
+                        ? 'bg-[#CBD9C6]/20 dark:bg-[#1E5C41]/20'
                         : 'hover:bg-gray-50/30 dark:hover:bg-white/5'
                     }`}
                   >
@@ -188,7 +188,7 @@ export const MessengerView: React.FC = () => {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1 mb-1">
-                        <span className="font-serif text-lg text-[#171A17] dark:text-white truncate">
+                        <span className="font-serif font-bold text-lg text-[#171A17] dark:text-white truncate">
                           {partnerName}
                         </span>
                         <span className="font-sans text-[10px] uppercase tracking-widest text-gray-400 shrink-0">
@@ -209,7 +209,7 @@ export const MessengerView: React.FC = () => {
               })
             ) : (
               <div className="p-8 text-center text-xs text-gray-400 space-y-4">
-                <p className="font-serif text-xl">Noch keine Unterhaltungen vorhanden.</p>
+                <p className="font-serif font-bold text-xl">Noch keine Unterhaltungen vorhanden.</p>
                 <p className="font-sans text-[10px] uppercase tracking-widest">Klicke bei einem Inserat auf „Nachricht schreiben“, um einen Chat zu starten.</p>
               </div>
             )}
@@ -244,7 +244,7 @@ export const MessengerView: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <h3 
                       onClick={() => navigate('listing-detail', { id: activeConversation.listingId })}
-                      className="font-serif text-xl sm:text-2xl text-[#171A17] dark:text-white truncate cursor-pointer hover:opacity-70 transition-opacity"
+                      className="font-serif font-bold text-xl sm:text-2xl text-[#171A17] dark:text-white truncate cursor-pointer hover:opacity-70 transition-opacity"
                     >
                       {activeConversation.listingTitle}
                     </h3>
@@ -269,7 +269,7 @@ export const MessengerView: React.FC = () => {
                   </button>
                   <button
                     onClick={() => handleStatusChange('SOLD')}
-                    className="px-4 py-2 bg-[#123D2A] dark:bg-white text-white dark:text-[#171A17] text-[10px] font-bold uppercase tracking-widest hover:opacity-80 transition-opacity"
+                    className="px-4 py-2 bg-[#F4C430] text-[#123D2A] text-[10px] font-bold uppercase tracking-widest hover:opacity-80 transition-opacity"
                   >
                     Verkauft
                   </button>
@@ -303,8 +303,8 @@ export const MessengerView: React.FC = () => {
                     <div
                       className={`max-w-[80%] sm:max-w-[60%] p-5 text-sm leading-relaxed ${
                         isMe
-                          ? 'bg-[#171A17] text-white dark:bg-white dark:text-[#171A17]'
-                          : 'bg-gray-100 text-[#171A17] dark:bg-white/5 dark:text-gray-300'
+                          ? 'bg-[#123D2A] text-[#F5F1E8] dark:bg-[#F4C430] dark:text-[#123D2A]'
+                          : 'bg-[#F5F1E8] text-[#123D2A] dark:bg-white/5 dark:text-gray-300'
                       }`}
                     >
                       <p className="whitespace-pre-line">{msg.content}</p>
@@ -339,7 +339,7 @@ export const MessengerView: React.FC = () => {
               <button
                 type="submit"
                 disabled={!messageText.trim()}
-                className="pb-3 text-[#123D2A] dark:text-[#F4C430] hover:text-[#171A17] dark:hover:text-white disabled:opacity-30 transition-colors"
+                className="pb-3 text-[#F4C430] hover:text-[#E4B528] disabled:opacity-30 transition-colors"
               >
                 <Send className="w-6 h-6" />
               </button>
@@ -348,7 +348,7 @@ export const MessengerView: React.FC = () => {
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-400">
-            <p className="font-serif text-2xl">Wähle eine Unterhaltung aus der linken Liste aus.</p>
+            <p className="font-serif font-bold text-2xl">Wähle eine Unterhaltung aus der linken Liste aus.</p>
           </div>
         )}
 

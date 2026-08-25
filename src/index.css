@@ -16,7 +16,7 @@
   --color-brand-dark-text: #F4F1E8;
   
   --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
-  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-serif: 'Outfit', system-ui, -apple-system, sans-serif;
 }
 
 @layer base {

@@ -1,12 +1,28 @@
 import React, { useState, useMemo } from 'react';
-import { 
-  Search, SlidersHorizontal, ArrowRight, X, Gift
+import {
+  Search, SlidersHorizontal, ArrowRight, X, Gift,
+  Car, Smartphone, Sofa, Shirt, Baby, Grid, Briefcase, Book, Heart, Package, Home
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { storage } from '../services/storage';
 import { ListingType, ListingCondition, DeliveryType } from '../types';
 import { ListingGrid, SortOption } from '../components/marketplace/ListingGrid';
 import { FilterSidebar } from '../components/marketplace/FilterSidebar';
+
+
+const CategoryIcon = ({ iconName, className }: { iconName: string, className: string }) => {
+  switch (iconName) {
+    case 'Car': return <Car className={className} />;
+    case 'Smartphone': return <Smartphone className={className} />;
+    case 'Sofa': return <Sofa className={className} />;
+    case 'Shirt': return <Shirt className={className} />;
+    case 'Baby': return <Baby className={className} />;
+    case 'Briefcase': return <Briefcase className={className} />;
+    case 'Book': return <Book className={className} />;
+    case 'Home': return <Home className={className} />;
+    default: return <Grid className={className} />;
+  }
+};
 
 export const HomePage: React.FC = () => {
   const { 
@@ -107,54 +123,76 @@ export const HomePage: React.FC = () => {
       {/* ==================================================== */}
       {/* EDITORIAL HERO SECTION */}
       {/* ==================================================== */}
-      <section className="pt-12 pb-16 md:pt-20 md:pb-24 bg-[#F5F1E8] dark:bg-transparent">
+      <section className="pt-12 pb-16 md:pt-20 md:pb-24 bg-[#123D2A] dark:bg-[#111511]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-end">
             <div className="md:col-span-8 lg:col-span-9 max-w-4xl">
-              <h1 className="text-[3rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem] leading-[0.95] font-serif text-[#123D2A] dark:text-white tracking-tight">
+              <div className="w-12 h-1 bg-[#F4C430] mb-6"></div>
+              <h1 className="text-[3rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem] leading-[0.95] font-serif font-bold text-[#F5F1E8] tracking-tight">
                 {t.heroSearchTitle}
               </h1>
             </div>
             <div className="md:col-span-4 lg:col-span-3 pb-2 md:pb-4">
-              <p className="text-base md:text-lg text-[#171A17]/80 dark:text-gray-300 font-medium">
+              <p className="text-base md:text-lg text-[#F5F1E8]/80 font-medium">
                 {t.heroSearchSubtitle}
               </p>
             </div>
           </div>
 
-          {/* EDITORIAL CATEGORY STRIP */}
-          <div className="mt-16 md:mt-24 flex overflow-x-auto gap-8 md:gap-16 pb-6 scrollbar-hide snap-x">
+          {/* EDITORIAL CATEGORY GRID */}
+          <div className="mt-16 md:mt-20 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             
             <button
               onClick={() => {
                 setSelectedCategory(null);
                 setSelectedType('FREE');
               }}
-              className="flex-shrink-0 group snap-start text-left"
+              className={`group flex flex-col justify-between p-4 sm:p-5 h-28 sm:h-32 text-left transition-all ${
+                (!selectedCategory && selectedType === 'FREE')
+                  ? 'bg-[#F4C430] text-[#123D2A] border border-[#F4C430]'
+                  : 'bg-transparent border border-[#F5F1E8]/20 text-[#F5F1E8] hover:border-[#F4C430] hover:bg-white/5'
+              }`}
             >
-              <span className="block text-sm font-bold text-[#F4C430] mb-2 tracking-widest uppercase">00</span>
-              <span className="block text-3xl md:text-4xl font-serif text-[#171A17] dark:text-white group-hover:opacity-60 transition-opacity">
+              
+              <div className="flex justify-between items-start w-full">
+                <span className={`text-[10px] sm:text-xs font-bold tracking-widest uppercase ${(!selectedCategory && selectedType === 'FREE') ? 'text-[#123D2A]/70' : 'text-[#F4C430]'}`}>00</span>
+                <Gift className={`w-5 h-5 ${(!selectedCategory && selectedType === 'FREE') ? 'text-[#123D2A]' : 'text-[#F5F1E8]/50 group-hover:text-[#F4C430]'}`} />
+              </div>
+
+              <span className="text-xl sm:text-2xl font-serif font-bold">
                 {t.sadaqahTag}
               </span>
             </button>
 
-            {categories.slice(0, 8).map((c, idx) => (
-              <button
-                key={c.id}
-                onClick={() => setSelectedCategory(c.id)}
-                className={`flex-shrink-0 group snap-start text-left ${selectedCategory === c.id ? 'opacity-100' : 'opacity-70 dark:opacity-60'} hover:opacity-100 transition-opacity`}
-              >
-                <span className="block text-sm font-bold text-[#123D2A]/40 dark:text-white/40 mb-2 tracking-widest uppercase">
-                  {String(idx + 1).padStart(2, '0')}
-                </span>
-                <span className="block text-3xl md:text-4xl font-serif text-[#123D2A] dark:text-white">
-                  {c.name[language]}
-                </span>
-              </button>
-            ))}
-          </div>
+            {categories.slice(0, 9).map((c, idx) => {
+              const isActive = selectedCategory === c.id;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setSelectedCategory(c.id)}
+                  className={`group flex flex-col justify-between p-4 sm:p-5 h-28 sm:h-32 text-left transition-all ${
+                    isActive
+                      ? 'bg-[#F4C430] text-[#123D2A] border border-[#F4C430]'
+                      : 'bg-transparent border border-[#F5F1E8]/20 text-[#F5F1E8] hover:border-[#F4C430] hover:bg-white/5'
+                  }`}
+                >
+                  
+                  <div className="flex justify-between items-start w-full">
+                    <span className={`text-[10px] sm:text-xs font-bold tracking-widest uppercase ${isActive ? 'text-[#123D2A]/70' : 'text-[#F4C430]'}`}>
+                      {String(idx + 1).padStart(2, '0')}
+                    </span>
+                    <CategoryIcon iconName={c.icon} className={`w-5 h-5 ${isActive ? 'text-[#123D2A]' : 'text-[#F5F1E8]/50 group-hover:text-[#F4C430]'}`} />
+                  </div>
 
+                  <span className="text-xl sm:text-2xl font-serif font-bold">
+                    {c.name[language]}
+                  </span>
+                </button>
+              );
+            })}
+
+          </div>
         </div>
       </section>
 
@@ -167,7 +205,7 @@ export const HomePage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-12">
           <div className="flex flex-wrap items-center gap-3">
             {searchQuery && (
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-none bg-[#CBD9C6]/30 dark:bg-white/5 text-[#123D2A] dark:text-white text-sm font-bold">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-none bg-[#CBD9C6] dark:bg-[#CBD9C6] text-[#123D2A] dark:text-[#123D2A] text-sm font-bold">
                 <span>Suche: {searchQuery}</span>
                 <button onClick={() => setSearchQuery('')} className="hover:opacity-60">
                   <X className="w-4 h-4" />
@@ -176,7 +214,7 @@ export const HomePage: React.FC = () => {
             )}
 
             {selectedCategory && (
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-none bg-[#CBD9C6]/30 dark:bg-white/5 text-[#123D2A] dark:text-white text-sm font-bold">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-none bg-[#CBD9C6] dark:bg-[#CBD9C6] text-[#123D2A] dark:text-[#123D2A] text-sm font-bold">
                 <span>{categories.find(c => c.id === selectedCategory)?.name[language]}</span>
                 <button onClick={() => setSelectedCategory(null)} className="hover:opacity-60">
                   <X className="w-4 h-4" />
@@ -223,12 +261,12 @@ export const HomePage: React.FC = () => {
 
           {/* MOBILE DRAWER */}
           {mobileFilterOpen && (
-            <div className="fixed inset-0 z-50 flex lg:hidden bg-black/60 backdrop-blur-sm">
-              <div className="w-4/5 max-w-sm bg-[#F5F1E8] dark:bg-[#111511] h-full p-6 overflow-y-auto flex flex-col justify-between">
+            <div className="fixed inset-0 z-50 flex lg:hidden bg-[#F5F1E8] dark:bg-[#111511]">
+              <div className="w-full h-full p-6 overflow-y-auto flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between pb-6 mb-6 border-b border-[#123D2A]/10 dark:border-white/10">
-                    <h3 className="font-serif text-2xl text-[#123D2A] dark:text-white">Filter</h3>
-                    <button onClick={() => setMobileFilterOpen(false)} className="text-gray-500 hover:text-gray-900 dark:hover:text-white">
+                    <h3 className="font-serif font-bold text-2xl text-[#123D2A] dark:text-white">Filter</h3>
+                    <button onClick={() => setMobileFilterOpen(false)} className="p-2 -mr-2 text-gray-500 hover:text-[#123D2A] dark:hover:text-[#F4C430] transition-colors">
                       <X className="w-6 h-6" />
                     </button>
                   </div>
@@ -276,6 +314,23 @@ export const HomePage: React.FC = () => {
 
         </div>
       </main>
+
+      {/* CTA SECTION */}
+      <section className="bg-[#123D2A] py-20 mt-20">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <div className="w-12 h-1 bg-[#F4C430] mx-auto mb-8"></div>
+          <h2 className="text-3xl md:text-5xl font-serif font-bold text-[#F5F1E8] mb-6">
+            Noch nichts gefunden?
+          </h2>
+          <p className="text-[#F5F1E8]/80 text-lg mb-10 max-w-xl mx-auto">
+            Speichere deine Suche und wir zeigen dir neue Inserate aus der Community, sobald sie verfügbar sind.
+          </p>
+          <button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="px-8 py-4 bg-[#F4C430] text-[#123D2A] text-sm font-bold uppercase tracking-widest hover:bg-[#E4B528] transition-colors rounded-none">
+            Zurück zur Suche
+          </button>
+        </div>
+      </section>
+
     </div>
   );
 };

@@ -213,7 +213,7 @@ export const ListingWizard: React.FC = () => {
       
       {/* WIZARD HEADER & PROGRESS BAR */}
       <div className="space-y-6 text-center">
-        <h1 className="text-3xl md:text-5xl font-serif text-[#171A17] dark:text-white">
+        <h1 className="text-3xl md:text-5xl font-serif font-bold text-[#171A17] dark:text-white">
           {t.createListingTitle}
         </h1>
         <div className="flex items-center justify-center gap-2 font-sans text-xs uppercase tracking-widest text-gray-500">
@@ -248,7 +248,7 @@ export const ListingWizard: React.FC = () => {
         {/* ==================================================== */}
         {step === 1 && (
           <div className="space-y-8 animate-fade-in">
-            <h2 className="font-serif text-2xl text-[#171A17] dark:text-white text-center mb-8">
+            <h2 className="font-serif font-bold text-2xl text-[#171A17] dark:text-white text-center mb-8">
               {t.step1Question}
             </h2>
             <div className="flex flex-col gap-4">
@@ -262,7 +262,7 @@ export const ListingWizard: React.FC = () => {
                 }`}
               >
                 <div>
-                  <h3 className={`font-serif text-xl mb-1 ${type === 'SELL' ? 'text-[#123D2A] dark:text-white' : 'text-[#171A17] dark:text-gray-300'}`}>{t.typeSell}</h3>
+                  <h3 className={`font-serif font-bold text-xl mb-1 ${type === 'SELL' ? 'text-[#123D2A] dark:text-white' : 'text-[#171A17] dark:text-gray-300'}`}>{t.typeSell}</h3>
                   <p className="font-sans text-xs uppercase tracking-widest text-gray-500">{t.step1SellDesc}</p>
                 </div>
                 {type === 'SELL' && <Check className="w-5 h-5 text-[#123D2A] dark:text-white" />}
@@ -278,7 +278,7 @@ export const ListingWizard: React.FC = () => {
                 }`}
               >
                 <div>
-                  <h3 className={`font-serif text-xl mb-1 ${type === 'FREE' ? 'text-[#123D2A] dark:text-white' : 'text-[#171A17] dark:text-gray-300'}`}>{t.typeFree}</h3>
+                  <h3 className={`font-serif font-bold text-xl mb-1 ${type === 'FREE' ? 'text-[#123D2A] dark:text-white' : 'text-[#171A17] dark:text-gray-300'}`}>{t.typeFree}</h3>
                   <p className="font-sans text-xs uppercase tracking-widest text-gray-500">{t.step1FreeDesc}</p>
                 </div>
                 {type === 'FREE' && <Check className="w-5 h-5 text-[#123D2A] dark:text-white" />}
@@ -294,7 +294,7 @@ export const ListingWizard: React.FC = () => {
                 }`}
               >
                 <div>
-                  <h3 className={`font-serif text-xl mb-1 ${type === 'WANTED' ? 'text-[#123D2A] dark:text-white' : 'text-[#171A17] dark:text-gray-300'}`}>{t.typeWanted}</h3>
+                  <h3 className={`font-serif font-bold text-xl mb-1 ${type === 'WANTED' ? 'text-[#123D2A] dark:text-white' : 'text-[#171A17] dark:text-gray-300'}`}>{t.typeWanted}</h3>
                   <p className="font-sans text-xs uppercase tracking-widest text-gray-500">{t.step1WantedDesc}</p>
                 </div>
                 {type === 'WANTED' && <Check className="w-5 h-5 text-[#123D2A] dark:text-white" />}
@@ -308,7 +308,7 @@ export const ListingWizard: React.FC = () => {
         {/* ==================================================== */}
         {step === 2 && (
           <div className="space-y-8 animate-fade-in">
-            <h2 className="font-serif text-2xl text-[#171A17] dark:text-white text-center mb-8">
+            <h2 className="font-serif font-bold text-2xl text-[#171A17] dark:text-white text-center mb-8">
               {t.step2SelectCat}
             </h2>
             <div className="grid grid-cols-2 gap-x-8 gap-y-4 max-h-96 overflow-y-auto">
@@ -322,7 +322,7 @@ export const ListingWizard: React.FC = () => {
                       setCategoryId(c.id);
                       setSubcategoryId(c.subcategories[0]?.id || '');
                     }}
-                    className={`py-3 text-left font-serif text-lg transition-colors border-b ${
+                    className={`py-3 text-left font-serif font-bold text-lg transition-colors border-b ${
                       isSelected
                         ? 'text-[#123D2A] dark:text-white border-[#123D2A] dark:border-white'
                         : 'text-gray-500 hover:text-[#171A17] dark:hover:text-white border-transparent'
@@ -369,7 +369,7 @@ export const ListingWizard: React.FC = () => {
         {step === 3 && (
           <div className="space-y-8 animate-fade-in">
             <div className="text-center">
-              <h2 className="font-serif text-2xl text-[#171A17] dark:text-white">
+              <h2 className="font-serif font-bold text-2xl text-[#171A17] dark:text-white">
                 {t.wizardStep3}
               </h2>
               <p className="font-sans text-[10px] uppercase tracking-widest text-gray-500 mt-2">
@@ -381,7 +381,7 @@ export const ListingWizard: React.FC = () => {
             <div className="py-16 border border-dashed border-gray-300 dark:border-white/20 text-center space-y-6 hover:border-[#123D2A] dark:hover:border-white transition-colors cursor-pointer group">
               <Upload className="w-8 h-8 text-gray-300 group-hover:text-[#123D2A] dark:group-hover:text-white mx-auto transition-colors" />
               <div>
-                <p className="font-serif text-xl text-[#171A17] dark:text-white">
+                <p className="font-serif font-bold text-xl text-[#171A17] dark:text-white">
                   {t.dragDropPhotos}
                 </p>
               </div>
@@ -456,7 +456,7 @@ export const ListingWizard: React.FC = () => {
         {/* ==================================================== */}
         {step === 4 && (
           <div className="space-y-10 animate-fade-in">
-            <h2 className="font-serif text-2xl text-[#171A17] dark:text-white text-center mb-8">
+            <h2 className="font-serif font-bold text-2xl text-[#171A17] dark:text-white text-center mb-8">
               {t.wizardStep4}
             </h2>
 
@@ -479,7 +479,7 @@ export const ListingWizard: React.FC = () => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={t.titleHelp}
-                className="w-full pb-2 font-serif text-xl bg-transparent border-b border-gray-300 dark:border-white/20 text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors placeholder:font-sans placeholder:text-sm placeholder:tracking-widest"
+                className="w-full pb-2 font-serif font-bold text-xl bg-transparent border-b border-gray-300 dark:border-white/20 text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors placeholder:font-sans placeholder:text-sm placeholder:tracking-widest"
               />
             </div>
 
@@ -524,13 +524,13 @@ export const ListingWizard: React.FC = () => {
                 </label>
                 <div className="flex items-center gap-8">
                   <div className="relative flex-1 max-w-[200px]">
-                    <span className="absolute left-0 bottom-2 font-serif text-2xl text-[#171A17] dark:text-white">€</span>
+                    <span className="absolute left-0 bottom-2 font-serif font-bold text-2xl text-[#171A17] dark:text-white">€</span>
                     <input
                       type="number"
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
                       placeholder="0"
-                      className="w-full pl-8 pb-1 font-serif text-3xl bg-transparent border-b border-gray-300 dark:border-white/20 text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                      className="w-full pl-8 pb-1 font-serif font-bold text-3xl bg-transparent border-b border-gray-300 dark:border-white/20 text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
                     />
                   </div>
 
@@ -554,13 +554,13 @@ export const ListingWizard: React.FC = () => {
                   Maximales Budget (€, optional)
                 </label>
                 <div className="relative max-w-[200px]">
-                  <span className="absolute left-0 bottom-2 font-serif text-2xl text-[#171A17] dark:text-white">€</span>
+                  <span className="absolute left-0 bottom-2 font-serif font-bold text-2xl text-[#171A17] dark:text-white">€</span>
                   <input
                     type="number"
                     value={maxBudget}
                     onChange={(e) => setMaxBudget(e.target.value)}
                     placeholder="0"
-                    className="w-full pl-8 pb-1 font-serif text-3xl bg-transparent border-b border-gray-300 dark:border-white/20 text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                    className="w-full pl-8 pb-1 font-serif font-bold text-3xl bg-transparent border-b border-gray-300 dark:border-white/20 text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
                   />
                 </div>
               </div>
@@ -586,7 +586,7 @@ export const ListingWizard: React.FC = () => {
         {/* ==================================================== */}
         {step === 5 && (
           <div className="space-y-8 animate-fade-in">
-            <h2 className="font-serif text-2xl text-[#171A17] dark:text-white text-center mb-8">
+            <h2 className="font-serif font-bold text-2xl text-[#171A17] dark:text-white text-center mb-8">
               {t.transferType}
             </h2>
             <div className="flex flex-col gap-4">
@@ -602,7 +602,7 @@ export const ListingWizard: React.FC = () => {
                 <div className="flex items-center gap-6">
                   <Package className="w-6 h-6" />
                   <div>
-                    <h3 className="font-serif text-xl mb-1">{t.deliveryPickup}</h3>
+                    <h3 className="font-serif font-bold text-xl mb-1">{t.deliveryPickup}</h3>
                     <p className="font-sans text-[10px] uppercase tracking-widest opacity-80">Käufer holt den Artikel persönlich ab</p>
                   </div>
                 </div>
@@ -621,7 +621,7 @@ export const ListingWizard: React.FC = () => {
                 <div className="flex items-center gap-6">
                   <Truck className="w-6 h-6" />
                   <div>
-                    <h3 className="font-serif text-xl mb-1">{t.deliveryShipping}</h3>
+                    <h3 className="font-serif font-bold text-xl mb-1">{t.deliveryShipping}</h3>
                     <p className="font-sans text-[10px] uppercase tracking-widest opacity-80">Versand per Post / Paketdienst</p>
                   </div>
                 </div>
@@ -644,7 +644,7 @@ export const ListingWizard: React.FC = () => {
                     <Truck className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-serif text-xl mb-1">{t.deliveryBoth}</h3>
+                    <h3 className="font-serif font-bold text-xl mb-1">{t.deliveryBoth}</h3>
                     <p className="font-sans text-[10px] uppercase tracking-widest opacity-80">Sowohl Abholung als auch Versand</p>
                   </div>
                 </div>
@@ -660,7 +660,7 @@ export const ListingWizard: React.FC = () => {
         {step === 6 && (
           <div className="space-y-10 animate-fade-in">
             <div className="text-center">
-              <h2 className="font-serif text-2xl text-[#171A17] dark:text-white">
+              <h2 className="font-serif font-bold text-2xl text-[#171A17] dark:text-white">
                 {t.locationFilter}
               </h2>
               <p className="font-sans text-[10px] uppercase tracking-widest text-gray-500 mt-2">
@@ -720,11 +720,11 @@ export const ListingWizard: React.FC = () => {
         {step === 7 && (
           <div className="space-y-8 animate-fade-in">
             <div className="text-center">
-              <h2 className="font-serif text-2xl text-[#171A17] dark:text-white">
+              <h2 className="font-serif font-bold text-2xl text-[#171A17] dark:text-white">
                 Vorschau deines Inserats
               </h2>
               <p className="font-sans text-[10px] uppercase tracking-widest text-gray-500 mt-2">
-                So wird dein Inserat für andere verifizierte Mitglieder der BE HALAL Community angezeigt.
+                So wird dein Inserat für andere verifizierte Mitglieder der ONLINE BAZAR Community angezeigt.
               </p>
             </div>
 
@@ -749,7 +749,7 @@ export const ListingWizard: React.FC = () => {
                 </div>
 
                 <div>
-                  <h3 className="font-serif text-3xl text-[#171A17] dark:text-white mb-2">
+                  <h3 className="font-serif font-bold text-3xl text-[#171A17] dark:text-white mb-2">
                     {title}
                   </h3>
                   <div className="font-sans text-xl font-bold text-[#171A17] dark:text-white">
@@ -766,7 +766,7 @@ export const ListingWizard: React.FC = () => {
             <div className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs text-gray-600 dark:text-gray-300 flex items-start gap-4">
               <ShieldCheck className="w-5 h-5 text-[#123D2A] dark:text-white shrink-0" />
               <span className="leading-relaxed">
-                Mit dem Veröffentlichen bestätigst du, dass dein Artikel den redaktionellen Community-Regeln der BE HALAL Plattform entspricht.
+                Mit dem Veröffentlichen bestätigst du, dass dein Artikel den redaktionellen Community-Regeln der ONLINE BAZAR Plattform entspricht.
               </span>
             </div>
           </div>

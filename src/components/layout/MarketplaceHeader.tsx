@@ -82,15 +82,10 @@ export const MarketplaceHeader: React.FC = () => {
           <div 
             id="brand-logo-button"
             onClick={() => navigate('home')}
-            className="flex items-center gap-2.5 cursor-pointer group shrink-0"
+            className="flex items-center gap-2 cursor-pointer group shrink-0"
           >
-            <img
-              src="/assets/Logo.png"
-              alt="BE HALAL Logo"
-              className="w-9 h-9 md:w-10 md:h-10 object-contain"
-            />
             <span className="font-extrabold text-xl md:text-2xl tracking-tighter text-[#123D2A] dark:text-[#F4F1E8] leading-none uppercase">
-              BE HALAL
+              ONLINE BAZAR
             </span>
           </div>
 
@@ -165,7 +160,7 @@ export const MarketplaceHeader: React.FC = () => {
                 <button
                   type="submit"
                   id="btn-execute-search"
-                  className="w-10 h-10 mr-1 flex items-center justify-center rounded-full bg-[#123D2A] dark:bg-[#F4C430] text-white dark:text-[#123D2A] hover:opacity-90 transition-opacity shrink-0"
+                  className="w-10 h-10 mr-1 flex items-center justify-center rounded-full bg-[#F4C430] text-[#123D2A] hover:bg-[#E4B528] transition-colors shrink-0"
                 >
                   <Search className="w-4 h-4" />
                 </button>
@@ -261,7 +256,7 @@ export const MarketplaceHeader: React.FC = () => {
                 >
                   <MessageSquare className="w-5 h-5" />
                   {unreadMessagesCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] bg-red-600 text-white rounded-full text-[10px] font-bold">
+                    <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] bg-[#F4C430] text-[#123D2A] rounded-full text-[10px] font-bold">
                       {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
                     </span>
                   )}
@@ -289,7 +284,7 @@ export const MarketplaceHeader: React.FC = () => {
                   {showUserMenu && (
                     <div className="absolute right-0 mt-4 w-64 bg-white dark:bg-[#111511] border border-[#171A17] dark:border-white/20 z-50">
                       <div className="px-5 py-4 border-b border-[#171A17] dark:border-white/20">
-                        <p className="font-serif text-xl text-[#171A17] dark:text-white truncate">
+                        <p className="font-serif font-bold text-xl text-[#171A17] dark:text-white truncate">
                           {user.firstName} {user.lastName}
                         </p>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mt-1 truncate">@{user.username}</p>
@@ -336,7 +331,7 @@ export const MarketplaceHeader: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.searchPlaceholder}
-              className="w-full h-12 pl-12 pr-4 rounded-full bg-white dark:bg-[#191E19] text-sm text-[#171A17] dark:text-white placeholder:text-gray-400 focus:outline-none"
+              className="w-full h-12 pl-12 pr-4 rounded-full bg-white dark:bg-[#191E19] text-sm text-[#171A17] dark:text-white placeholder:text-gray-400 border border-transparent focus:outline-none focus:border-[#123D2A] focus:ring-1 focus:ring-[#123D2A] transition-colors"
             />
             <Search className="w-5 h-5 text-gray-400 absolute left-4 top-3.5 pointer-events-none" />
           </form>

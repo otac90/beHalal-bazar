@@ -15,7 +15,7 @@ export const MobileNav: React.FC = () => {
           onClick={() => navigate('home')}
           className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors ${
             currentRoute === 'home'
-              ? 'text-[#123D2A] dark:text-[#F5C518] font-bold'
+              ? 'text-[#123D2A] dark:text-[#F4C430] font-bold relative after:absolute after:-bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-[#F4C430] after:rounded-full'
               : 'text-gray-500 dark:text-gray-400 hover:text-gray-900'
           }`}
         >
@@ -29,7 +29,7 @@ export const MobileNav: React.FC = () => {
           onClick={() => navigate('search')}
           className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors ${
             currentRoute === 'search'
-              ? 'text-[#123D2A] dark:text-[#F5C518] font-bold'
+              ? 'text-[#123D2A] dark:text-[#F4C430] font-bold relative after:absolute after:-bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-[#F4C430] after:rounded-full'
               : 'text-gray-500 dark:text-gray-400 hover:text-gray-900'
           }`}
         >
@@ -44,10 +44,10 @@ export const MobileNav: React.FC = () => {
           className="flex flex-col items-center justify-center -mt-5"
           aria-label="Inserat aufgeben"
         >
-          <div className="w-12 h-12 rounded-full bg-[#F5C518] text-[#123D2A] flex items-center justify-center shadow-lg active:scale-95 transition-transform border-2 border-white dark:border-[#121A14]">
+          <div className="w-12 h-12 rounded-full bg-[#F4C430] text-[#123D2A] flex items-center justify-center shadow-lg active:scale-95 transition-transform border-2 border-white dark:border-[#121A14]">
             <Plus className="w-6 h-6 stroke-[2.8]" />
           </div>
-          <span className="text-[10px] font-bold text-[#123D2A] dark:text-[#F5C518] mt-0.5">
+          <span className="text-[10px] font-bold text-[#123D2A] dark:text-[#F4C430] mt-0.5">
             Inserieren
           </span>
         </button>
@@ -58,13 +58,13 @@ export const MobileNav: React.FC = () => {
           onClick={() => navigate('messages')}
           className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors relative ${
             currentRoute === 'messages'
-              ? 'text-[#123D2A] dark:text-[#F5C518] font-bold'
+              ? 'text-[#123D2A] dark:text-[#F4C430] font-bold relative after:absolute after:-bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-[#F4C430] after:rounded-full'
               : 'text-gray-500 dark:text-gray-400 hover:text-gray-900'
           }`}
         >
           <MessageSquare className="w-5 h-5" />
           {unreadMessagesCount > 0 && (
-            <span className="absolute top-0 right-1 flex items-center justify-center min-w-[16px] h-[16px] bg-red-600 text-white rounded-full text-[9px] font-bold ring-2 ring-white dark:ring-[#121A14]">
+            <span className="absolute top-0 right-1 flex items-center justify-center min-w-[16px] h-[16px] bg-[#F4C430] text-[#123D2A] rounded-full text-[9px] font-bold ring-2 ring-white dark:ring-[#121A14]">
               {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
             </span>
           )}
@@ -77,7 +77,7 @@ export const MobileNav: React.FC = () => {
           onClick={() => navigate(user ? 'account' : 'login')}
           className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-colors ${
             currentRoute === 'account' || currentRoute === 'login'
-              ? 'text-[#123D2A] dark:text-[#F5C518] font-bold'
+              ? 'text-[#123D2A] dark:text-[#F4C430] font-bold relative after:absolute after:-bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-[#F4C430] after:rounded-full'
               : 'text-gray-500 dark:text-gray-400 hover:text-gray-900'
           }`}
         >

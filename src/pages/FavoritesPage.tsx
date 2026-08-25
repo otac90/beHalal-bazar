@@ -26,7 +26,7 @@ export const FavoritesPage: React.FC = () => {
   if (!user) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-24 text-center">
-        <h2 className="text-4xl font-serif text-[#171A17] dark:text-white mb-6">{t.pleaseLogin}</h2>
+        <h2 className="text-4xl font-serif font-bold text-[#171A17] dark:text-white mb-6">{t.pleaseLogin}</h2>
         <p className="text-sm font-medium text-gray-500 mb-8 uppercase tracking-widest">
           {t.loginToSaveFavorites}
         </p>
@@ -50,7 +50,7 @@ export const FavoritesPage: React.FC = () => {
               <Heart className="w-4 h-4" />
               {t.savedListings}
             </span>
-            <h1 className="text-[3rem] sm:text-[4rem] leading-[0.95] font-serif text-[#171A17] dark:text-white tracking-tight">
+            <h1 className="text-[3rem] sm:text-[4rem] leading-[0.95] font-serif font-bold text-[#171A17] dark:text-white tracking-tight">
               {t.my} <span className="text-[#F4C430] italic">{t.favorites}</span>
             </h1>
             <p className="font-sans text-xs uppercase tracking-widest text-gray-500 max-w-xl leading-relaxed mt-4">
@@ -65,7 +65,7 @@ export const FavoritesPage: React.FC = () => {
         {favoriteListings.length === 0 ? (
           <div className="text-center py-32 border border-[#171A17]/10 dark:border-white/10">
             <Heart className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-8" />
-            <h3 className="text-3xl md:text-4xl font-serif text-[#171A17] dark:text-white mb-4">{t.noFavoritesYet}</h3>
+            <h3 className="text-3xl md:text-4xl font-serif font-bold text-[#171A17] dark:text-white mb-4">{t.noFavoritesYet}</h3>
             <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-12">
               {t.noFavoritesDesc}
             </p>

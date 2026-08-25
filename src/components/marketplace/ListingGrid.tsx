@@ -34,7 +34,7 @@ export const ListingGrid: React.FC<Props> = ({
       {/* HEADER & SORTING ROW */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl md:text-3xl font-serif text-[#123D2A] dark:text-white flex items-center gap-2">
+          <h2 className="text-2xl md:text-3xl font-serif font-bold text-[#123D2A] dark:text-white flex items-center gap-2">
             <span>{title || (activeCategory ? activeCategory.name[language] : t.allCategories)}</span>
             {activeSubcategory && (
               <span className="text-lg text-gray-400 font-sans">
@@ -82,7 +82,7 @@ export const ListingGrid: React.FC<Props> = ({
       ) : (
         /* EMPTY STATE */
         <div className="py-24 px-4 text-center flex flex-col items-center justify-center">
-          <h3 className="text-2xl font-serif text-[#123D2A] dark:text-white mb-2">
+          <h3 className="text-2xl font-serif font-bold text-[#123D2A] dark:text-white mb-2">
             {t.noListingsFound}
           </h3>
           <p className="text-sm text-gray-500 max-w-sm mx-auto mb-8 font-medium">

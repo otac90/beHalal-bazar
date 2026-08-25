@@ -40,7 +40,7 @@ export const StaticPages: React.FC<Props> = ({ pageType }) => {
             <span className="text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">
               {t.aboutCommunityTitle}
             </span>
-            <h1 className="text-4xl md:text-5xl font-serif text-[#171A17] dark:text-white">
+            <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#171A17] dark:text-white">
               {t.aboutTitle}
             </h1>
             <p className="font-sans text-xs uppercase tracking-widest text-gray-500 max-w-xl mx-auto leading-relaxed">
@@ -51,7 +51,7 @@ export const StaticPages: React.FC<Props> = ({ pageType }) => {
           <div className="space-y-12 border-t border-gray-200 dark:border-white/10 pt-16">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
               <div className="space-y-4">
-                <h3 className="font-serif text-2xl text-[#171A17] dark:text-white">
+                <h3 className="font-serif font-bold text-2xl text-[#171A17] dark:text-white">
                   {t.aboutSafetyTitle}
                 </h3>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -59,7 +59,7 @@ export const StaticPages: React.FC<Props> = ({ pageType }) => {
                 </p>
               </div>
               <div className="space-y-4">
-                <h3 className="font-serif text-2xl text-[#171A17] dark:text-white">
+                <h3 className="font-serif font-bold text-2xl text-[#171A17] dark:text-white">
                   {t.aboutSustainTitle}
                 </h3>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -77,7 +77,7 @@ export const StaticPages: React.FC<Props> = ({ pageType }) => {
       {pageType === 'rules' && (
         <div className="space-y-16">
           <div className="space-y-6">
-            <h1 className="text-4xl md:text-5xl font-serif text-[#171A17] dark:text-white">
+            <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#171A17] dark:text-white">
               {t.communityRules}
             </h1>
             <p className="font-sans text-xs uppercase tracking-widest text-gray-500 max-w-xl leading-relaxed">
@@ -148,7 +148,7 @@ export const StaticPages: React.FC<Props> = ({ pageType }) => {
       {pageType === 'safety' && (
         <div className="space-y-16">
           <div className="space-y-6">
-            <h1 className="text-4xl md:text-5xl font-serif text-[#171A17] dark:text-white">
+            <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#171A17] dark:text-white">
               {t.safetyTips}
             </h1>
             <p className="font-sans text-xs uppercase tracking-widest text-gray-500 max-w-xl leading-relaxed">
@@ -158,7 +158,7 @@ export const StaticPages: React.FC<Props> = ({ pageType }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12">
             <div className="space-y-4">
-              <div className="font-serif text-3xl text-[#171A17] dark:text-white">01</div>
+              <div className="font-serif font-bold text-3xl text-[#171A17] dark:text-white">01</div>
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#171A17] dark:text-white">
                 {t.safetyPersonalTitle}
               </h3>
@@ -167,7 +167,7 @@ export const StaticPages: React.FC<Props> = ({ pageType }) => {
               </p>
             </div>
             <div className="space-y-4">
-              <div className="font-serif text-3xl text-[#171A17] dark:text-white">02</div>
+              <div className="font-serif font-bold text-3xl text-[#171A17] dark:text-white">02</div>
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#171A17] dark:text-white">
                 {t.safetyNoAdvanceTitle}
               </h3>
@@ -176,7 +176,7 @@ export const StaticPages: React.FC<Props> = ({ pageType }) => {
               </p>
             </div>
             <div className="space-y-4">
-              <div className="font-serif text-3xl text-[#171A17] dark:text-white">03</div>
+              <div className="font-serif font-bold text-3xl text-[#171A17] dark:text-white">03</div>
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#171A17] dark:text-white">
                 {t.safetyProtectDataTitle}
               </h3>
@@ -185,7 +185,7 @@ export const StaticPages: React.FC<Props> = ({ pageType }) => {
               </p>
             </div>
             <div className="space-y-4">
-              <div className="font-serif text-3xl text-[#171A17] dark:text-white">04</div>
+              <div className="font-serif font-bold text-3xl text-[#171A17] dark:text-white">04</div>
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#171A17] dark:text-white">
                 {t.safetyReportTitle}
               </h3>
@@ -203,7 +203,7 @@ export const StaticPages: React.FC<Props> = ({ pageType }) => {
       {pageType === 'faq' && (
         <div className="space-y-16">
           <div className="space-y-6">
-            <h1 className="text-4xl md:text-5xl font-serif text-[#171A17] dark:text-white">
+            <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#171A17] dark:text-white">
               {t.faq}
             </h1>
             <p className="font-sans text-xs uppercase tracking-widest text-gray-500 max-w-xl leading-relaxed">
@@ -223,7 +223,7 @@ export const StaticPages: React.FC<Props> = ({ pageType }) => {
                 key={i}
                 className="pb-8 border-b border-gray-200 dark:border-white/10 space-y-4"
               >
-                <h3 className="font-serif text-2xl text-[#171A17] dark:text-white">
+                <h3 className="font-serif font-bold text-2xl text-[#171A17] dark:text-white">
                   {faq.q}
                 </h3>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
@@ -241,7 +241,7 @@ export const StaticPages: React.FC<Props> = ({ pageType }) => {
       {pageType === 'contact' && (
         <div className="space-y-16">
           <div className="space-y-6">
-            <h1 className="text-4xl md:text-5xl font-serif text-[#171A17] dark:text-white">
+            <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#171A17] dark:text-white">
               {t.contactUs}
             </h1>
             <p className="font-sans text-xs uppercase tracking-widest text-gray-500 max-w-xl leading-relaxed">
@@ -254,7 +254,7 @@ export const StaticPages: React.FC<Props> = ({ pageType }) => {
               {contactSent ? (
                 <div className="border border-[#123D2A] dark:border-white/30 p-8 text-center space-y-4">
                   <CheckCircle2 className="w-8 h-8 text-[#123D2A] dark:text-[#F4C430] mx-auto" />
-                  <h3 className="font-serif text-2xl text-[#171A17] dark:text-white">
+                  <h3 className="font-serif font-bold text-2xl text-[#171A17] dark:text-white">
                     {t.contactSentTitle}
                   </h3>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -314,7 +314,7 @@ export const StaticPages: React.FC<Props> = ({ pageType }) => {
                 <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#171A17] dark:text-white">
                   {t.contactSupportTitle}
                 </h3>
-                <p className="font-serif text-2xl text-[#171A17] dark:text-white">
+                <p className="font-serif font-bold text-2xl text-[#171A17] dark:text-white">
                   support@behalal-bazar.at
                 </p>
               </div>
@@ -344,7 +344,7 @@ export const StaticPages: React.FC<Props> = ({ pageType }) => {
       {(pageType === 'impressum' || pageType === 'datenschutz' || pageType === 'agb') && (
         <div className="space-y-16">
           <div className="space-y-6">
-            <h1 className="text-4xl md:text-5xl font-serif text-[#171A17] dark:text-white">
+            <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#171A17] dark:text-white">
               {pageType === 'impressum' && t.impressum}
               {pageType === 'datenschutz' && t.privacyPolicy}
               {pageType === 'agb' && t.termsOfService}

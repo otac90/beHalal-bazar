@@ -35,6 +35,7 @@ export const ListingCard: React.FC<Props> = ({ listing }) => {
   const isSold = listing.status === 'SOLD';
 
   const dateObj = new Date(listing.createdAt);
+  const isNew = Date.now() - dateObj.getTime() < 48 * 60 * 60 * 1000; // 48h for demo
   const dateString = dateObj.toLocaleDateString(language === 'en' ? 'en-US' : 'de-AT', { day: '2-digit', month: 'short' });
 
   return (
@@ -54,13 +55,18 @@ export const ListingCard: React.FC<Props> = ({ listing }) => {
 
         {/* TOP BADGES */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 items-start">
+          {isNew && (
+            <span className="px-2 py-0.5 text-[10px] font-bold bg-[#F4C430] text-[#123D2A] uppercase tracking-widest">
+              NEU
+            </span>
+          )}
           {isFree && (
-            <span className="px-2 py-0.5 text-[10px] font-bold bg-[#123D2A] text-[#F4C430] uppercase tracking-widest">
+            <span className="px-2 py-0.5 text-[10px] font-bold bg-[#123D2A] text-[#F5F1E8] uppercase tracking-widest">
               {t.typeFree}
             </span>
           )}
           {isWanted && (
-            <span className="px-2 py-0.5 text-[10px] font-bold bg-[#171A17] text-white uppercase tracking-widest">
+            <span className="px-2 py-0.5 text-[10px] font-bold bg-[#123D2A] text-[#F4C430] uppercase tracking-widest">
               {t.typeWanted}
             </span>
           )}
@@ -83,11 +89,11 @@ export const ListingCard: React.FC<Props> = ({ listing }) => {
             e.stopPropagation();
             toggleFavorite(listing.id);
           }}
-          className={`absolute top-3 right-3 p-1.5 transition-transform active:scale-90 z-10`}
+          className={`absolute top-3 right-3 p-2 bg-white/90 dark:bg-black/60 backdrop-blur-sm border border-[#123D2A]/10 dark:border-white/10 transition-transform active:scale-90 z-10`}
           title={isFav ? t.favoriteRemoved : t.favoriteAdded}
           aria-label="Add to favorite"
         >
-          <Heart className={`w-5 h-5 ${isFav ? 'fill-[#123D2A] text-[#123D2A] dark:fill-[#F4C430] dark:text-[#F4C430]' : 'text-[#171A17] dark:text-white drop-shadow-md hover:scale-110'}`} />
+          <Heart className={`w-4 h-4 ${isFav ? 'fill-red-500 text-red-500' : 'text-[#123D2A] dark:text-white hover:text-red-500 transition-colors'}`} />
         </button>
 
         {/* DELIVERY ICON */}
@@ -117,12 +123,12 @@ export const ListingCard: React.FC<Props> = ({ listing }) => {
               {t.freePrice}
             </span>
           ) : isWanted ? (
-            <span className="text-sm font-bold text-[#171A17] dark:text-white">
+            <span className="text-sm font-bold text-[#123D2A] dark:text-[#F4C430]">
               {listing.maxBudget ? `bis ${formatPrice(listing.maxBudget)}` : 'VB'}
             </span>
           ) : (
             <div className="flex items-baseline gap-1">
-              <span className="text-sm font-bold text-[#171A17] dark:text-white">
+              <span className="text-sm font-bold text-[#123D2A] dark:text-[#F4C430]">
                 {formatPrice(listing.price)}
               </span>
               {listing.negotiable && (

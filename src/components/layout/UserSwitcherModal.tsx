@@ -20,7 +20,7 @@ export const UserSwitcherModal: React.FC = () => {
       >
         <div className="flex items-center justify-between pb-6 border-b border-gray-200 dark:border-white/10">
           <div>
-            <h3 className="text-2xl font-serif text-[#171A17] dark:text-white">
+            <h3 className="text-2xl font-serif font-bold text-[#171A17] dark:text-white">
               {t.switchUserDemo}
             </h3>
             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mt-2">

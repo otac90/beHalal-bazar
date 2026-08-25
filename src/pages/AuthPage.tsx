@@ -91,7 +91,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
     const saved = storage.addUser(newUser);
     storage.setCurrentUser(saved);
     setUser(saved);
-    showToast('Konto erfolgreich erstellt und verifiziert! Willkommen bei BE HALAL.', 'success');
+    showToast('Konto erfolgreich erstellt und verifiziert! Willkommen bei ONLINE BAZAR.', 'success');
     navigate('home');
   };
 
@@ -99,11 +99,11 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
     <div className="max-w-6xl mx-auto px-4 py-16 space-y-16">
       
       <div className="text-center space-y-6 max-w-2xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#171A17] text-white dark:bg-white dark:text-[#171A17] text-[10px] uppercase tracking-widest font-bold">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#123D2A] text-[#F5F1E8] dark:bg-[#123D2A] dark:text-[#F5F1E8] text-[10px] uppercase tracking-widest font-bold">
           <Lock className="w-3.5 h-3.5" />
           <span>Geschlossene vertrauensvolle Community</span>
         </div>
-        <h1 className="text-4xl sm:text-5xl font-serif text-[#171A17] dark:text-white">
+        <h1 className="text-4xl sm:text-5xl font-serif font-bold text-[#171A17] dark:text-white">
           {mode === 'login' ? 'Willkommen zurück' : 'Mitglied werden'}
         </h1>
         <p className="font-sans text-xs uppercase tracking-widest text-gray-500">
@@ -122,7 +122,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
               onClick={() => setMode('login')}
               className={`flex-1 py-4 text-[11px] font-bold uppercase tracking-widest transition-all border-b-2 ${
                 mode === 'login'
-                  ? 'border-[#123D2A] dark:border-white text-[#171A17] dark:text-white'
+                  ? 'border-[#F4C430] text-[#123D2A] dark:text-[#F4C430]'
                   : 'border-transparent text-gray-400 hover:text-[#171A17] dark:hover:text-white'
               }`}
             >
@@ -132,7 +132,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
               onClick={() => setMode('register')}
               className={`flex-1 py-4 text-[11px] font-bold uppercase tracking-widest transition-all border-b-2 ${
                 mode === 'register'
-                  ? 'border-[#123D2A] dark:border-white text-[#171A17] dark:text-white'
+                  ? 'border-[#F4C430] text-[#123D2A] dark:text-[#F4C430]'
                   : 'border-transparent text-gray-400 hover:text-[#171A17] dark:hover:text-white'
               }`}
             >
@@ -151,7 +151,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                     type="email"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-lg font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                    className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-lg font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
                   />
                 </div>
               </div>
@@ -165,14 +165,14 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                     type="password"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
-                    className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-lg font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                    className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-lg font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
                   />
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-4 bg-[#123D2A] dark:bg-white text-white dark:text-[#171A17] text-[11px] font-bold uppercase tracking-widest hover:bg-[#171A17] dark:hover:bg-gray-200 transition-colors"
+                className="w-full py-4 bg-[#F4C430] text-[#123D2A] text-[11px] font-bold uppercase tracking-widest hover:bg-[#E4B528] transition-colors"
               >
                 Anmelden
               </button>
@@ -189,7 +189,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                     required
                     value={regFirstName}
                     onChange={(e) => setRegFirstName(e.target.value)}
-                    className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                    className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
                   />
                 </div>
                 <div className="space-y-2">
@@ -201,7 +201,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                     required
                     value={regLastName}
                     onChange={(e) => setRegLastName(e.target.value)}
-                    className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                    className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
                   />
                 </div>
               </div>
@@ -216,7 +216,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                   placeholder="amina_wien"
                   value={regUsername}
                   onChange={(e) => setRegUsername(e.target.value)}
-                  className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors placeholder:font-sans placeholder:font-normal placeholder:uppercase placeholder:text-[10px]"
+                  className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors placeholder:font-sans placeholder:font-normal placeholder:uppercase placeholder:text-[10px]"
                 />
               </div>
 
@@ -229,7 +229,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                   required
                   value={regEmail}
                   onChange={(e) => setRegEmail(e.target.value)}
-                  className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                  className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
                 />
               </div>
 
@@ -243,7 +243,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                     required
                     value={regPostalCode}
                     onChange={(e) => setRegPostalCode(e.target.value)}
-                    className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                    className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
                   />
                 </div>
                 <div className="space-y-2">
@@ -255,7 +255,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                     required
                     value={regCity}
                     onChange={(e) => setRegCity(e.target.value)}
-                    className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                    className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
                   />
                 </div>
               </div>
@@ -269,7 +269,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                   required
                   value={regPassword}
                   onChange={(e) => setRegPassword(e.target.value)}
-                  className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                  className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
                 />
               </div>
 
@@ -293,7 +293,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
 
               <button
                 type="submit"
-                className="w-full py-4 bg-[#123D2A] dark:bg-[#F4C430] text-white dark:text-[#171A17] text-[11px] font-bold uppercase tracking-widest hover:bg-[#171A17] dark:hover:bg-white transition-colors"
+                className="w-full py-4 bg-[#F4C430] text-[#123D2A] text-[11px] font-bold uppercase tracking-widest hover:bg-[#E4B528] transition-colors"
               >
                 Konto erstellen & loslegen
               </button>
@@ -308,7 +308,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430] mb-2 block">
               Schnell-Test
             </span>
-            <h3 className="font-serif text-3xl text-[#171A17] dark:text-white mb-4">
+            <h3 className="font-serif font-bold text-3xl text-[#171A17] dark:text-white mb-4">
               Test-Profile
             </h3>
             <p className="font-sans text-xs uppercase tracking-widest text-gray-500 leading-relaxed">
@@ -331,7 +331,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                   />
                   <div>
                     <div className="flex items-center gap-3 mb-1">
-                      <span className="font-serif text-xl text-[#171A17] dark:text-white">
+                      <span className="font-serif font-bold text-xl text-[#171A17] dark:text-white">
                         {u.firstName} {u.lastName.charAt(0)}.
                       </span>
                       <span className="text-[9px] px-2 py-1 uppercase tracking-widest bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 font-bold">

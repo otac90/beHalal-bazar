@@ -87,7 +87,7 @@ export const AdminModerationPage: React.FC = () => {
           Zugang nur für Moderatoren & Admins
         </h2>
         <p className="text-xs text-gray-500">
-          Dieser Bereich ist dem BE HALAL Plattform-Team vorbehalten. Zu Testzwecken kannst du mit einem Klick zur Administrator-Rolle wechseln.
+          Dieser Bereich ist dem ONLINE BAZAR Plattform-Team vorbehalten. Zu Testzwecken kannst du mit einem Klick zur Administrator-Rolle wechseln.
         </p>
         <button
           onClick={handleMakeMeAdmin}

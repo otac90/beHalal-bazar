@@ -20,7 +20,7 @@ export const UserProfilePage: React.FC = () => {
   if (!targetUser) {
     return (
       <div className="max-w-md mx-auto py-32 px-4 text-center space-y-8 animate-fade-in">
-        <h2 className="font-serif text-3xl text-[#171A17] dark:text-white">
+        <h2 className="font-serif font-bold text-3xl text-[#171A17] dark:text-white">
           Mitglied nicht gefunden
         </h2>
         <p className="font-sans text-xs uppercase tracking-widest text-gray-500 leading-relaxed">
@@ -64,7 +64,7 @@ export const UserProfilePage: React.FC = () => {
           />
           <div className="space-y-4">
             <div>
-              <h1 className="text-4xl sm:text-5xl font-serif text-[#171A17] dark:text-white mb-2">
+              <h1 className="text-4xl sm:text-5xl font-serif font-bold text-[#171A17] dark:text-white mb-2">
                 {targetUser.firstName} {targetUser.lastName.charAt(0)}.
               </h1>
               <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-gray-500">
@@ -94,7 +94,7 @@ export const UserProfilePage: React.FC = () => {
         {/* TRUST STATS & ACTION */}
         <div className="flex flex-col items-start md:items-end gap-6 shrink-0">
           <div className="text-left md:text-right">
-            <div className="flex items-center justify-start md:justify-end gap-2 text-[#171A17] dark:text-white font-serif text-4xl">
+            <div className="flex items-center justify-start md:justify-end gap-2 text-[#171A17] dark:text-white font-serif font-bold text-4xl">
               <span>{targetUser.ratingAverage}</span>
               <Star className="w-6 h-6 fill-[#123D2A] dark:fill-[#F4C430] text-[#123D2A] dark:text-[#F4C430]" />
             </div>
@@ -122,7 +122,7 @@ export const UserProfilePage: React.FC = () => {
         {/* ACTIVE LISTINGS */}
         <div className="space-y-12">
           <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-serif text-[#171A17] dark:text-white">
+            <h2 className="text-3xl font-serif font-bold text-[#171A17] dark:text-white">
               Aktive Inserate
             </h2>
             <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
@@ -146,7 +146,7 @@ export const UserProfilePage: React.FC = () => {
         {/* REVIEWS SECTION */}
         <div className="space-y-12">
           <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-serif text-[#171A17] dark:text-white">
+            <h2 className="text-3xl font-serif font-bold text-[#171A17] dark:text-white">
               Community-Bewertungen
             </h2>
             <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
@@ -205,7 +205,7 @@ export const UserProfilePage: React.FC = () => {
                     )}
 
                     {rev.comment && (
-                      <p className="text-sm font-serif italic text-[#171A17]/80 dark:text-gray-300">
+                      <p className="text-sm font-serif font-bold italic text-[#171A17]/80 dark:text-gray-300">
                         "{rev.comment}"
                       </p>
                     )}
