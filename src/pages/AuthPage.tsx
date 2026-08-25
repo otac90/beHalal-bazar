@@ -1,23 +1,24 @@
 import React, { useState } from 'react';
 import { 
   Lock, Mail, ShieldCheck, UserCheck, ArrowRight, 
-  Sparkles, CheckCircle2, UserIcon, KeyRound, AlertTriangle, X
+  Sparkles, CheckCircle2, UserIcon, KeyRound, AlertTriangle, X, CircleCheck, CircleX
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { storage } from '../services/storage';
 
 interface Props {
-  initialMode?: 'login' | 'register';
+  initialMode?: 'login' | 'register' | 'reset';
 }
 
 export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
   const { setUser, navigate, showToast, t } = useApp();
 
-  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
+  const [mode, setMode] = useState<'login' | 'register' | 'reset'>(initialMode);
   
   // Login form state
   const [loginEmail, setLoginEmail] = useState('amina.k@example.at');
   const [loginPassword, setLoginPassword] = useState('password123');
+  const [resetEmail, setResetEmail] = useState('');
 
   // Register form state
   const [regFirstName, setRegFirstName] = useState('');
@@ -25,6 +26,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
   const [regUsername, setRegUsername] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
+  const [regPasswordRepeat, setRegPasswordRepeat] = useState('');
   const [regPostalCode, setRegPostalCode] = useState('1100');
   const [regCity, setRegCity] = useState('Wien');
   const [regAcceptRules, setRegAcceptRules] = useState(false);
@@ -32,6 +34,14 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
   const [showRulesModal, setShowRulesModal] = useState(false);
 
   const sampleUsers = storage.getUsers();
+  const passwordChecks = [
+    { label: 'Mindestens 8 Zeichen', isValid: regPassword.length >= 8 },
+    { label: 'Mindestens 1 Großbuchstabe', isValid: /[A-ZÄÖÜ]/.test(regPassword) },
+    { label: 'Mindestens 1 Zahl', isValid: /\d/.test(regPassword) },
+    { label: 'Mindestens 1 Sonderzeichen', isValid: /[^A-Za-zÄÖÜäöüß0-9]/.test(regPassword) },
+  ];
+  const isPasswordStrong = passwordChecks.every((check) => check.isValid);
+  const passwordsMatch = regPassword.length > 0 && regPassword === regPasswordRepeat;
 
   const handleQuickLogin = (userId: string) => {
     const target = sampleUsers.find((u) => u.id === userId);
@@ -56,10 +66,28 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
     }
   };
 
+  const handleResetSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail.trim()) {
+      showToast('Bitte gib deine E-Mail-Adresse ein.', 'warning');
+      return;
+    }
+    showToast('Wenn die E-Mail-Adresse registriert ist, erhältst du eine Nachricht zum Zurücksetzen deines Passworts.', 'success');
+    setMode('login');
+  };
+
   const handleRegisterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!regFirstName || !regLastName || !regEmail || !regUsername || !regPassword) {
+    if (!regFirstName || !regLastName || !regEmail || !regUsername || !regPassword || !regPasswordRepeat) {
       showToast('Bitte fülle alle Pflichtfelder aus.', 'warning');
+      return;
+    }
+    if (!isPasswordStrong) {
+      showToast('Bitte wähle ein Passwort, das alle Kriterien erfüllt.', 'warning');
+      return;
+    }
+    if (!passwordsMatch) {
+      showToast('Die beiden Passwörter müssen übereinstimmen.', 'warning');
       return;
     }
     if (!hasReadRules) {
@@ -111,7 +139,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
           <span>Geschlossene vertrauensvolle Community</span>
         </div>
         <h1 className="text-4xl sm:text-5xl font-serif font-bold text-[#171A17] dark:text-white">
-          {mode === 'login' ? 'Willkommen zurück' : 'Mitglied werden'}
+          {mode === 'login' ? 'Willkommen zurück' : mode === 'reset' ? 'Passwort zurücksetzen' : 'Mitglied werden'}
         </h1>
         <p className="font-sans text-xs uppercase tracking-widest text-gray-500">
           Kaufen, Verkaufen und Verschenken unter verifizierten Mitgliedern.
@@ -177,12 +205,72 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                 </div>
               </div>
 
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetEmail(loginEmail);
+                    setMode('reset');
+                  }}
+                  className="text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430] hover:opacity-70 transition-opacity"
+                >
+                  Passwort vergessen?
+                </button>
+              </div>
+
               <button
                 type="submit"
                 className="w-full py-4 bg-[#F4C430] text-[#123D2A] text-[11px] font-bold uppercase tracking-widest hover:bg-[#E4B528] transition-colors"
               >
                 Anmelden
               </button>
+            </form>
+          ) : mode === 'reset' ? (
+            <form onSubmit={handleResetSubmit} className="space-y-8 animate-fade-in">
+              <div className="border border-[#123D2A]/15 dark:border-white/10 bg-white/70 dark:bg-white/5 px-5 py-5">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FAF2CC] text-[#123D2A] dark:bg-[#F4C430] dark:text-[#123D2A] shrink-0">
+                    <Mail className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">
+                      Reset-Link anfordern
+                    </h2>
+                    <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                      Gib deine E-Mail-Adresse ein. Du erhältst anschließend eine Nachricht mit einem Link, um dein Passwort zurückzusetzen.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  E-Mail-Adresse
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-lg font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3">
+                <button
+                  type="submit"
+                  className="py-4 bg-[#F4C430] text-[#123D2A] text-[11px] font-bold uppercase tracking-widest hover:bg-[#E4B528] transition-colors"
+                >
+                  Nachricht senden
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode('login')}
+                  className="px-5 py-4 border border-[#123D2A]/20 text-[#123D2A] dark:border-white/20 dark:text-white text-[11px] font-bold uppercase tracking-widest hover:bg-[#123D2A]/5 transition-colors"
+                >
+                  Zurück
+                </button>
+              </div>
             </form>
           ) : (
             <form onSubmit={handleRegisterSubmit} className="space-y-8 animate-fade-in">
@@ -278,6 +366,49 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                   onChange={(e) => setRegPassword(e.target.value)}
                   className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
                 />
+              </div>
+
+              <div className="space-y-4 border border-[#123D2A]/15 dark:border-white/10 bg-white/70 dark:bg-white/5 px-5 py-5">
+                <div>
+                  <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">
+                    Sicheres Passwort
+                  </h2>
+                  <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                    Dein Passwort muss alle Kriterien erfüllen.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {passwordChecks.map((check) => (
+                    <div
+                      key={check.label}
+                      className={`flex items-center gap-2 text-xs font-bold ${
+                        check.isValid ? 'text-[#123D2A] dark:text-[#F4C430]' : 'text-gray-500 dark:text-gray-400'
+                      }`}
+                    >
+                      {check.isValid ? <CircleCheck className="w-4 h-4" /> : <CircleX className="w-4 h-4" />}
+                      <span>{check.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  Passwort wiederholen *
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={regPasswordRepeat}
+                  onChange={(e) => setRegPasswordRepeat(e.target.value)}
+                  aria-invalid={regPasswordRepeat.length > 0 && !passwordsMatch}
+                  className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
+                />
+                {regPasswordRepeat.length > 0 && (
+                  <p className={`text-xs font-bold ${passwordsMatch ? 'text-[#123D2A] dark:text-[#F4C430]' : 'text-red-600 dark:text-red-400'}`}>
+                    {passwordsMatch ? 'Die Passwörter stimmen überein.' : 'Die Passwörter stimmen noch nicht überein.'}
+                  </p>
+                )}
               </div>
 
               <div className="pt-4 space-y-4">
