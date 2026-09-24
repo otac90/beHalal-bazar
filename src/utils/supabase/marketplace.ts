@@ -20,7 +20,7 @@ export interface SupabaseListingDraft {
   country: string;
   postalCode: string;
   city: string;
-  status: 'ACTIVE';
+  status: 'ACTIVE' | 'PENDING';
   views: number;
   favoritesCount: number;
   publishedAt?: string;
@@ -83,6 +83,7 @@ export async function createListingWithImages(
       listing_fee: draft.listingFee ?? 0,
       listing_duration_days: draft.listingDurationDays ?? null,
       details: draft.details ?? {},
+      payment_status: draft.listingFee && draft.listingFee > 0 ? 'PENDING' : 'NOT_REQUIRED',
     })
     .select('id')
     .single();

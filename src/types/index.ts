@@ -160,19 +160,6 @@ export interface SavedSearch {
   matchCount?: number;
 }
 
-export interface Review {
-  id: string;
-  transactionId?: string;
-  reviewerId: string;
-  reviewerName: string;
-  reviewerAvatar?: string;
-  reviewedUserId: string;
-  rating: number; // 1-5
-  tags: string[]; // e.g. 'friendly', 'reliable', 'quick_reply', 'as_described'
-  comment?: string;
-  createdAt: string;
-}
-
 export type ReportReason =
   | 'FORBIDDEN_PRODUCT'
   | 'SCAM_FRAUD'

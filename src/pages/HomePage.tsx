@@ -149,17 +149,12 @@ export const HomePage: React.FC = () => {
             <div className="md:col-span-8 lg:col-span-9 max-w-4xl">
               <div className="w-12 h-1 bg-[#F4C430] mb-6"></div>
               <h1 className="text-[3rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem] leading-[0.95] font-serif font-bold text-[#F5F1E8] tracking-tight">
-                {t.heroSearchTitle.split('\n').map((line) => (
-                  <span key={line} className="block">
+                {t.heroSearchTitle.split('\n').map((line, index) => (
+                  <span key={line} className={`block ${index > 0 ? 'text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4.25rem]' : ''}`}>
                     {line}
                   </span>
                 ))}
               </h1>
-            </div>
-            <div className="md:col-span-4 lg:col-span-3 pb-2 md:pb-4">
-              <p className="text-base md:text-lg text-[#F5F1E8]/80 font-medium">
-                {t.heroSearchSubtitle}
-              </p>
             </div>
           </div>
 

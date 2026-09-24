@@ -2,12 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Send, ShieldCheck, CheckCheck, Clock, ImageIcon, 
   MapPin, AlertTriangle, ArrowLeft, MoreVertical, Check, 
-  Sparkles, Star 
+  Sparkles
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { storage } from '../../services/storage';
 import { Conversation, Message } from '../../types';
-import { ReviewDialog } from '../marketplace/ReviewDialog';
 
 export const MessengerView: React.FC = () => {
   const { user, routeParams, navigate, showToast, t } = useApp();
@@ -18,7 +17,6 @@ export const MessengerView: React.FC = () => {
   );
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
-  const [showReviewDialog, setShowReviewDialog] = useState(false);
 
   const userId = user?.id;
 
@@ -134,8 +132,6 @@ export const MessengerView: React.FC = () => {
 
   const isSeller = activeConversation?.sellerId === user.id;
   const otherParticipantName = isSeller ? activeConversation?.buyerName : activeConversation?.sellerName;
-  const otherParticipantAvatar = isSeller ? activeConversation?.buyerAvatar : activeConversation?.sellerAvatar;
-  const otherParticipantId = isSeller ? activeConversation?.buyerId : activeConversation?.sellerId;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-4 md:py-8 h-[calc(100dvh-220px)] min-h-0 md:h-[calc(100dvh-88px)] md:min-h-[620px] flex">
@@ -283,12 +279,6 @@ export const MessengerView: React.FC = () => {
                 <ShieldCheck className="w-4 h-4 text-[#123D2A] dark:text-[#F4C430] shrink-0" />
                 <span>{t.safetyBoxTips}</span>
               </div>
-              <button
-                onClick={() => setShowReviewDialog(true)}
-                className="underline hover:text-[#171A17] dark:hover:text-white transition-colors"
-              >
-                Bewerten
-              </button>
             </div>
 
             {/* MESSAGES THREAD */}
@@ -354,16 +344,6 @@ export const MessengerView: React.FC = () => {
         )}
 
       </div>
-
-      {/* REVIEW DIALOG */}
-      {otherParticipantId && otherParticipantName && (
-        <ReviewDialog
-          isOpen={showReviewDialog}
-          onClose={() => setShowReviewDialog(false)}
-          targetUserId={otherParticipantId}
-          targetUserName={otherParticipantName}
-        />
-      )}
 
     </div>
   );

@@ -1,10 +1,10 @@
 import { 
   User, Listing, Conversation, Message, SavedSearch, 
-  Review, Report, PlatformConfig, NotificationItem, Language, ListingStatus 
+  Report, PlatformConfig, NotificationItem, Language, ListingStatus
 } from '../types';
 import { 
   INITIAL_USERS, INITIAL_LISTINGS, INITIAL_CONVERSATIONS, 
-  INITIAL_REVIEWS, INITIAL_SAVED_SEARCHES, INITIAL_REPORTS, INITIAL_CONFIG 
+  INITIAL_SAVED_SEARCHES, INITIAL_REPORTS, INITIAL_CONFIG
 } from './mockData';
 
 const STORAGE_KEYS = {
@@ -15,7 +15,6 @@ const STORAGE_KEYS = {
   MESSAGES: 'behalal_messages_v1',
   FAVORITES: 'behalal_favorites_v1',
   SAVED_SEARCHES: 'behalal_saved_searches_v1',
-  REVIEWS: 'behalal_reviews_v1',
   REPORTS: 'behalal_reports_v1',
   NOTIFICATIONS: 'behalal_notifications_v1',
   CONFIG: 'behalal_config_v1',
@@ -462,53 +461,6 @@ class StorageService {
     localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(convs));
     this.notify();
     return newConv;
-  }
-
-  // --- Reviews ---
-  public getReviewsForUser(userId: string): Review[] {
-    const raw = localStorage.getItem(STORAGE_KEYS.REVIEWS);
-    let reviews: Review[] = INITIAL_REVIEWS;
-    if (raw) {
-      try {
-        reviews = JSON.parse(raw);
-      } catch {
-        reviews = INITIAL_REVIEWS;
-      }
-    } else {
-      localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(INITIAL_REVIEWS));
-    }
-    return reviews.filter((r) => r.reviewedUserId === userId);
-  }
-
-  public addReview(review: Omit<Review, 'id' | 'createdAt'>): Review {
-    const raw = localStorage.getItem(STORAGE_KEYS.REVIEWS);
-    let reviews: Review[] = [];
-    try {
-      reviews = raw ? JSON.parse(raw) : INITIAL_REVIEWS;
-    } catch {
-      reviews = INITIAL_REVIEWS;
-    }
-    const newReview: Review = {
-      ...review,
-      id: `rev-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    };
-    reviews.unshift(newReview);
-    localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(reviews));
-
-    // Update user average rating
-    const userReviews = reviews.filter((r) => r.reviewedUserId === review.reviewedUserId);
-    const avg = userReviews.reduce((sum, r) => sum + r.rating, 0) / userReviews.length;
-    const users = this.getUsers();
-    const targetUser = users.find((u) => u.id === review.reviewedUserId);
-    if (targetUser) {
-      targetUser.ratingAverage = Number(avg.toFixed(1));
-      targetUser.ratingCount = userReviews.length;
-      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-    }
-
-    this.notify();
-    return newReview;
   }
 
   // --- Reports & Moderation ---

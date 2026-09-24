@@ -84,7 +84,7 @@ export const UserSwitcherModal: React.FC = () => {
                       )}
                     </div>
                     <p className="text-[10px] font-medium uppercase tracking-widest text-gray-500">
-                      @{u.username} • {u.city} • ★ {u.ratingAverage} ({u.ratingCount})
+                      @{u.username} • {u.city}
                     </p>
                   </div>
                 </div>

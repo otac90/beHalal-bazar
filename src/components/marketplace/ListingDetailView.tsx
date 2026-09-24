@@ -3,14 +3,13 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Heart, Share2, X, ShieldAlert, MapPin, Truck, Package, 
   ChevronLeft, ChevronRight, MessageSquare, 
-  ArrowLeft, Eye 
+  ArrowLeft, Eye, Clock3
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { storage } from '../../services/storage';
 import { SellerCard } from './SellerCard';
 import { SafetyBox } from './SafetyBox';
 import { ReportDialog } from './ReportDialog';
-import { ReviewDialog } from './ReviewDialog';
 import { Listing } from '../../types';
 
 export const ListingDetailView: React.FC = () => {
@@ -31,7 +30,6 @@ export const ListingDetailView: React.FC = () => {
     showToast('Status aktualisiert auf ' + newStatus, 'success');
   };
   const [showReportDialog, setShowReportDialog] = useState(false);
-  const [showReviewDialog, setShowReviewDialog] = useState(false);
 
   
   const createdAtDate = new Date(listing?.createdAt || Date.now());
@@ -99,6 +97,9 @@ export const ListingDetailView: React.FC = () => {
   const isOwner = user?.id === listing.userId;
   const isFree = listing.type === 'FREE' || listing.isFree;
   const isWanted = listing.type === 'WANTED';
+  const remainingDays = listing.expiresAt
+    ? Math.max(0, Math.ceil((new Date(listing.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('de-AT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(price);
@@ -284,6 +285,14 @@ export const ListingDetailView: React.FC = () => {
                 <span className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Zuletzt geändert</span>
                 <span className="text-lg font-serif font-bold text-[#123D2A] dark:text-white">{formatDate(updatedAtDate)}</span>
               </div>
+              {remainingDays !== null && (
+                <div>
+                  <span className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Online verbleibt</span>
+                  <span className="flex items-center gap-2 text-lg font-serif font-bold text-[#123D2A] dark:text-white">
+                    <Clock3 className="h-4 w-4" /> {remainingDays} {remainingDays === 1 ? 'Tag' : 'Tage'}
+                  </span>
+                </div>
+              )}
 </div>
 
             {/* COMMUNITY DISCLAIMER (Plain text) */}
@@ -398,14 +407,6 @@ export const ListingDetailView: React.FC = () => {
                   <ShieldAlert className="w-4 h-4" />
                   {t.reportListing}
                 </button>
-                {!isOwner && listing.seller && (
-                  <button
-                    onClick={() => setShowReviewDialog(true)}
-                    className="hover:text-[#123D2A] dark:hover:text-[#F4C430] uppercase tracking-widest"
-                  >
-                    Bewerten
-                  </button>
-                )}
               </div>
             </div>
 
@@ -487,15 +488,6 @@ export const ListingDetailView: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {listing.seller && (
-        <ReviewDialog
-          isOpen={showReviewDialog}
-          onClose={() => setShowReviewDialog(false)}
-          targetUserId={listing.seller.id}
-          targetUserName={listing.seller.firstName}
-        />
-      )}
 
     </div>
   );

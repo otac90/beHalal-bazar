@@ -15,8 +15,6 @@ create table if not exists public.profiles (
   language text not null default 'de' check (language in ('de', 'en')),
   role text not null default 'MEMBER' check (role in ('USER', 'MEMBER', 'MODERATOR', 'ADMIN')),
   status text not null default 'ACTIVE' check (status in ('ACTIVE', 'WARNED', 'TEMPORARILY_SUSPENDED', 'BANNED')),
-  rating_average numeric(3, 2) not null default 0 check (rating_average between 0 and 5),
-  rating_count integer not null default 0 check (rating_count >= 0),
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );

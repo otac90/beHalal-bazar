@@ -3,7 +3,7 @@ import {
   Plus, Upload, Trash2, Check, ArrowRight, ArrowLeft, 
   Sparkles, AlertTriangle, ShieldCheck, Eye, ImageIcon, 
   DollarSign, MapPin, Truck, Package, BriefcaseBusiness, Ship, CarFront, Building2, Gift,
-  Bike, Wrench, House, Map, Palmtree, Warehouse, KeyRound, Tag, Sailboat, Anchor, Waves, type LucideIcon
+  Bike, Wrench, House, Map, Palmtree, Warehouse, KeyRound, Tag, Sailboat, Anchor, Waves, CreditCard, LockKeyhole, CheckCircle2, type LucideIcon
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { 
@@ -13,6 +13,7 @@ import {
 import { storage } from '../../services/storage';
 import { checkListingModeration } from '../../services/moderation';
 import { createListingWithImages } from '../../utils/supabase/marketplace';
+import { createListingCheckout } from '../../utils/stripe';
 import {
   AUTO_MOTOR_CATEGORIES,
   BOAT_CATEGORIES,
@@ -362,6 +363,8 @@ export const ListingWizard: React.FC = () => {
     const parsedPrice = isFree ? 0 : Number(price) || 0;
     const parsedBudget = type === 'WANTED' ? Number(maxBudget) || parsedPrice : undefined;
 
+    const requiresPayment = listingFee > 0;
+    const now = new Date();
     const draft: Listing = {
       id: '',
       userId: user.id,
@@ -380,14 +383,14 @@ export const ListingWizard: React.FC = () => {
       country,
       postalCode,
       city,
-      status: 'ACTIVE',
+      status: requiresPayment ? 'PENDING' : 'ACTIVE',
       views: 1,
       favoritesCount: 0,
       images,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      publishedAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + listingDurationDays * 24 * 60 * 60 * 1000).toISOString(),
+      publishedAt: requiresPayment ? undefined : now.toISOString(),
+      expiresAt: requiresPayment ? undefined : new Date(now.getTime() + listingDurationDays * 24 * 60 * 60 * 1000).toISOString(),
       listingFee,
       listingDurationDays,
       details: {
@@ -411,7 +414,7 @@ export const ListingWizard: React.FC = () => {
 
     try {
       const persisted = await createListingWithImages(
-        { ...draft, status: 'ACTIVE' as const },
+        { ...draft, status: draft.status as 'ACTIVE' | 'PENDING' },
         images,
         Object.entries(pendingImageFiles).map(([id, file]) => ({ id, file: file as File })),
       );
@@ -422,6 +425,13 @@ export const ListingWizard: React.FC = () => {
       };
 
       storage.saveListing(newListing);
+
+      if (requiresPayment) {
+        const checkoutUrl = await createListingCheckout(newListing.id);
+        window.location.assign(checkoutUrl);
+        return;
+      }
+
       showToast(t.listingCreatedSuccess, 'success');
       navigate('listing-detail', { id: newListing.id });
     } catch (error) {
@@ -1171,7 +1181,7 @@ export const ListingWizard: React.FC = () => {
                 Vorschau deines Inserats
               </h2>
               <p className="font-sans text-[10px] uppercase tracking-widest text-gray-500 mt-2">
-                So wird dein Inserat für andere verifizierte Mitglieder der ONLINE BAZAR Community angezeigt.
+                So wird dein Inserat nach erfolgreicher Prüfung und Zahlung im ONLINE BAZAR angezeigt.
               </p>
             </div>
 
@@ -1216,6 +1226,41 @@ export const ListingWizard: React.FC = () => {
                 Mit dem Veröffentlichen bestätigst du, dass dein Artikel den redaktionellen Community-Regeln der ONLINE BAZAR Plattform entspricht.
               </span>
             </div>
+
+            {listingFee > 0 ? (
+              <div className="border border-[#F4C430] bg-[#FFFDF2] p-6 dark:bg-[#1B2117]">
+                <div className="flex items-start justify-between gap-5">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-[#123D2A] text-[#F4C430]">
+                      <CreditCard className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">Zahlung vor Veröffentlichung</p>
+                      <h3 className="mt-1 font-serif text-2xl font-bold text-[#171A17] dark:text-white">Inserat sicher bezahlen</h3>
+                      <p className="mt-2 max-w-xl text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                        Nach erfolgreicher Zahlung wird dein Inserat automatisch veröffentlicht und bleibt {listingDurationDays} Tage online.
+                      </p>
+                    </div>
+                  </div>
+                  <LockKeyhole className="h-5 w-5 shrink-0 text-[#123D2A] dark:text-[#F4C430]" />
+                </div>
+
+                <div className="mt-6 grid grid-cols-1 gap-3 border-t border-[#F4C430]/40 pt-5 sm:grid-cols-3">
+                  <div className="flex items-center gap-3 text-xs font-bold text-[#123D2A] dark:text-white"><CheckCircle2 className="h-4 w-4 text-[#123D2A] dark:text-[#F4C430]" />Sichere Stripe-Zahlung</div>
+                  <div className="flex items-center gap-3 text-xs font-bold text-[#123D2A] dark:text-white"><CheckCircle2 className="h-4 w-4 text-[#123D2A] dark:text-[#F4C430]" />Visa · Mastercard</div>
+                  <div className="flex items-center gap-3 text-xs font-bold text-[#123D2A] dark:text-white"><CheckCircle2 className="h-4 w-4 text-[#123D2A] dark:text-[#F4C430]" />Apple Pay · Google Pay · Klarna</div>
+                </div>
+
+                <div className="mt-6 flex items-end justify-between border-t border-[#F4C430]/40 pt-5">
+                  <span className="text-sm font-bold text-gray-500">Anzeigenpreis · {listingDurationDays} Tage</span>
+                  <span className="font-serif text-3xl font-bold text-[#123D2A] dark:text-[#F4C430]">€ {listingFee.toFixed(2)}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="border border-[#123D2A]/20 bg-[#EAF2E7] p-5 text-sm font-bold text-[#123D2A] dark:border-white/10 dark:bg-white/5 dark:text-white">
+                Dieses Inserat ist kostenlos und wird direkt veröffentlicht.
+              </div>
+            )}
           </div>
         )}
 
@@ -1249,7 +1294,7 @@ export const ListingWizard: React.FC = () => {
               className="px-8 py-4 bg-[#123D2A] dark:bg-[#F4C430] text-white dark:text-[#171A17] text-[11px] font-bold uppercase tracking-widest hover:bg-[#171A17] dark:hover:bg-white flex items-center gap-2 transition-colors disabled:opacity-50"
             >
               <Check className="w-4 h-4" />
-              <span>{isSubmitting ? 'Wird veröffentlicht...' : t.publishListing}</span>
+              <span>{isSubmitting ? (listingFee > 0 ? 'Zahlungsseite wird geöffnet...' : 'Wird veröffentlicht...') : listingFee > 0 ? 'Sicher bezahlen & fortfahren' : t.publishListing}</span>
             </button>
           )}
         </div>

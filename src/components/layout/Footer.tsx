@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Heart, Globe, Lock, ArrowUp } from 'lucide-react';
+import { ShieldCheck, Heart, Globe, ArrowUp } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 export const Footer: React.FC = () => {
@@ -30,10 +30,6 @@ export const Footer: React.FC = () => {
             <p className="text-sm font-medium text-[#F5F1E8]/60 leading-relaxed">
               {t.footerAboutText}
             </p>
-            <div className="inline-flex items-center gap-3 px-4 py-2 border border-[#F5F1E8]/20 text-[9px] font-bold uppercase tracking-widest text-[#F5F1E8]">
-              <Lock className="w-3.5 h-3.5" />
-              <span>{t.closedCommunityBadge}</span>
-            </div>
           </div>
 
           {/* COMMUNITY & WISSEN */}

@@ -312,14 +312,6 @@ export const StaticPages: React.FC<Props> = ({ pageType }) => {
             <div className="space-y-8">
               <div className="space-y-2">
                 <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#171A17] dark:text-white">
-                  {t.contactSupportTitle}
-                </h3>
-                <p className="font-serif font-bold text-2xl text-[#171A17] dark:text-white">
-                  support@behalal-bazar.at
-                </p>
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#171A17] dark:text-white">
                   {t.contactResponseTimeTitle}
                 </h3>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400" dangerouslySetInnerHTML={{ __html: t.contactResponseTime }} />

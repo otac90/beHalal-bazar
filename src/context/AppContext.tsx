@@ -22,6 +22,8 @@ export type AppRoute =
   | 'register'
   | 'forgot-password'
   | 'verify-email'
+  | 'payment-success'
+  | 'payment-cancel'
   | 'about'
   | 'rules'
   | 'safety'
@@ -79,7 +81,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [user, setUser] = useState<User | null>(storage.getCurrentUser());
   const [language, setLanguageState] = useState<Language>(storage.getLanguage());
   const [theme, setThemeState] = useState<'light' | 'dark'>(storage.getTheme());
-  const [currentRoute, setCurrentRoute] = useState<AppRoute>('home');
+  const [currentRoute, setCurrentRoute] = useState<AppRoute>(() => {
+    const stripeState = new URLSearchParams(window.location.search).get('stripe');
+    return stripeState === 'success' ? 'payment-success' : stripeState === 'cancel' ? 'payment-cancel' : 'home';
+  });
   const [routeParams, setRouteParams] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategoryState] = useState<string | null>(null);
@@ -173,7 +178,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Check closed community access barrier:
     // If not logged in and trying to access private pages, prompt login
     const publicRoutes: AppRoute[] = [
-      'home', 'login', 'register', 'forgot-password', 'verify-email',
+      'home', 'login', 'register', 'forgot-password', 'verify-email', 'payment-success', 'payment-cancel',
       'about', 'rules', 'safety', 'faq', 'contact', 'impressum', 'datenschutz', 'agb'
     ];
 

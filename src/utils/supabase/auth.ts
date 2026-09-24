@@ -16,8 +16,6 @@ export interface Profile {
   language: User['language'];
   role: User['role'];
   status: User['status'];
-  rating_average: number;
-  rating_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -55,9 +53,9 @@ export async function getProfileForUser(authUser: SupabaseUser): Promise<User> {
     emailVerified: Boolean(authUser.email_confirmed_at),
     createdAt: profile.created_at,
     updatedAt: profile.updated_at,
-    ratingAverage: Number(profile.rating_average ?? 0),
-    ratingCount: profile.rating_count ?? 0,
-    responseRate: 'Noch keine Bewertungen',
+    ratingAverage: 0,
+    ratingCount: 0,
+    responseRate: 'Noch keine Angaben',
     activeListingsCount: 0,
     blockedUserIds: [],
   };

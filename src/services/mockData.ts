@@ -1,4 +1,4 @@
-import { User, Listing, Conversation, SavedSearch, Review, Report, PlatformConfig } from '../types';
+import { User, Listing, Conversation, SavedSearch, Report, PlatformConfig } from '../types';
 
 export const INITIAL_USERS: User[] = [
   {
@@ -478,31 +478,6 @@ export const INITIAL_CONVERSATIONS: Conversation[] = [
     lastMessage: 'Salam Fatima! Ist das Handy noch verfügbar und wäre versicherter Versand möglich?',
     lastMessageAt: '2026-08-21T13:20:00Z',
     unreadCountForUser: 1,
-  },
-];
-
-export const INITIAL_REVIEWS: Review[] = [
-  {
-    id: 'rev-1',
-    reviewerId: 'user-bilal',
-    reviewerName: 'Bilal M.',
-    reviewerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-    reviewedUserId: 'user-amina',
-    rating: 5,
-    tags: ['Sehr freundlich', 'Sehr zuverlässig', 'Artikel genau wie beschrieben'],
-    comment: 'Sehr herzliche und unkomplizierte Übergabe. Das Fahrrad war genau im beschriebenen Top-Zustand!',
-    createdAt: '2026-07-15T16:00:00Z',
-  },
-  {
-    id: 'rev-2',
-    reviewerId: 'user-fatima',
-    reviewerName: 'Fatima S.',
-    reviewerAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&auto=format&fit=crop&q=80',
-    reviewedUserId: 'user-amina',
-    rating: 5,
-    tags: ['Schnelle Antwort', 'Unkomplizierte Abwicklung'],
-    comment: 'Alles bestens, gerne wieder.',
-    createdAt: '2026-06-20T10:30:00Z',
   },
 ];
 

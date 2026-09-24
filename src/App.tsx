@@ -22,6 +22,7 @@ import { UserProfilePage } from './pages/UserProfilePage';
 import { AdminModerationPage } from './pages/AdminModerationPage';
 import { AuthPage } from './pages/AuthPage';
 import { StaticPages } from './pages/StaticPages';
+import { PaymentResultPage } from './pages/PaymentResultPage';
 
 const MainContent: React.FC = () => {
   const { currentRoute } = useApp();
@@ -61,6 +62,12 @@ const MainContent: React.FC = () => {
 
       case 'forgot-password':
         return <AuthPage initialMode="reset" />;
+
+      case 'payment-success':
+        return <PaymentResultPage success />;
+
+      case 'payment-cancel':
+        return <PaymentResultPage success={false} />;
       
       case 'about':
       case 'rules':

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Star, Clock, User as UserIcon, ArrowRight } from 'lucide-react';
+import { ShieldCheck, ArrowRight } from 'lucide-react';
 import { User, Listing } from '../../types';
 import { useApp } from '../../context/AppContext';
 
@@ -50,16 +50,6 @@ export const SellerCard: React.FC<Props> = ({ seller }) => {
       </div>
 
       <div className="flex items-center gap-8 pt-4 border-t border-[#F5F1E8]/20">
-        <div>
-          <div className="flex items-center gap-1 font-serif font-bold text-lg text-[#F5F1E8] mb-0.5">
-            <span>{seller.ratingAverage}</span>
-            <Star className="w-4 h-4 fill-current text-[#F4C430]" />
-          </div>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[#F5F1E8]/70">
-            {seller.ratingCount} Bewertungen
-          </span>
-        </div>
-
         <div>
           <div className="font-serif font-bold text-lg text-[#F5F1E8] mb-0.5">
             {seller.memberSince.replace('Neu in ', '')}

@@ -1,11 +1,13 @@
--- Marketplace schema for listings, listing images, and user reviews.
+-- Marketplace schema for listings and listing images.
 -- Run after supabase/profiles.sql has been applied.
 
 create extension if not exists pgcrypto;
 
+drop table if exists public.reviews cascade;
+drop function if exists public.refresh_profile_rating();
 alter table if exists public.profiles
-  add column if not exists rating_average numeric(3, 2) not null default 0,
-  add column if not exists rating_count integer not null default 0;
+  drop column if exists rating_average,
+  drop column if exists rating_count;
 
 create table if not exists public.listings (
   id uuid primary key default gen_random_uuid(),
@@ -45,11 +47,57 @@ create table if not exists public.listings (
 alter table public.listings
   add column if not exists listing_fee numeric(12, 2) not null default 0 check (listing_fee >= 0),
   add column if not exists listing_duration_days integer check (listing_duration_days is null or listing_duration_days > 0),
-  add column if not exists details jsonb not null default '{}'::jsonb;
+  add column if not exists details jsonb not null default '{}'::jsonb,
+  add column if not exists payment_status text not null default 'NOT_REQUIRED' check (payment_status in ('NOT_REQUIRED', 'PENDING', 'PAID', 'FAILED', 'CANCELED')),
+  add column if not exists stripe_checkout_session_id text,
+  add column if not exists stripe_payment_intent_id text,
+  add column if not exists paid_at timestamptz;
+
+create unique index if not exists listings_stripe_checkout_session_idx
+  on public.listings(stripe_checkout_session_id)
+  where stripe_checkout_session_id is not null;
 
 create index if not exists listings_user_id_idx on public.listings(user_id);
 create index if not exists listings_status_created_at_idx on public.listings(status, created_at desc);
 create index if not exists listings_category_idx on public.listings(category_id, subcategory_id);
+
+create or replace function public.protect_listing_payment_state()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  -- Browser-authenticated users may create a pending paid listing, but only
+  -- the server-side Stripe webhook may mark it paid and publish it.
+  if (select auth.uid()) is not null then
+    if tg_op = 'INSERT' and new.listing_fee > 0 and (new.status <> 'PENDING' or new.payment_status <> 'PENDING') then
+      raise exception 'Paid listings must remain pending until Stripe confirms payment';
+    end if;
+
+    if tg_op = 'UPDATE' and (
+      new.payment_status is distinct from old.payment_status
+      or new.stripe_checkout_session_id is distinct from old.stripe_checkout_session_id
+      or new.stripe_payment_intent_id is distinct from old.stripe_payment_intent_id
+      or new.paid_at is distinct from old.paid_at
+    ) then
+      raise exception 'Payment state is managed by the server';
+    end if;
+
+    if old.payment_status = 'PENDING' and new.status = 'ACTIVE' then
+      raise exception 'Paid listings can only be published after Stripe confirmation';
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists protect_listing_payment_state on public.listings;
+create trigger protect_listing_payment_state
+  before insert or update on public.listings
+  for each row execute procedure public.protect_listing_payment_state();
+
+revoke all on function public.protect_listing_payment_state() from public;
 
 create table if not exists public.listing_images (
   id uuid primary key default gen_random_uuid(),
@@ -63,21 +111,6 @@ create table if not exists public.listing_images (
 create unique index if not exists listing_images_one_cover_idx
   on public.listing_images(listing_id) where is_cover = true;
 create index if not exists listing_images_listing_id_idx on public.listing_images(listing_id, sort_order);
-
-create table if not exists public.reviews (
-  id uuid primary key default gen_random_uuid(),
-  reviewer_id uuid not null references public.profiles(id) on delete cascade,
-  reviewed_user_id uuid not null references public.profiles(id) on delete cascade,
-  rating smallint not null check (rating between 1 and 5),
-  comment text check (comment is null or char_length(comment) <= 2000),
-  tags text[] not null default '{}',
-  created_at timestamptz not null default timezone('utc', now()),
-  updated_at timestamptz not null default timezone('utc', now()),
-  constraint reviews_not_self check (reviewer_id <> reviewed_user_id),
-  constraint reviews_one_per_pair unique (reviewer_id, reviewed_user_id)
-);
-
-create index if not exists reviews_reviewed_user_idx on public.reviews(reviewed_user_id, created_at desc);
 
 create or replace function public.set_marketplace_updated_at()
 returns trigger
@@ -95,51 +128,8 @@ create trigger set_listings_updated_at
   before update on public.listings
   for each row execute procedure public.set_marketplace_updated_at();
 
-drop trigger if exists set_reviews_updated_at on public.reviews;
-create trigger set_reviews_updated_at
-  before update on public.reviews
-  for each row execute procedure public.set_marketplace_updated_at();
-
-create or replace function public.refresh_profile_rating()
-returns trigger
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  target_id uuid := coalesce(new.reviewed_user_id, old.reviewed_user_id);
-begin
-  update public.profiles
-  set rating_average = coalesce((
-        select round(avg(r.rating)::numeric, 2)
-        from public.reviews r
-        where r.reviewed_user_id = target_id
-      ), 0),
-      rating_count = (
-        select count(*)
-        from public.reviews r
-        where r.reviewed_user_id = target_id
-      ),
-      updated_at = timezone('utc', now())
-  where id = target_id;
-
-  if tg_op = 'DELETE' then
-    return old;
-  end if;
-  return new;
-end;
-$$;
-
--- Rating aggregates are maintained server-side from the reviews table and are
--- never writable by an authenticated frontend client.
-drop trigger if exists refresh_profile_rating_after_review on public.reviews;
-create trigger refresh_profile_rating_after_review
-  after insert or update or delete on public.reviews
-  for each row execute procedure public.refresh_profile_rating();
-
 alter table public.listings enable row level security;
 alter table public.listing_images enable row level security;
-alter table public.reviews enable row level security;
 
 drop policy if exists "Authenticated users can view listings" on public.listings;
 create policy "Authenticated users can view listings"
@@ -177,31 +167,8 @@ create policy "Owners can manage listing images"
   using (exists (select 1 from public.listings l where l.id = listing_id and l.user_id = (select auth.uid())))
   with check (exists (select 1 from public.listings l where l.id = listing_id and l.user_id = (select auth.uid())));
 
-drop policy if exists "Authenticated users can view reviews" on public.reviews;
-create policy "Authenticated users can view reviews"
-  on public.reviews for select to authenticated
-  using (true);
-
-drop policy if exists "Users can create reviews for other users" on public.reviews;
-create policy "Users can create reviews for other users"
-  on public.reviews for insert to authenticated
-  with check ((select auth.uid()) = reviewer_id and reviewer_id <> reviewed_user_id);
-
-drop policy if exists "Users can update their own reviews" on public.reviews;
-create policy "Users can update their own reviews"
-  on public.reviews for update to authenticated
-  using ((select auth.uid()) = reviewer_id)
-  with check ((select auth.uid()) = reviewer_id);
-
-drop policy if exists "Users can delete their own reviews" on public.reviews;
-create policy "Users can delete their own reviews"
-  on public.reviews for delete to authenticated
-  using ((select auth.uid()) = reviewer_id);
-
 grant select, insert, update, delete on public.listings to authenticated;
 grant select, insert, update, delete on public.listing_images to authenticated;
-grant select, insert, update, delete on public.reviews to authenticated;
-revoke all on function public.refresh_profile_rating() from public;
 
 -- Storage setup for user-uploaded listing images.
 -- The bucket `listing-images` must already exist. It is public because listing

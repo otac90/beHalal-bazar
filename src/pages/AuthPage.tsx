@@ -155,7 +155,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
       <div className="text-center space-y-6 max-w-2xl mx-auto">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#123D2A] text-[#F5F1E8] dark:bg-[#123D2A] dark:text-[#F5F1E8] text-[10px] uppercase tracking-widest font-bold">
           <Lock className="w-3.5 h-3.5" />
-          <span>Geschlossene vertrauensvolle Community</span>
+          <span>Vertrauensvoller Marktplatz für alle</span>
         </div>
         <h1 className="text-4xl sm:text-5xl font-serif font-bold text-[#171A17] dark:text-white">
           {mode === 'login' ? 'Willkommen zurück!' : mode === 'reset' ? 'Passwort zurücksetzen' : 'Mitglied werden'}
