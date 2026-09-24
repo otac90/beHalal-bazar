@@ -118,7 +118,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   useEffect(() => {
     let isMounted = true;
-    const supabase = createClient();
+    let supabase: ReturnType<typeof createClient>;
+
+    try {
+      supabase = createClient();
+    } catch (error) {
+      console.error('Supabase authentication is unavailable', error);
+      return () => {
+        isMounted = false;
+      };
+    }
 
     const syncAuthUser = async (authUser: Awaited<ReturnType<typeof supabase.auth.getUser>>['data']['user']) => {
       if (!isMounted) return;
