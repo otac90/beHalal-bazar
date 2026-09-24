@@ -46,16 +46,21 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const { error } = await createClient().auth.signInWithPassword({
-      email: loginEmail.trim(),
-      password: loginPassword,
-    });
-    setIsSubmitting(false);
-    if (!error) {
+    try {
+      const { error } = await createClient().auth.signInWithPassword({
+        email: loginEmail.trim(),
+        password: loginPassword,
+      });
+      if (error) {
+        showToast(error.message, 'error');
+        return;
+      }
       showToast('Erfolgreich angemeldet.', 'success');
       navigate('home');
-    } else {
-      showToast(error.message, 'error');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Die Anmeldung ist derzeit nicht verfügbar.', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -66,16 +71,21 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
       return;
     }
     setIsSubmitting(true);
-    const { error } = await createClient().auth.resetPasswordForEmail(resetEmail.trim(), {
-      redirectTo: window.location.origin,
-    });
-    setIsSubmitting(false);
-    if (error) {
-      showToast(error.message, 'error');
-      return;
+    try {
+      const { error } = await createClient().auth.resetPasswordForEmail(resetEmail.trim(), {
+        redirectTo: window.location.origin,
+      });
+      if (error) {
+        showToast(error.message, 'error');
+        return;
+      }
+      showToast('Wenn die E-Mail-Adresse registriert ist, erhältst du eine Nachricht zum Zurücksetzen deines Passworts.', 'success');
+      setMode('login');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Der Passwort-Reset ist derzeit nicht verfügbar.', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
-    showToast('Wenn die E-Mail-Adresse registriert ist, erhältst du eine Nachricht zum Zurücksetzen deines Passworts.', 'success');
-    setMode('login');
   };
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
@@ -103,38 +113,39 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
     }
 
     setIsSubmitting(true);
-    const { data, error } = await createClient().auth.signUp({
-      email: regEmail.trim(),
-      password: regPassword,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: {
-          username: regUsername.toLowerCase().trim(),
-          first_name: regFirstName.trim(),
-          last_name: regLastName.trim(),
-          postal_code: regPostalCode.trim(),
-          city: regCity.trim(),
+    try {
+      const { data, error } = await createClient().auth.signUp({
+        email: regEmail.trim(),
+        password: regPassword,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: {
+            username: regUsername.toLowerCase().trim(),
+            first_name: regFirstName.trim(),
+            last_name: regLastName.trim(),
+            postal_code: regPostalCode.trim(),
+            city: regCity.trim(),
+          },
         },
-      },
-    });
-    setIsSubmitting(false);
+      });
 
-    if (error) {
-      showToast(error.message, 'error');
-      return;
-    }
+      if (error) {
+        showToast(error.message, 'error');
+        return;
+      }
 
-    if (data.user && data.session) {
-      try {
+      if (data.user && data.session) {
         await getProfileForUser(data.user);
         showToast('Konto erfolgreich erstellt. Willkommen bei Be Halal Bazar.', 'success');
         navigate('home');
-      } catch (profileError) {
-        showToast(profileError instanceof Error ? profileError.message : 'Dein Profil konnte nicht geladen werden.', 'error');
+      } else {
+        showToast('Konto erstellt. Bitte bestätige zuerst deine E-Mail-Adresse.', 'success');
+        setMode('login');
       }
-    } else {
-      showToast('Konto erstellt. Bitte bestätige zuerst deine E-Mail-Adresse.', 'success');
-      setMode('login');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Die Registrierung ist derzeit nicht verfügbar.', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -154,7 +165,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-start">
+      <div className="max-w-xl mx-auto w-full">
         
         {/* LEFT / MAIN AUTH FORM */}
         <div className="space-y-12">
@@ -471,32 +482,6 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
             </form>
           )}
 
-        </div>
-
-        {/* RIGHT: QUICK PERSONA SWITCHER */}
-        <div className="lg:pl-16 lg:border-l border-gray-200 dark:border-white/10 space-y-12">
-          <div>
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430] mb-2 block">
-              Schnell-Test
-            </span>
-            <h3 className="font-serif font-bold text-3xl text-[#171A17] dark:text-white mb-4">
-              Test-Profile
-            </h3>
-            <p className="font-sans text-xs uppercase tracking-widest text-gray-500 leading-relaxed">
-              Klicke auf eine Person, um sofort ihre Perspektive (Verkäufer, Käufer oder Moderator) zu testen:
-            </p>
-          </div>
-
-          <div className="space-y-6">
-            <div className="border-y border-gray-200 dark:border-white/10 py-6 space-y-4">
-              <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-                Anmeldung und Registrierung werden sicher von Supabase Auth verwaltet. Deine zusätzlichen Profildaten werden separat in <code className="text-xs">public.profiles</code> gespeichert.
-              </p>
-              <p className="text-xs uppercase tracking-widest text-gray-500">
-                Für den ersten Login muss die Profil-Tabelle im Supabase SQL Editor angelegt worden sein.
-              </p>
-            </div>
-          </div>
         </div>
 
       </div>
