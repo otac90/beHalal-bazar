@@ -3,7 +3,8 @@ import {
   Plus, Upload, Trash2, Check, ArrowRight, ArrowLeft, 
   Sparkles, AlertTriangle, ShieldCheck, Eye, ImageIcon, 
   DollarSign, MapPin, Truck, Package, BriefcaseBusiness, Ship, CarFront, Building2, Gift,
-  Bike, Wrench, House, Map, Palmtree, Warehouse, KeyRound, Tag, Sailboat, Anchor, Waves, CreditCard, LockKeyhole, CheckCircle2, type LucideIcon
+  Bike, Wrench, House, Map, Palmtree, Warehouse, KeyRound, Tag, Sailboat, Anchor, Waves, CreditCard, LockKeyhole, CheckCircle2,
+  Shirt, Baby, Smartphone, Utensils, Armchair, BookOpen, Gamepad2, Car, Layers, Sofa, BedDouble, Table2, Lamp, BookMarked, Joystick, type LucideIcon
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { 
@@ -141,6 +142,79 @@ const REAL_ESTATE_ICONS: Record<string, LucideIcon> = {
   'commercial-property': Warehouse,
   'holiday-property': Palmtree,
   'other-property': Tag,
+};
+
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  'fashion-accessories': Shirt,
+  'baby-kids': Baby,
+  electronics: Smartphone,
+  household: Utensils,
+  'furniture-living': Armchair,
+  'sports-leisure': Bike,
+  'books-media': BookOpen,
+  gaming: Gamepad2,
+  'auto-accessories': Car,
+  'garden-tools': Wrench,
+  other: Layers,
+};
+
+const SUBCATEGORY_ICONS: Record<string, LucideIcon> = {
+  'women-clothes': Shirt,
+  'men-clothes': Shirt,
+  shoes: Tag,
+  'bags-accessories': Tag,
+  'watches-jewelry': Tag,
+  'traditional-clothing': Shirt,
+  'baby-clothes': Baby,
+  'kids-clothes': Shirt,
+  strollers: Baby,
+  'car-seats': Baby,
+  'baby-gear': Baby,
+  'kids-furniture': Armchair,
+  toys: Joystick,
+  smartphones: Smartphone,
+  tablets: Smartphone,
+  laptops: Smartphone,
+  tv: Smartphone,
+  audio: Smartphone,
+  cameras: Smartphone,
+  'elec-accessories': Tag,
+  'home-appliances': Utensils,
+  kitchen: Utensils,
+  tableware: Utensils,
+  decoration: Lamp,
+  cleaning: Sparkles,
+  'house-accessories': Tag,
+  'living-room': Sofa,
+  bedroom: BedDouble,
+  'tables-chairs': Table2,
+  closets: Warehouse,
+  lighting: Lamp,
+  carpets: Layers,
+  bikes: Bike,
+  football: Sparkles,
+  fitness: Sparkles,
+  outdoor: Palmtree,
+  'water-sports': Waves,
+  'islamic-books': BookMarked,
+  'kids-books': BookOpen,
+  education: BookOpen,
+  'general-books': BookOpen,
+  'media-games': Joystick,
+  consoles: Gamepad2,
+  games: Gamepad2,
+  'gaming-accessories': Joystick,
+  'pc-gaming': Gamepad2,
+  'tires-rims': Car,
+  'spare-parts': Wrench,
+  'car-accessories': Car,
+  'roof-racks': Car,
+  'power-tools': Wrench,
+  'hand-tools': Wrench,
+  'garden-tools-cat': Palmtree,
+  'garden-furniture': Armchair,
+  'other-general': Layers,
+  'other-crafts': Wrench,
 };
 
 export const ListingWizard: React.FC = () => {
@@ -548,9 +622,10 @@ export const ListingWizard: React.FC = () => {
             <h2 className="font-serif font-bold text-2xl text-[#171A17] dark:text-white text-center mb-8">
               {t.step2SelectCat}
             </h2>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-4 max-h-96 overflow-y-auto">
+            <div className="grid max-h-[30rem] grid-cols-1 gap-3 overflow-y-auto sm:grid-cols-2">
               {availableCategories.map((c) => {
                 const isSelected = categoryId === c.id;
+                const CategoryIcon = CATEGORY_ICONS[c.id] ?? Tag;
                 return (
                   <button
                     key={c.id}
@@ -559,13 +634,19 @@ export const ListingWizard: React.FC = () => {
                       setCategoryId(c.id);
                       setSubcategoryId(c.subcategories[0]?.id || '');
                     }}
-                    className={`py-3 text-left font-serif font-bold text-lg transition-colors border-b ${
+                    className={`flex min-h-[104px] items-center gap-4 border p-4 text-left transition-colors ${
                       isSelected
-                        ? 'text-[#123D2A] dark:text-white border-[#123D2A] dark:border-white'
-                        : 'text-gray-500 hover:text-[#171A17] dark:hover:text-white border-transparent'
+                        ? 'border-[#123D2A] bg-[#123D2A] text-white dark:border-[#F4C430] dark:bg-[#F4C430] dark:text-[#171A17]'
+                        : 'border-gray-200 text-[#171A17] hover:border-[#123D2A] dark:border-white/10 dark:text-white dark:hover:border-[#F4C430]'
                     }`}
                   >
-                    {c.name[language]}
+                    <CategoryIcon className={`h-8 w-8 shrink-0 ${isSelected ? 'text-[#F4C430] dark:text-[#123D2A]' : 'text-[#F4C430]'}`} />
+                    <span className="min-w-0">
+                      <span className="block font-serif text-lg font-bold">{c.name[language]}</span>
+                      <span className={`mt-1 block text-[10px] font-bold uppercase tracking-widest ${isSelected ? 'text-white/70 dark:text-[#171A17]/70' : 'text-gray-500'}`}>
+                        {c.subcategories.length} Unterkategorien
+                      </span>
+                    </span>
                   </button>
                 );
               })}
@@ -636,17 +717,19 @@ export const ListingWizard: React.FC = () => {
                     })}
                   </div>
                 ) : (
-                  <div className="flex flex-wrap gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {selectedCategoryObj.subcategories.map((sub) => {
                       const isSubSelected = subcategoryId === sub.id;
+                      const SubcategoryIcon = SUBCATEGORY_ICONS[sub.id] ?? CATEGORY_ICONS[selectedCategoryObj.id] ?? Tag;
                       return (
                         <button
                           key={sub.id}
                           type="button"
                           onClick={() => setSubcategoryId(sub.id)}
-                          className={`border px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors ${isSubSelected ? 'border-[#123D2A] bg-[#123D2A] text-white dark:border-white dark:bg-white dark:text-[#171A17]' : 'border-gray-300 bg-transparent text-gray-500 dark:border-white/20'}`}
+                          className={`flex min-h-[82px] items-center gap-4 border p-4 text-left transition-colors ${isSubSelected ? 'border-[#123D2A] bg-[#123D2A] text-white dark:border-[#F4C430] dark:bg-[#F4C430] dark:text-[#171A17]' : 'border-gray-200 text-[#171A17] hover:border-[#123D2A] dark:border-white/10 dark:text-white dark:hover:border-[#F4C430]'}`}
                         >
-                          {sub.name[language]}
+                          <SubcategoryIcon className={`h-6 w-6 shrink-0 ${isSubSelected ? 'text-[#F4C430] dark:text-[#123D2A]' : 'text-[#F4C430]'}`} />
+                          <span className="font-serif text-base font-bold">{sub.name[language]}</span>
                         </button>
                       );
                     })}
