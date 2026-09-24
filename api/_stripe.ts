@@ -1,13 +1,17 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
+export function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY fehlt in den Vercel-Umgebungsvariablen.');
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
+}
 
-export const adminSupabase = createClient(
-  process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-  { auth: { autoRefreshToken: false, persistSession: false } },
-);
+export function getAdminSupabase() {
+  const url = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error('Supabase-Servervariablen fehlen in den Vercel-Umgebungsvariablen.');
+  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
+}
 
 export function getBearerToken(request: { headers: Record<string, string | string[] | undefined> }) {
   const value = request.headers.authorization;

@@ -1,4 +1,4 @@
-import { adminSupabase, ensureStripeConfiguration, getBearerToken, stripe } from './_stripe';
+import { ensureStripeConfiguration, getAdminSupabase, getBearerToken, getStripe } from './_stripe';
 
 interface RequestLike {
   method?: string;
@@ -16,6 +16,8 @@ export default async function handler(request: RequestLike, response: ResponseLi
 
   try {
     ensureStripeConfiguration();
+    const stripe = getStripe();
+    const adminSupabase = getAdminSupabase();
     const token = getBearerToken(request);
     if (!token) return response.status(401).json({ error: 'Nicht angemeldet.' });
     const { data: authData, error: authError } = await adminSupabase.auth.getUser(token);

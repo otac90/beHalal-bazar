@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { adminSupabase, ensureStripeConfiguration, stripe } from './_stripe';
+import { ensureStripeConfiguration, getAdminSupabase, getStripe } from './_stripe';
 
 export const config = { api: { bodyParser: false } };
 
@@ -25,6 +25,8 @@ export default async function handler(request: RequestLike, response: ResponseLi
 
   try {
     ensureStripeConfiguration();
+    const stripe = getStripe();
+    const adminSupabase = getAdminSupabase();
     const signature = getHeader(request, 'stripe-signature');
     const secret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!signature || !secret) return response.status(400).json({ error: 'Webhook ist nicht konfiguriert.' });
