@@ -85,7 +85,10 @@ export default async function handler(request: RequestLike, response: ResponseLi
 
     return response.status(200).json({ received: true });
   } catch (error) {
-    console.error('Stripe webhook failed', error);
+    console.error('Stripe webhook failed', {
+      message: error instanceof Error ? error.message : String(error),
+      name: error instanceof Error ? error.name : 'UnknownError',
+    });
     return response.status(400).json({ error: 'Ungültiger Stripe-Webhook.' });
   }
 }

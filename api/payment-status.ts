@@ -40,6 +40,30 @@ export default async function handler(request: RequestLike, response: ResponseLi
       .single();
     if (listingError || !listing) return response.status(404).json({ error: 'Inserat nicht gefunden.' });
 
+    // A successful Checkout session is authoritative even if Stripe's webhook
+    // is delayed or a delivery attempt failed. This keeps the listing pending
+    // until Stripe has confirmed payment and safely reconciles the server state.
+    if (session.payment_status === 'paid' && listing.payment_status !== 'PAID') {
+      const paidAt = new Date();
+      const expiresAt = new Date(paidAt.getTime() + (listing.listing_duration_days || 30) * 24 * 60 * 60 * 1000);
+      const { error: reconciliationError } = await adminSupabase
+        .from('listings')
+        .update({
+          status: 'ACTIVE',
+          payment_status: 'PAID',
+          stripe_payment_intent_id: typeof session.payment_intent === 'string' ? session.payment_intent : null,
+          paid_at: paidAt.toISOString(),
+          published_at: paidAt.toISOString(),
+          expires_at: expiresAt.toISOString(),
+        })
+        .eq('id', listing.id)
+        .eq('user_id', authData.user.id);
+      if (reconciliationError) throw reconciliationError;
+      listing.payment_status = 'PAID';
+      listing.status = 'ACTIVE';
+      listing.expires_at = expiresAt.toISOString();
+    }
+
     return response.status(200).json({
       paid: session.payment_status === 'paid' && listing.payment_status === 'PAID',
       status: listing.payment_status,
