@@ -7,6 +7,7 @@ interface RequestLike {
   headers: Record<string, string | string[] | undefined>;
   body?: unknown;
   rawBody?: Buffer;
+  on?: (event: string, callback: (...args: any[]) => void) => void;
 }
 
 interface ResponseLike {
@@ -17,6 +18,21 @@ interface ResponseLike {
 const getHeader = (request: RequestLike, name: string) => {
   const value = request.headers[name] || request.headers[name.toLowerCase()];
   return Array.isArray(value) ? value[0] : value;
+};
+
+const readRawBody = (request: RequestLike): Promise<Buffer> => {
+  if (request.rawBody) return Promise.resolve(Buffer.from(request.rawBody));
+  if (request.body !== undefined) {
+    return Promise.resolve(Buffer.from(typeof request.body === 'string' ? request.body : JSON.stringify(request.body)));
+  }
+  if (!request.on) return Promise.reject(new Error('Webhook request body is unavailable.'));
+
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    request.on?.('data', (chunk: Buffer | string) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+    request.on?.('end', () => resolve(Buffer.concat(chunks)));
+    request.on?.('error', reject);
+  });
 };
 
 export default async function handler(request: RequestLike, response: ResponseLike) {
@@ -30,7 +46,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
     const secret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!signature || !secret) return response.status(400).json({ error: 'Webhook ist nicht konfiguriert.' });
 
-    const rawPayload = request.rawBody || Buffer.from(typeof request.body === 'string' ? request.body : JSON.stringify(request.body));
+    const rawPayload = await readRawBody(request);
     const event = stripe.webhooks.constructEvent(rawPayload, signature, secret);
     if (event.type !== 'checkout.session.completed' && event.type !== 'checkout.session.async_payment_succeeded') {
       return response.status(200).json({ received: true });

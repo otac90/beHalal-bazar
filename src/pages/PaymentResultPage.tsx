@@ -49,6 +49,8 @@ export const PaymentResultPage: React.FC<PaymentResultPageProps> = ({ success })
         if (!nextDetails.paid && attempts < 8) {
           attempts += 1;
           window.setTimeout(loadStatus, 1500);
+        } else if (!nextDetails.paid) {
+          setError('Stripe hat die Rückkehr bestätigt, aber der Webhook wurde noch nicht verarbeitet. Bitte prüfe die Webhook-Zustellung in Stripe und starte den Vorgang gegebenenfalls erneut.');
         }
       } catch (loadError) {
         if (!cancelled) setError(loadError instanceof Error ? loadError.message : 'Zahlungsstatus nicht verfügbar.');
