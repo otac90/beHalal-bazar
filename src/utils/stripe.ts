@@ -17,9 +17,19 @@ export async function createListingCheckout(listingId: string) {
     body: JSON.stringify({ listingId }),
   });
 
-  const payload = await response.json().catch(() => ({}));
+  const rawResponse = await response.text();
+  let payload: { url?: string; error?: string } = {};
+  try {
+    payload = JSON.parse(rawResponse) as typeof payload;
+  } catch {
+    // Vite's development server returns an HTML 404 for /api routes because
+    // Vercel Functions are only available through Vercel or `vercel dev`.
+  }
   if (!response.ok || typeof payload.url !== 'string') {
-    throw new Error(payload.error || 'Die Zahlungsseite konnte nicht geöffnet werden.');
+    if (response.status === 404 || rawResponse.trim().startsWith('<!')) {
+      throw new Error('Die Zahlungsfunktion ist unter dieser Adresse nicht verfügbar. Bitte die Vercel-URL verwenden oder lokal mit „vercel dev“ starten.');
+    }
+    throw new Error(payload.error || `Die Zahlungsseite konnte nicht geöffnet werden (HTTP ${response.status}).`);
   }
 
   return payload.url as string;
