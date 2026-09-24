@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { 
   Plus, Upload, Trash2, Check, ArrowRight, ArrowLeft, 
   Sparkles, AlertTriangle, ShieldCheck, Eye, ImageIcon, 
-  DollarSign, MapPin, Truck, Package, BriefcaseBusiness, Ship, CarFront, Building2, Gift
+  DollarSign, MapPin, Truck, Package, BriefcaseBusiness, Ship, CarFront, Building2, Gift,
+  Bike, Wrench, House, Map, Palmtree, Warehouse, KeyRound, Tag, type LucideIcon
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { 
@@ -17,6 +18,7 @@ import {
   getListingDurationDays,
   getListingFee,
   LISTING_OFFER_OPTIONS,
+  REAL_ESTATE_CATEGORIES,
   ListingOffer,
   RealEstateAction,
 } from '../../data/listingOffers';
@@ -37,6 +39,23 @@ const DetailInput: React.FC<DetailInputProps> = ({ label, value, onChange, type 
     <input type={type} value={value ?? ''} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className={detailInputClass} />
   </label>
 );
+
+const VEHICLE_ICONS: Record<string, LucideIcon> = {
+  cars: CarFront,
+  'motorcycles-quads': Bike,
+  'commercial-vehicles': Truck,
+  'caravans-motorhomes': House,
+  'spare-parts-accessories': Wrench,
+};
+
+const REAL_ESTATE_ICONS: Record<string, LucideIcon> = {
+  house: House,
+  apartment: Building2,
+  land: Map,
+  'commercial-property': Warehouse,
+  'holiday-property': Palmtree,
+  'other-property': Tag,
+};
 
 export const ListingWizard: React.FC = () => {
   const { user, categories, navigate, showToast, config, t, language } = useApp();
@@ -450,25 +469,62 @@ export const ListingWizard: React.FC = () => {
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   Unterkategorie
                 </label>
-                <div className="flex flex-wrap gap-3">
-                  {selectedCategoryObj.subcategories.map((sub) => {
-                    const isSubSelected = subcategoryId === sub.id;
-                    return (
-                      <button
-                        key={sub.id}
-                        type="button"
-                        onClick={() => setSubcategoryId(sub.id)}
-                        className={`px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors border ${
-                          isSubSelected
-                            ? 'bg-[#123D2A] dark:bg-white text-white dark:text-[#171A17] border-[#123D2A] dark:border-white'
-                            : 'bg-transparent text-gray-500 border-gray-300 dark:border-white/20 hover:border-[#171A17] dark:hover:border-white hover:text-[#171A17] dark:hover:text-white'
-                        }`}
-                      >
-                        {sub.name[language]}
-                      </button>
-                    );
-                  })}
-                </div>
+                {offerType === 'AUTO_MOTOR' ? (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {AUTO_MOTOR_CATEGORIES.map((vehicle) => {
+                      const isSubSelected = subcategoryId === vehicle.id;
+                      const VehicleIcon = VEHICLE_ICONS[vehicle.id] ?? CarFront;
+                      return (
+                        <button
+                          key={vehicle.id}
+                          type="button"
+                          onClick={() => setSubcategoryId(vehicle.id)}
+                          className={`border p-4 text-left transition-colors ${isSubSelected ? 'border-[#123D2A] bg-[#123D2A] text-white dark:border-[#F4C430] dark:bg-[#F4C430] dark:text-[#171A17]' : 'border-gray-200 text-[#171A17] hover:border-[#123D2A] dark:border-white/10 dark:text-white dark:hover:border-[#F4C430]'}`}
+                        >
+                          <VehicleIcon className={`mb-4 h-7 w-7 ${isSubSelected ? 'text-[#F4C430] dark:text-[#123D2A]' : 'text-[#F4C430]'}`} />
+                          <span className="block font-serif text-lg font-bold">{vehicle.title}</span>
+                          <span className={`mt-1 block text-xs leading-relaxed ${isSubSelected ? 'text-white/75 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{vehicle.description}</span>
+                          <span className={`mt-4 block border-t pt-3 text-[10px] font-bold uppercase tracking-widest ${isSubSelected ? 'border-white/20 text-[#F4C430] dark:border-[#171A17]/20 dark:text-[#123D2A]' : 'border-gray-200 text-[#123D2A] dark:border-white/10 dark:text-[#F4C430]'}`}>Inseratspreis: Ab € 0</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : offerType === 'REAL_ESTATE' ? (
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {REAL_ESTATE_CATEGORIES.map((property) => {
+                      const isSubSelected = subcategoryId === property.id;
+                      const PropertyIcon = REAL_ESTATE_ICONS[property.id] ?? Building2;
+                      return (
+                        <button
+                          key={property.id}
+                          type="button"
+                          onClick={() => setSubcategoryId(property.id)}
+                          className={`border p-4 text-left transition-colors ${isSubSelected ? 'border-[#123D2A] bg-[#123D2A] text-white dark:border-[#F4C430] dark:bg-[#F4C430] dark:text-[#171A17]' : 'border-gray-200 text-[#171A17] hover:border-[#123D2A] dark:border-white/10 dark:text-white dark:hover:border-[#F4C430]'}`}
+                        >
+                          <PropertyIcon className={`mb-4 h-7 w-7 ${isSubSelected ? 'text-[#F4C430] dark:text-[#123D2A]' : 'text-[#F4C430]'}`} />
+                          <span className="block font-serif text-lg font-bold">{property.title}</span>
+                          <span className={`mt-1 block text-xs leading-relaxed ${isSubSelected ? 'text-white/75 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{property.description}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-3">
+                    {selectedCategoryObj.subcategories.map((sub) => {
+                      const isSubSelected = subcategoryId === sub.id;
+                      return (
+                        <button
+                          key={sub.id}
+                          type="button"
+                          onClick={() => setSubcategoryId(sub.id)}
+                          className={`border px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors ${isSubSelected ? 'border-[#123D2A] bg-[#123D2A] text-white dark:border-white dark:bg-white dark:text-[#171A17]' : 'border-gray-300 bg-transparent text-gray-500 dark:border-white/20'}`}
+                        >
+                          {sub.name[language]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
@@ -477,9 +533,12 @@ export const ListingWizard: React.FC = () => {
                 <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">Art des Inserats</p>
                 <div className="grid grid-cols-2 gap-3">
                   {(['SELL', 'RENT'] as const).map((action) => (
-                    <button key={action} type="button" onClick={() => setRealEstateAction(action)} className={`border px-5 py-4 text-left ${realEstateAction === action ? 'border-[#123D2A] bg-[#123D2A] text-white dark:border-[#F4C430] dark:bg-[#F4C430] dark:text-[#171A17]' : 'border-gray-200 text-gray-500 dark:border-white/10'}`}>
-                      <span className="block font-serif text-lg font-bold">{action === 'SELL' ? 'Verkaufen' : 'Vermieten'}</span>
-                      <span className="mt-1 block text-xs">€ {getListingFee(offerType, subcategoryId, action).toFixed(2)} · 30 Tage</span>
+                    <button key={action} type="button" onClick={() => setRealEstateAction(action)} className={`flex items-center justify-between gap-4 border px-5 py-4 text-left ${realEstateAction === action ? 'border-[#123D2A] bg-[#123D2A] text-white dark:border-[#F4C430] dark:bg-[#F4C430] dark:text-[#171A17]' : 'border-gray-200 text-gray-500 dark:border-white/10'}`}>
+                      <span>
+                        <span className="block font-serif text-lg font-bold">{action === 'SELL' ? 'Verkaufen' : 'Vermieten'}</span>
+                        <span className="mt-1 block text-xs">€ {getListingFee(offerType, subcategoryId, action).toFixed(2)} · 30 Tage</span>
+                      </span>
+                      {action === 'SELL' ? <House className={`h-7 w-7 shrink-0 ${realEstateAction === action ? 'text-[#F4C430] dark:text-[#123D2A]' : 'text-[#F4C430]'}`} /> : <KeyRound className={`h-7 w-7 shrink-0 ${realEstateAction === action ? 'text-[#F4C430] dark:text-[#123D2A]' : 'text-[#F4C430]'}`} />}
                     </button>
                   ))}
                 </div>
