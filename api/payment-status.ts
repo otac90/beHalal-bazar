@@ -1,4 +1,4 @@
-import { ensureStripeConfiguration, getAdminSupabase, getBearerToken, getStripe } from './_stripe';
+import { ensureStripeConfiguration, getAdminSupabase, getBearerToken, getStripe } from './_stripe.js';
 
 interface RequestLike {
   method?: string;

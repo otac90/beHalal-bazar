@@ -1,4 +1,4 @@
-import { ensureStripeConfiguration, getAdminSupabase, getStripe } from './_stripe';
+import { ensureStripeConfiguration, getAdminSupabase, getStripe } from './_stripe.js';
 
 export const config = { api: { bodyParser: false } };
 
