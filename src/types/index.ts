@@ -79,6 +79,9 @@ export interface Listing {
   updatedAt: string;
   publishedAt?: string;
   expiresAt?: string;
+  listingFee?: number;
+  listingDurationDays?: number;
+  details?: Record<string, string | number | boolean | null>;
   moderationReason?: string;
   seller?: {
     id: string;

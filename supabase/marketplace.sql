@@ -42,6 +42,11 @@ create table if not exists public.listings (
   )
 );
 
+alter table public.listings
+  add column if not exists listing_fee numeric(12, 2) not null default 0 check (listing_fee >= 0),
+  add column if not exists listing_duration_days integer check (listing_duration_days is null or listing_duration_days > 0),
+  add column if not exists details jsonb not null default '{}'::jsonb;
+
 create index if not exists listings_user_id_idx on public.listings(user_id);
 create index if not exists listings_status_created_at_idx on public.listings(status, created_at desc);
 create index if not exists listings_category_idx on public.listings(category_id, subcategory_id);

@@ -134,6 +134,42 @@ export const INITIAL_CATEGORIES: Category[] = [
     ],
   },
   {
+    id: 'auto-motor',
+    slug: 'auto-motor',
+    icon: 'Car',
+    name: { de: 'Auto & Motor', en: 'Cars & Motor' },
+    subcategories: [
+      { id: 'cars', slug: 'gebrauchtwagen', name: { de: 'Gebrauchtwagen', en: 'Used Cars' } },
+      { id: 'motorcycles-quads', slug: 'motorrad-quad', name: { de: 'Motorrad & Quad', en: 'Motorcycles & Quads' } },
+      { id: 'commercial-vehicles', slug: 'nutzfahrzeuge-pickups', name: { de: 'Nutzfahrzeug & Pickup', en: 'Commercial Vehicles & Pickups' } },
+      { id: 'caravans-motorhomes', slug: 'wohnwagen-wohnmobil', name: { de: 'Wohnwagen & Wohnmobil', en: 'Caravans & Motorhomes' } },
+      { id: 'spare-parts-accessories', slug: 'ersatzteile-zubehoer', name: { de: 'Ersatzteile & Zubehör', en: 'Parts & Accessories' } },
+    ],
+  },
+  {
+    id: 'boats',
+    slug: 'boote-yachten-jetskis',
+    icon: 'Ship',
+    name: { de: 'Boote & Yachten', en: 'Boats & Yachts' },
+    subcategories: [
+      { id: 'boats-yachts-jetskis', slug: 'boote-yachten-jetskis', name: { de: 'Boote, Yachten & Jetskis', en: 'Boats, Yachts & Jet Skis' } },
+    ],
+  },
+  {
+    id: 'real-estate',
+    slug: 'immobilien',
+    icon: 'Building2',
+    name: { de: 'Immobilien', en: 'Real Estate' },
+    subcategories: [
+      { id: 'house', slug: 'haus', name: { de: 'Haus', en: 'House' } },
+      { id: 'apartment', slug: 'wohnung', name: { de: 'Wohnung', en: 'Apartment' } },
+      { id: 'land', slug: 'grundstueck', name: { de: 'Grundstück', en: 'Land' } },
+      { id: 'commercial-property', slug: 'gewerbeimmobilie', name: { de: 'Gewerbeimmobilie', en: 'Commercial Property' } },
+      { id: 'holiday-property', slug: 'ferienimmobilie', name: { de: 'Ferienimmobilie', en: 'Holiday Property' } },
+      { id: 'other-property', slug: 'sonstige-immobilien', name: { de: 'Sonstige Immobilien', en: 'Other Property' } },
+    ],
+  },
+  {
     id: 'garden-tools',
     slug: 'garten-werkzeug',
     icon: 'Wrench',

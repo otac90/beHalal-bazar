@@ -25,6 +25,9 @@ export interface SupabaseListingDraft {
   favoritesCount: number;
   publishedAt?: string;
   expiresAt?: string;
+  listingFee?: number;
+  listingDurationDays?: number;
+  details?: Record<string, string | number | boolean | null>;
 }
 
 interface PendingImageFile {
@@ -77,6 +80,9 @@ export async function createListingWithImages(
       favorites_count: draft.favoritesCount,
       published_at: draft.publishedAt ?? null,
       expires_at: draft.expiresAt ?? null,
+      listing_fee: draft.listingFee ?? 0,
+      listing_duration_days: draft.listingDurationDays ?? null,
+      details: draft.details ?? {},
     })
     .select('id')
     .single();

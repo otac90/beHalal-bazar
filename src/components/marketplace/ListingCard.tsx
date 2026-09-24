@@ -31,6 +31,7 @@ export const ListingCard: React.FC<Props> = ({ listing }) => {
 
   const isWanted = listing.type === 'WANTED';
   const isFree = listing.type === 'FREE' || listing.isFree;
+  const isFreeAd = listing.details?.offerType === 'PRIVATE' || listing.listingFee === undefined;
   const isReserved = listing.status === 'RESERVED';
   const isSold = listing.status === 'SOLD';
 
@@ -63,6 +64,11 @@ export const ListingCard: React.FC<Props> = ({ listing }) => {
           {isFree && (
             <span className="px-2 py-0.5 text-[10px] font-bold bg-[#123D2A] text-[#F5F1E8] uppercase tracking-widest">
               {t.typeFree}
+            </span>
+          )}
+          {isFreeAd && (
+            <span className="px-2 py-0.5 text-[10px] font-bold bg-[#F4C430] text-[#123D2A] uppercase tracking-widest">
+              Kostenlose Anzeige
             </span>
           )}
           {isWanted && (

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Plus, Upload, Trash2, Check, ArrowRight, ArrowLeft, 
   Sparkles, AlertTriangle, ShieldCheck, Eye, ImageIcon, 
-  DollarSign, MapPin, Truck, Package 
+  DollarSign, MapPin, Truck, Package, BriefcaseBusiness, Ship, CarFront, Building2, Gift
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { 
@@ -12,6 +12,31 @@ import {
 import { storage } from '../../services/storage';
 import { checkListingModeration } from '../../services/moderation';
 import { createListingWithImages } from '../../utils/supabase/marketplace';
+import {
+  AUTO_MOTOR_CATEGORIES,
+  getListingDurationDays,
+  getListingFee,
+  LISTING_OFFER_OPTIONS,
+  ListingOffer,
+  RealEstateAction,
+} from '../../data/listingOffers';
+
+const detailInputClass = 'w-full border-b border-gray-300 bg-transparent pb-2 text-sm font-bold text-[#171A17] focus:border-[#123D2A] focus:outline-none dark:border-white/20 dark:text-white dark:focus:border-white';
+
+interface DetailInputProps {
+  label: string;
+  value: string | number | boolean | null | undefined;
+  onChange: (value: string) => void;
+  type?: 'text' | 'number' | 'date';
+  placeholder?: string;
+}
+
+const DetailInput: React.FC<DetailInputProps> = ({ label, value, onChange, type = 'text', placeholder }) => (
+  <label className="space-y-2">
+    <span className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</span>
+    <input type={type} value={value ?? ''} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className={detailInputClass} />
+  </label>
+);
 
 export const ListingWizard: React.FC = () => {
   const { user, categories, navigate, showToast, config, t, language } = useApp();
@@ -19,7 +44,9 @@ export const ListingWizard: React.FC = () => {
   const [step, setStep] = useState(1);
 
   // Form State
+  const [offerType, setOfferType] = useState<ListingOffer>('PRIVATE');
   const [type, setType] = useState<ListingType>('SELL');
+  const [realEstateAction, setRealEstateAction] = useState<RealEstateAction>('SELL');
   const [categoryId, setCategoryId] = useState<string>('baby-kids');
   const [subcategoryId, setSubcategoryId] = useState<string>('strollers');
   const [images, setImages] = useState<ListingImage[]>([]);
@@ -35,10 +62,37 @@ export const ListingWizard: React.FC = () => {
   const [postalCode, setPostalCode] = useState(user?.postalCode || '1100');
   const [city, setCity] = useState(user?.city || 'Wien');
   const [country, setCountry] = useState(user?.country || 'Österreich');
+  const [details, setDetails] = useState<Record<string, string | number | boolean | null>>({});
   
   // Validation / Warning states
   const [moderationWarning, setModerationWarning] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const maxPhotos = offerType === 'REAL_ESTATE' ? Infinity : config.maxPhotosPerListing;
+  const listingFee = getListingFee(offerType, subcategoryId, realEstateAction);
+  const listingDurationDays = offerType === 'PRIVATE' ? config.listingExpiryDays : getListingDurationDays(offerType);
+
+  const updateDetail = (key: string, value: string | number | boolean | null) => {
+    setDetails((currentDetails) => ({ ...currentDetails, [key]: value }));
+  };
+
+  const chooseOfferType = (nextOffer: ListingOffer) => {
+    setOfferType(nextOffer);
+    setType(nextOffer === 'PRIVATE' ? 'SELL' : 'SELL');
+    if (nextOffer === 'BOATS') {
+      setCategoryId('boats');
+      setSubcategoryId('boats-yachts-jetskis');
+    } else if (nextOffer === 'AUTO_MOTOR') {
+      setCategoryId('auto-motor');
+      setSubcategoryId('cars');
+    } else if (nextOffer === 'REAL_ESTATE') {
+      setCategoryId('real-estate');
+      setSubcategoryId('house');
+    } else if (nextOffer === 'PRIVATE') {
+      setCategoryId('baby-kids');
+      setSubcategoryId('strollers');
+    }
+  };
 
   // Pre-set stock images for quick addition
   const sampleStockImages = [
@@ -50,8 +104,8 @@ export const ListingWizard: React.FC = () => {
   ];
 
   const handleAddImage = (url: string) => {
-    if (images.length >= config.maxPhotosPerListing) {
-      showToast(`Maximal ${config.maxPhotosPerListing} Bilder erlaubt.`, 'warning');
+    if (images.length >= maxPhotos) {
+      showToast(`Maximal ${maxPhotos} Bilder erlaubt.`, 'warning');
       return;
     }
     const newImg: ListingImage = {
@@ -65,7 +119,7 @@ export const ListingWizard: React.FC = () => {
 
   const handleFileUploadSimulation = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = (Array.from(e.target.files ?? []) as File[]).filter((file) => file.type.startsWith('image/'));
-    const availableSlots = config.maxPhotosPerListing - images.length;
+    const availableSlots = Number.isFinite(maxPhotos) ? maxPhotos - images.length : files.length;
 
     if (files.length === 0) {
       showToast('Bitte wähle eine Bilddatei aus.', 'warning');
@@ -73,7 +127,7 @@ export const ListingWizard: React.FC = () => {
     }
 
     if (availableSlots <= 0) {
-      showToast(`Maximal ${config.maxPhotosPerListing} Bilder erlaubt.`, 'warning');
+      showToast(`Maximal ${maxPhotos} Bilder erlaubt.`, 'warning');
       return;
     }
 
@@ -96,7 +150,7 @@ export const ListingWizard: React.FC = () => {
     showToast(`${selectedFiles.length} Foto${selectedFiles.length === 1 ? '' : 's'} ausgewählt.`, 'success');
 
     if (files.length > selectedFiles.length) {
-      showToast(`Nur ${config.maxPhotosPerListing} Bilder sind pro Inserat erlaubt.`, 'warning');
+      showToast(`Nur ${maxPhotos} Bilder sind pro Inserat erlaubt.`, 'warning');
     }
 
     e.target.value = '';
@@ -218,7 +272,14 @@ export const ListingWizard: React.FC = () => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       publishedAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + config.listingExpiryDays * 24 * 60 * 60 * 1000).toISOString(),
+      expiresAt: new Date(Date.now() + listingDurationDays * 24 * 60 * 60 * 1000).toISOString(),
+      listingFee,
+      listingDurationDays,
+      details: {
+        ...details,
+        offerType,
+        realEstateAction: offerType === 'REAL_ESTATE' ? realEstateAction : null,
+      },
       seller: {
         id: user.id,
         username: user.username,
@@ -256,6 +317,13 @@ export const ListingWizard: React.FC = () => {
   };
 
   const selectedCategoryObj = categories.find((c) => c.id === categoryId);
+  const availableCategories = categories.filter((category) => {
+    if (offerType === 'BOATS') return category.id === 'boats';
+    if (offerType === 'AUTO_MOTOR') return category.id === 'auto-motor';
+    if (offerType === 'REAL_ESTATE') return category.id === 'real-estate';
+    if (offerType === 'PRIVATE') return !['auto-motor', 'boats', 'real-estate'].includes(category.id);
+    return !['auto-motor', 'boats', 'real-estate'].includes(category.id);
+  });
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-16 space-y-16">
@@ -298,57 +366,51 @@ export const ListingWizard: React.FC = () => {
         {step === 1 && (
           <div className="space-y-8 animate-fade-in">
             <h2 className="font-serif font-bold text-2xl text-[#171A17] dark:text-white text-center mb-8">
-              {t.step1Question}
+              Welche Art von Anzeige möchtest du erstellen?
             </h2>
-            <div className="flex flex-col gap-4">
-              <button
-                type="button"
-                onClick={() => setType('SELL')}
-                className={`py-6 px-8 border-b-2 text-left transition-all flex items-center justify-between group ${
-                  type === 'SELL'
-                    ? 'border-[#123D2A] dark:border-white'
-                    : 'border-transparent border-b-gray-200 dark:border-b-white/10 hover:border-gray-400'
-                }`}
-              >
-                <div>
-                  <h3 className={`font-serif font-bold text-xl mb-1 ${type === 'SELL' ? 'text-[#123D2A] dark:text-white' : 'text-[#171A17] dark:text-gray-300'}`}>{t.typeSell}</h3>
-                  <p className="font-sans text-xs uppercase tracking-widest text-gray-500">{t.step1SellDesc}</p>
-                </div>
-                {type === 'SELL' && <Check className="w-5 h-5 text-[#123D2A] dark:text-white" />}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setType('FREE')}
-                className={`py-6 px-8 border-b-2 text-left transition-all flex items-center justify-between group ${
-                  type === 'FREE'
-                    ? 'border-[#123D2A] dark:border-white'
-                    : 'border-transparent border-b-gray-200 dark:border-b-white/10 hover:border-gray-400'
-                }`}
-              >
-                <div>
-                  <h3 className={`font-serif font-bold text-xl mb-1 ${type === 'FREE' ? 'text-[#123D2A] dark:text-white' : 'text-[#171A17] dark:text-gray-300'}`}>{t.typeFree}</h3>
-                  <p className="font-sans text-xs uppercase tracking-widest text-gray-500">{t.step1FreeDesc}</p>
-                </div>
-                {type === 'FREE' && <Check className="w-5 h-5 text-[#123D2A] dark:text-white" />}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setType('WANTED')}
-                className={`py-6 px-8 border-b-2 text-left transition-all flex items-center justify-between group ${
-                  type === 'WANTED'
-                    ? 'border-[#123D2A] dark:border-white'
-                    : 'border-transparent border-b-gray-200 dark:border-b-white/10 hover:border-gray-400'
-                }`}
-              >
-                <div>
-                  <h3 className={`font-serif font-bold text-xl mb-1 ${type === 'WANTED' ? 'text-[#123D2A] dark:text-white' : 'text-[#171A17] dark:text-gray-300'}`}>{t.typeWanted}</h3>
-                  <p className="font-sans text-xs uppercase tracking-widest text-gray-500">{t.step1WantedDesc}</p>
-                </div>
-                {type === 'WANTED' && <Check className="w-5 h-5 text-[#123D2A] dark:text-white" />}
-              </button>
+            <div className="grid grid-cols-1 gap-3">
+              {LISTING_OFFER_OPTIONS.map((offer) => {
+                const isSelected = offerType === offer.id;
+                const Icon = offer.id === 'PRIVATE' ? Gift : offer.id === 'COMMERCIAL' ? BriefcaseBusiness : offer.id === 'BOATS' ? Ship : offer.id === 'AUTO_MOTOR' ? CarFront : Building2;
+                return (
+                  <button
+                    key={offer.id}
+                    type="button"
+                    onClick={() => chooseOfferType(offer.id)}
+                    className={`flex items-center gap-5 border px-5 py-5 text-left transition-colors ${isSelected ? 'border-[#123D2A] bg-[#123D2A] text-white dark:border-[#F4C430] dark:bg-[#F4C430] dark:text-[#171A17]' : 'border-gray-200 hover:border-[#123D2A] dark:border-white/10 dark:hover:border-[#F4C430]'}`}
+                  >
+                    <Icon className={`h-7 w-7 shrink-0 ${isSelected ? 'text-[#F4C430] dark:text-[#123D2A]' : 'text-[#123D2A] dark:text-[#F4C430]'}`} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-serif text-xl font-bold">{offer.title}</span>
+                      <span className={`mt-1 block text-xs ${isSelected ? 'text-white/75 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{offer.description}</span>
+                    </span>
+                    <span className="shrink-0 text-right text-[10px] font-bold uppercase tracking-widest">
+                      <span className="block">{offer.feeLabel}</span>
+                      <span className={`mt-1 block font-normal tracking-normal ${isSelected ? 'text-white/70 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{offer.durationLabel}</span>
+                    </span>
+                    {isSelected && <Check className="h-5 w-5 shrink-0" />}
+                  </button>
+                );
+              })}
             </div>
+
+            {offerType === 'PRIVATE' && (
+              <div className="border-t border-gray-200 pt-7 dark:border-white/10">
+                <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">Was möchtest du anbieten?</p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  {[
+                    { id: 'SELL' as const, title: t.typeSell, description: t.step1SellDesc },
+                    { id: 'FREE' as const, title: t.typeFree, description: t.step1FreeDesc },
+                    { id: 'WANTED' as const, title: t.typeWanted, description: t.step1WantedDesc },
+                  ].map((item) => (
+                    <button key={item.id} type="button" onClick={() => setType(item.id)} className={`border px-4 py-4 text-left ${type === item.id ? 'border-[#123D2A] text-[#123D2A] dark:border-[#F4C430] dark:text-[#F4C430]' : 'border-gray-200 text-gray-500 dark:border-white/10'}`}>
+                      <span className="block font-bold">{item.title}</span>
+                      <span className="mt-1 block text-[10px] uppercase tracking-widest">{item.description}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -361,7 +423,7 @@ export const ListingWizard: React.FC = () => {
               {t.step2SelectCat}
             </h2>
             <div className="grid grid-cols-2 gap-x-8 gap-y-4 max-h-96 overflow-y-auto">
-              {categories.map((c) => {
+              {availableCategories.map((c) => {
                 const isSelected = categoryId === c.id;
                 return (
                   <button
@@ -409,6 +471,36 @@ export const ListingWizard: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {offerType === 'REAL_ESTATE' && (
+              <div className="border-t border-gray-200 pt-8 dark:border-white/10">
+                <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">Art des Inserats</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {(['SELL', 'RENT'] as const).map((action) => (
+                    <button key={action} type="button" onClick={() => setRealEstateAction(action)} className={`border px-5 py-4 text-left ${realEstateAction === action ? 'border-[#123D2A] bg-[#123D2A] text-white dark:border-[#F4C430] dark:bg-[#F4C430] dark:text-[#171A17]' : 'border-gray-200 text-gray-500 dark:border-white/10'}`}>
+                      <span className="block font-serif text-lg font-bold">{action === 'SELL' ? 'Verkaufen' : 'Vermieten'}</span>
+                      <span className="mt-1 block text-xs">€ {getListingFee(offerType, subcategoryId, action).toFixed(2)} · 30 Tage</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {offerType === 'AUTO_MOTOR' && (
+              <div className="border-t border-gray-200 pt-8 dark:border-white/10">
+                <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">Fahrzeugbereich</p>
+                <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                  {AUTO_MOTOR_CATEGORIES.filter((item) => item.id === subcategoryId).map((item) => <p key={item.id}>{item.description}</p>)}
+                  <p className="font-bold text-[#123D2A] dark:text-[#F4C430]">Inseratspreis: Ab € 0</p>
+                </div>
+              </div>
+            )}
+
+            {offerType === 'BOATS' && (
+              <div className="border-t border-gray-200 pt-8 text-sm text-gray-600 dark:border-white/10 dark:text-gray-300">
+                <p>Boote, Yachten und Jetskis werden 60 Tage für € 44,99 veröffentlicht.</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -422,7 +514,7 @@ export const ListingWizard: React.FC = () => {
                 {t.wizardStep3}
               </h2>
               <p className="font-sans text-[10px] uppercase tracking-widest text-gray-500 mt-2">
-                {images.length} von {config.maxPhotosPerListing} • {t.step3UploadNotice}
+                {images.length} von {Number.isFinite(maxPhotos) ? maxPhotos : 'unbegrenzt'} • {t.step3UploadNotice}
               </p>
             </div>
 
@@ -565,8 +657,76 @@ export const ListingWizard: React.FC = () => {
               </div>
             </div>
 
+            {offerType !== 'PRIVATE' && (
+              <div className="space-y-6 border-y border-gray-200 py-7 dark:border-white/10">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">Spezifische Angaben</p>
+                  <p className="mt-2 text-sm text-gray-500">Diese Angaben helfen Interessenten, das Angebot schnell und verlässlich einzuschätzen.</p>
+                </div>
+
+                {offerType === 'COMMERCIAL' && (
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <DetailInput label="Unternehmen / Anbieter *" value={details.companyName} onChange={(value) => updateDetail('companyName', value)} />
+                    <DetailInput label="Ansprechperson *" value={details.contactName} onChange={(value) => updateDetail('contactName', value)} />
+                    <DetailInput label="Geschäftliche E-Mail *" type="text" value={details.businessEmail} onChange={(value) => updateDetail('businessEmail', value)} />
+                    <DetailInput label="UID-Nummer" value={details.vatId} onChange={(value) => updateDetail('vatId', value)} placeholder="ATU..." />
+                    <DetailInput label="Website" value={details.website} onChange={(value) => updateDetail('website', value)} placeholder="https://" />
+                  </div>
+                )}
+
+                {offerType === 'BOATS' && (
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <DetailInput label="Hersteller *" value={details.manufacturer} onChange={(value) => updateDetail('manufacturer', value)} />
+                    <DetailInput label="Modell *" value={details.model} onChange={(value) => updateDetail('model', value)} />
+                    <DetailInput label="Baujahr" type="number" value={details.year} onChange={(value) => updateDetail('year', value)} />
+                    <DetailInput label="Länge in Metern" type="number" value={details.lengthMeters} onChange={(value) => updateDetail('lengthMeters', value)} />
+                    <DetailInput label="Motorleistung in PS" type="number" value={details.enginePower} onChange={(value) => updateDetail('enginePower', value)} />
+                    <DetailInput label="Motorstunden" type="number" value={details.engineHours} onChange={(value) => updateDetail('engineHours', value)} />
+                    <DetailInput label="Liegeplatz / Standort" value={details.berth} onChange={(value) => updateDetail('berth', value)} />
+                    <DetailInput label="Treibstoff" value={details.fuel} onChange={(value) => updateDetail('fuel', value)} placeholder="Benzin, Diesel, Elektro" />
+                  </div>
+                )}
+
+                {offerType === 'AUTO_MOTOR' && (
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <DetailInput label="Marke *" value={details.make} onChange={(value) => updateDetail('make', value)} />
+                    <DetailInput label="Modell *" value={details.model} onChange={(value) => updateDetail('model', value)} />
+                    <DetailInput label="Erstzulassung" type="date" value={details.firstRegistration} onChange={(value) => updateDetail('firstRegistration', value)} />
+                    <DetailInput label="Kilometerstand" type="number" value={details.mileage} onChange={(value) => updateDetail('mileage', value)} />
+                    <DetailInput label="Leistung in PS" type="number" value={details.power} onChange={(value) => updateDetail('power', value)} />
+                    <DetailInput label="Kraftstoff" value={details.fuel} onChange={(value) => updateDetail('fuel', value)} placeholder="Benzin, Diesel, Hybrid" />
+                    <DetailInput label="Getriebe" value={details.transmission} onChange={(value) => updateDetail('transmission', value)} placeholder="Automatik oder Schaltung" />
+                    <DetailInput label="Pickerl / HU gültig bis" type="date" value={details.inspectionValidUntil} onChange={(value) => updateDetail('inspectionValidUntil', value)} />
+                  </div>
+                )}
+
+                {offerType === 'REAL_ESTATE' && (
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <DetailInput label="Wohnfläche / Nutzfläche in m² *" type="number" value={details.livingAreaSqm} onChange={(value) => updateDetail('livingAreaSqm', value)} />
+                    <DetailInput label="Grundstücksfläche in m²" type="number" value={details.plotAreaSqm} onChange={(value) => updateDetail('plotAreaSqm', value)} />
+                    <DetailInput label="Zimmer" type="number" value={details.rooms} onChange={(value) => updateDetail('rooms', value)} />
+                    <DetailInput label="Schlafzimmer" type="number" value={details.bedrooms} onChange={(value) => updateDetail('bedrooms', value)} />
+                    <DetailInput label="Baujahr" type="number" value={details.yearBuilt} onChange={(value) => updateDetail('yearBuilt', value)} />
+                    <DetailInput label="Etage" value={details.floor} onChange={(value) => updateDetail('floor', value)} placeholder="EG, 1. OG, Dachgeschoss" />
+                    <DetailInput label="Heizung" value={details.heating} onChange={(value) => updateDetail('heating', value)} placeholder="Gas, Fernwärme, Wärmepumpe" />
+                    <DetailInput label="Parkplätze / Stellplätze" type="number" value={details.parkingSpaces} onChange={(value) => updateDetail('parkingSpaces', value)} />
+                    <DetailInput label={realEstateAction === 'SELL' ? 'Kaufpreis (€) *' : 'Monatlicher Mietpreis (€) *'} type="number" value={price} onChange={setPrice} />
+                    <DetailInput label="Verfügbar ab" type="date" value={details.availableFrom} onChange={(value) => updateDetail('availableFrom', value)} />
+                  </div>
+                )}
+
+                <div className="border-t border-gray-200 pt-5 dark:border-white/10">
+                  <div className="flex items-center justify-between gap-4 text-sm">
+                    <span className="text-gray-500">Anzeigenpreis</span>
+                    <span className="font-bold text-[#123D2A] dark:text-[#F4C430]">€ {listingFee.toFixed(2)} · {listingDurationDays} Tage</span>
+                  </div>
+                  {offerType === 'REAL_ESTATE' && <p className="mt-2 text-xs text-gray-500">Immobilienanzeigen erlauben unbegrenzt viele Bilder.</p>}
+                </div>
+              </div>
+            )}
+
             {/* PREIS ODER BUDGET */}
-            {type === 'SELL' && (
+            {type === 'SELL' && offerType !== 'REAL_ESTATE' && (
               <div className="space-y-2 pt-4 border-t border-gray-200 dark:border-white/10">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   Preis (€) *
