@@ -3,7 +3,7 @@ import {
   Report, PlatformConfig, NotificationItem, Language, ListingStatus
 } from '../types';
 import { 
-  INITIAL_USERS, INITIAL_LISTINGS, INITIAL_CONVERSATIONS, 
+  INITIAL_LISTINGS, INITIAL_CONVERSATIONS,
   INITIAL_SAVED_SEARCHES, INITIAL_REPORTS, INITIAL_CONFIG
 } from './mockData';
 
@@ -21,6 +21,8 @@ const STORAGE_KEYS = {
   LANGUAGE: 'behalal_language_v1',
   THEME: 'behalal_theme_v1',
 };
+
+const DEMO_USER_IDS = new Set(['user-amina', 'user-bilal', 'user-fatima', 'user-mod-tariq', 'user-admin']);
 
 // Initial messages for mock conversations
 const INITIAL_MESSAGES: Message[] = [
@@ -104,13 +106,18 @@ class StorageService {
   public getUsers(): User[] {
     const raw = localStorage.getItem(STORAGE_KEYS.USERS);
     if (!raw) {
-      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
-      return INITIAL_USERS;
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([]));
+      return [];
     }
     try {
-      return JSON.parse(raw);
+      const users = JSON.parse(raw) as User[];
+      const realUsers = users.filter((user) => !DEMO_USER_IDS.has(user.id));
+      if (realUsers.length !== users.length) {
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(realUsers));
+      }
+      return realUsers;
     } catch {
-      return INITIAL_USERS;
+      return [];
     }
   }
 

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Search, Heart, MessageSquare, PlusCircle, 
   ChevronDown, Sun, Moon, Globe, User as UserIcon, 
-  LogOut, ShieldAlert, Sparkles, Layers, X
+  LogOut, ShieldAlert, Layers, X
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
@@ -20,7 +20,6 @@ export const MarketplaceHeader: React.FC = () => {
     setSelectedCategory,
     categories,
     unreadMessagesCount,
-    setShowUserSwitcher,
     logout,
     t,
   } = useApp();
@@ -291,12 +290,6 @@ export const MarketplaceHeader: React.FC = () => {
                       <button onClick={() => { logout(); setShowUserMenu(false); }} className="w-full px-5 py-3 text-left text-xs font-bold uppercase tracking-widest text-red-600 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                         {t.logout}
                       </button>
-                      <div className="border-t border-[#171A17] dark:border-white/20">
-                        <button onClick={() => { setShowUserSwitcher(true); setShowUserMenu(false); }} className="w-full px-5 py-3 flex items-center gap-2 text-left text-xs font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430] hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
-                          <Sparkles className="w-3.5 h-3.5" />
-                          <span>{t.switchUserDemo}</span>
-                        </button>
-                      </div>
                     </div>
                   )}
                 </div>

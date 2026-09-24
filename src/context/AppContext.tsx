@@ -55,7 +55,6 @@ interface AppContextType {
   favorites: string[];
   unreadMessagesCount: number;
   unreadNotificationsCount: number;
-  showUserSwitcher: boolean;
   
   // Actions
   setUser: (user: User | null) => void;
@@ -67,8 +66,6 @@ interface AppContextType {
   setSelectedCategory: (catId: string | null, subId?: string | null) => void;
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
   removeToast: (id: string) => void;
-  switchUser: (userId: string | null) => void;
-  setShowUserSwitcher: (show: boolean) => void;
   refreshState: () => void;
   toggleFavorite: (listingId: string) => boolean;
   isFavorite: (listingId: string) => boolean;
@@ -92,7 +89,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [categories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [config, setConfig] = useState<PlatformConfig>(storage.getConfig());
   const [toasts, setToasts] = useState<ToastInfo[]>([]);
-  const [showUserSwitcher, setShowUserSwitcher] = useState(false);
   const [favoritesList, setFavoritesList] = useState<string[]>(user ? storage.getFavorites(user.id) : []);
 
   // Sync with storage on mount and updates
@@ -227,20 +223,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const switchUser = (userId: string | null) => {
-    storage.setCurrentUser(userId);
-    const newUser = storage.getCurrentUser();
-    setUser(newUser);
-    if (newUser) {
-      setFavoritesList(storage.getFavorites(newUser.id));
-      showToast(`Eingeloggt als ${newUser.firstName} (${newUser.role})`, 'info');
-    } else {
-      setFavoritesList([]);
-      showToast('Gast-Modus aktiviert (Abgemeldet)', 'info');
-      setCurrentRoute('home');
-    }
-  };
-
   const logout = () => {
     void createClient().auth.signOut();
     storage.setCurrentUser(null);
@@ -296,7 +278,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         favorites: favoritesList,
         unreadMessagesCount,
         unreadNotificationsCount,
-        showUserSwitcher,
         setUser,
         setConfig,
         navigate,
@@ -306,8 +287,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setSelectedCategory,
         showToast,
         removeToast,
-        switchUser,
-        setShowUserSwitcher,
         refreshState,
         toggleFavorite,
         isFavorite,

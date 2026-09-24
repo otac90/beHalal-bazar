@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { 
   ShieldCheck, ShieldAlert, Check, X, Trash2, Plus, 
-  AlertTriangle, Users, Package, FileText, Ban, Sparkles 
+  AlertTriangle, Users, Package, FileText, Ban
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { storage } from '../services/storage';
 import { Report } from '../types';
 
 export const AdminModerationPage: React.FC = () => {
-  const { user, setUser, config, setConfig, showToast, navigate, t } = useApp();
+  const { user, config, setConfig, showToast, navigate, t } = useApp();
 
   const [reports, setReports] = useState<Report[]>(storage.getReports());
   const [newKeyword, setNewKeyword] = useState('');
@@ -18,15 +18,6 @@ export const AdminModerationPage: React.FC = () => {
   const allUsers = storage.getUsers();
 
   const isAdminOrMod = user?.role === 'ADMIN' || user?.role === 'MODERATOR';
-
-  const handleMakeMeAdmin = () => {
-    const adminPersona = allUsers.find((u) => u.role === 'ADMIN') || allUsers[0];
-    if (adminPersona) {
-      storage.setCurrentUser(adminPersona);
-      setUser(adminPersona);
-      showToast('Du bist nun als Administrator angemeldet.', 'success');
-    }
-  };
 
   const handleResolveReport = (reportId: string, action: 'DISMISSED' | 'DELETED_LISTING' | 'BANNED_USER') => {
     const rep = reports.find((r) => r.id === reportId);
@@ -87,14 +78,8 @@ export const AdminModerationPage: React.FC = () => {
           Zugang nur für Moderatoren & Admins
         </h2>
         <p className="text-xs text-gray-500">
-          Dieser Bereich ist dem ONLINE BAZAR Plattform-Team vorbehalten. Zu Testzwecken kannst du mit einem Klick zur Administrator-Rolle wechseln.
+          Dieser Bereich ist dem ONLINE BAZAR Plattform-Team vorbehalten.
         </p>
-        <button
-          onClick={handleMakeMeAdmin}
-          className="px-5 py-2.5 rounded-xl bg-[#123D2A] text-[#F5C518] text-xs font-bold shadow-md hover:bg-[#0D2C1E]"
-        >
-          Als Administrator anmelden (Test)
-        </button>
       </div>
     );
   }

@@ -9,7 +9,6 @@ import { MarketplaceHeader } from './components/layout/MarketplaceHeader';
 import { MobileNav } from './components/layout/MobileNav';
 import { Footer } from './components/layout/Footer';
 import { Toast } from './components/common/Toast';
-import { UserSwitcherModal } from './components/layout/UserSwitcherModal';
 
 // Pages
 import { HomePage } from './pages/HomePage';
@@ -95,7 +94,6 @@ const MainContent: React.FC = () => {
       <Footer />
       <MobileNav />
       <Toast />
-      <UserSwitcherModal />
     </div>
   );
 };

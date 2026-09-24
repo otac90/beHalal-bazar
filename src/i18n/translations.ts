@@ -18,7 +18,6 @@ export const TRANSLATIONS = {
     myAccount: 'Mein Konto',
     adminPanel: 'Admin & Moderation',
     notifications: 'Benachrichtigungen',
-    switchUserDemo: 'Demo-Nutzer wechseln',
     guestView: 'Gast-Ansicht (Abgemeldet)',
     
     // Auth & Access Barrier
@@ -49,7 +48,6 @@ export const TRANSLATIONS = {
     verifyEmailDesc: 'Wir haben einen Bestätigungscode an deine E-Mail gesendet. Bitte bestätige deine E-Mail, um vollen Zugang zum Marktplatz zu erhalten.',
     verifyNow: 'Code bestätigen & Freischalten',
     resendCode: 'Code erneut senden',
-    demoInstantVerify: 'Demo: Sofort als verifiziert markieren',
 
     // Listing Types & Conditions
     typeSell: 'Verkauf',
@@ -354,7 +352,6 @@ export const TRANSLATIONS = {
     myAccount: 'My Account',
     adminPanel: 'Admin & Moderation',
     notifications: 'Notifications',
-    switchUserDemo: 'Switch Demo User',
     guestView: 'Guest View (Logged Out)',
 
     // Auth & Access Barrier
@@ -385,7 +382,6 @@ export const TRANSLATIONS = {
     verifyEmailDesc: 'We sent a verification code to your email. Please verify to access the marketplace.',
     verifyNow: 'Confirm Code & Unlock',
     resendCode: 'Resend Code',
-    demoInstantVerify: 'Demo: Instant Verify',
 
     // Listing Types & Conditions
     typeSell: 'For Sale',

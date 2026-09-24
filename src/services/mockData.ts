@@ -1,6 +1,6 @@
 import { User, Listing, Conversation, SavedSearch, Report, PlatformConfig } from '../types';
 
-export const INITIAL_USERS: User[] = [
+const LEGACY_DEMO_USERS: User[] = [
   {
     id: 'user-amina',
     email: 'amina.k@behalal-community.at',
