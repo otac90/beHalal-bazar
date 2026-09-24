@@ -11,6 +11,7 @@ import {
 } from '../../types';
 import { storage } from '../../services/storage';
 import { checkListingModeration } from '../../services/moderation';
+import { createListingWithImages } from '../../utils/supabase/marketplace';
 
 export const ListingWizard: React.FC = () => {
   const { user, categories, navigate, showToast, config, t, language } = useApp();
@@ -21,14 +22,8 @@ export const ListingWizard: React.FC = () => {
   const [type, setType] = useState<ListingType>('SELL');
   const [categoryId, setCategoryId] = useState<string>('baby-kids');
   const [subcategoryId, setSubcategoryId] = useState<string>('strollers');
-  const [images, setImages] = useState<ListingImage[]>([
-    {
-      id: 'img-new-1',
-      url: 'https://images.unsplash.com/photo-1591088398332-8a7791972843?w=800&auto=format&fit=crop&q=80',
-      sortOrder: 0,
-      isCover: true,
-    }
-  ]);
+  const [images, setImages] = useState<ListingImage[]>([]);
+  const [pendingImageFiles, setPendingImageFiles] = useState<Record<string, File>>({});
   const [title, setTitle] = useState('');
   const [brand, setBrand] = useState('');
   const [description, setDescription] = useState('');
@@ -69,13 +64,42 @@ export const ListingWizard: React.FC = () => {
   };
 
   const handleFileUploadSimulation = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      // In browser environment, generate local Object URL or pick sample photo
-      const randomStock = sampleStockImages[Math.floor(Math.random() * sampleStockImages.length)];
-      handleAddImage(randomStock);
-      showToast('Foto erfolgreich hinzugefügt (EXIF bereinigt).', 'success');
+    const files = (Array.from(e.target.files ?? []) as File[]).filter((file) => file.type.startsWith('image/'));
+    const availableSlots = config.maxPhotosPerListing - images.length;
+
+    if (files.length === 0) {
+      showToast('Bitte wähle eine Bilddatei aus.', 'warning');
+      return;
     }
+
+    if (availableSlots <= 0) {
+      showToast(`Maximal ${config.maxPhotosPerListing} Bilder erlaubt.`, 'warning');
+      return;
+    }
+
+    const selectedFiles = files.slice(0, availableSlots);
+    const newImages = selectedFiles.map((file, index) => {
+      const id = `upload-${Date.now()}-${index}-${Math.random()}`;
+      return {
+        id,
+        url: URL.createObjectURL(file),
+        sortOrder: images.length + index,
+        isCover: images.length === 0 && index === 0,
+      };
+    });
+
+    setImages((currentImages) => [...currentImages, ...newImages]);
+    setPendingImageFiles((currentFiles) => ({
+      ...currentFiles,
+      ...Object.fromEntries(newImages.map((image, index) => [image.id, selectedFiles[index]])),
+    }));
+    showToast(`${selectedFiles.length} Foto${selectedFiles.length === 1 ? '' : 's'} ausgewählt.`, 'success');
+
+    if (files.length > selectedFiles.length) {
+      showToast(`Nur ${config.maxPhotosPerListing} Bilder sind pro Inserat erlaubt.`, 'warning');
+    }
+
+    e.target.value = '';
   };
 
   const handleSetCover = (id: string) => {
@@ -83,11 +107,20 @@ export const ListingWizard: React.FC = () => {
   };
 
   const handleDeleteImage = (id: string) => {
+    const imageToDelete = images.find((image) => image.id === id);
+    if (imageToDelete && pendingImageFiles[id]) {
+      URL.revokeObjectURL(imageToDelete.url);
+    }
     const filtered = images.filter((img) => img.id !== id);
     if (filtered.length > 0 && !filtered.some((img) => img.isCover)) {
-      filtered[0].isCover = true;
+      filtered[0] = { ...filtered[0], isCover: true };
     }
     setImages(filtered);
+    setPendingImageFiles((currentFiles) => {
+      const nextFiles = { ...currentFiles };
+      delete nextFiles[id];
+      return nextFiles;
+    });
   };
 
   const handleValidateStep4 = () => {
@@ -147,7 +180,7 @@ export const ListingWizard: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (!user) {
       showToast(t.closedCommunityNotice, 'warning');
       navigate('login');
@@ -160,8 +193,8 @@ export const ListingWizard: React.FC = () => {
     const parsedPrice = isFree ? 0 : Number(price) || 0;
     const parsedBudget = type === 'WANTED' ? Number(maxBudget) || parsedPrice : undefined;
 
-    const newListing: Listing = {
-      id: `lst-${Date.now()}`,
+    const draft: Listing = {
+      id: '',
       userId: user.id,
       type,
       title: title.trim(),
@@ -181,7 +214,7 @@ export const ListingWizard: React.FC = () => {
       status: 'ACTIVE',
       views: 1,
       favoritesCount: 0,
-      images: images.length > 0 ? images : [{ id: 'img-default', url: 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=800', isCover: true, sortOrder: 0 }],
+      images,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       publishedAt: new Date().toISOString(),
@@ -200,10 +233,26 @@ export const ListingWizard: React.FC = () => {
       },
     };
 
-    storage.saveListing(newListing);
-    setIsSubmitting(false);
-    showToast(t.listingCreatedSuccess, 'success');
-    navigate('listing-detail', { id: newListing.id });
+    try {
+      const persisted = await createListingWithImages(
+        { ...draft, status: 'ACTIVE' as const },
+        images,
+        Object.entries(pendingImageFiles).map(([id, file]) => ({ id, file: file as File })),
+      );
+      const newListing: Listing = {
+        ...draft,
+        id: persisted.id,
+        images: persisted.images,
+      };
+
+      storage.saveListing(newListing);
+      showToast(t.listingCreatedSuccess, 'success');
+      navigate('listing-detail', { id: newListing.id });
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Das Inserat konnte nicht veröffentlicht werden.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const selectedCategoryObj = categories.find((c) => c.id === categoryId);

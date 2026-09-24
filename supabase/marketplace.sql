@@ -197,3 +197,40 @@ grant select, insert, update, delete on public.listings to authenticated;
 grant select, insert, update, delete on public.listing_images to authenticated;
 grant select, insert, update, delete on public.reviews to authenticated;
 revoke all on function public.refresh_profile_rating() from public;
+
+-- Storage setup for user-uploaded listing images.
+-- The bucket `listing-images` must already exist. It is public because listing
+-- image URLs are shown to authenticated marketplace members via getPublicUrl.
+update storage.buckets
+set public = true,
+    file_size_limit = 10485760,
+    allowed_mime_types = array['image/jpeg', 'image/png', 'image/webp']
+where id = 'listing-images';
+
+drop policy if exists "Users can upload their listing images" on storage.objects;
+create policy "Users can upload their listing images"
+  on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'listing-images'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  );
+
+drop policy if exists "Users can update their listing images" on storage.objects;
+create policy "Users can update their listing images"
+  on storage.objects for update to authenticated
+  using (
+    bucket_id = 'listing-images'
+    and owner_id = (select auth.uid())::text
+  )
+  with check (
+    bucket_id = 'listing-images'
+    and owner_id = (select auth.uid())::text
+  );
+
+drop policy if exists "Users can delete their listing images" on storage.objects;
+create policy "Users can delete their listing images"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'listing-images'
+    and owner_id = (select auth.uid())::text
+  );
