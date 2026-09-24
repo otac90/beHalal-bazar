@@ -23,7 +23,7 @@ import {
   RealEstateAction,
 } from '../../data/listingOffers';
 
-const detailInputClass = 'w-full border-b border-gray-300 bg-transparent pb-2 text-sm font-bold text-[#171A17] focus:border-[#123D2A] focus:outline-none dark:border-white/20 dark:text-white dark:focus:border-white';
+const detailInputClass = 'w-full border-2 border-dashed border-[#F4C430] bg-transparent px-3 py-3 text-sm font-bold text-[#171A17] focus:border-[#123D2A] focus:outline-none dark:border-[#F4C430] dark:text-white dark:focus:border-white';
 
 interface DetailInputProps {
   label: string;
@@ -36,9 +36,69 @@ interface DetailInputProps {
 const DetailInput: React.FC<DetailInputProps> = ({ label, value, onChange, type = 'text', placeholder }) => (
   <label className="space-y-2">
     <span className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</span>
-    <input type={type} value={value ?? ''} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className={detailInputClass} />
+    <input
+      type={type}
+      min={type === 'number' ? 0 : undefined}
+      value={value ?? ''}
+      onChange={(event) => {
+        const nextValue = event.target.value;
+        if (type === 'number' && nextValue.startsWith('-')) return;
+        onChange(nextValue);
+      }}
+      placeholder={placeholder}
+      className={detailInputClass}
+    />
   </label>
 );
+
+const PRIVATE_DETAIL_FIELDS: Record<string, { key: string; label: string; type?: 'text' | 'number'; placeholder?: string }[]> = {
+  'fashion-accessories': [
+    { key: 'size', label: 'Größe', placeholder: 'z. B. 38, M, 42' },
+    { key: 'material', label: 'Material' },
+  ],
+  'baby-kids': [
+    { key: 'ageRange', label: 'Alter / Größe', placeholder: 'z. B. 2–3 Jahre oder 98' },
+    { key: 'material', label: 'Material' },
+  ],
+  electronics: [
+    { key: 'model', label: 'Modell / genaue Bezeichnung' },
+    { key: 'storage', label: 'Speicher', placeholder: 'z. B. 256 GB' },
+    { key: 'warranty', label: 'Garantie bis' },
+  ],
+  household: [
+    { key: 'dimensions', label: 'Maße', placeholder: 'Länge × Breite × Höhe' },
+    { key: 'material', label: 'Material' },
+  ],
+  'furniture-living': [
+    { key: 'dimensions', label: 'Maße', placeholder: 'Länge × Breite × Höhe' },
+    { key: 'material', label: 'Material' },
+  ],
+  'sports-leisure': [
+    { key: 'size', label: 'Größe', placeholder: 'Rahmen, Konfektion oder Schuhgröße' },
+    { key: 'material', label: 'Material' },
+  ],
+  'books-media': [
+    { key: 'author', label: 'Autor / Herausgeber' },
+    { key: 'isbn', label: 'ISBN' },
+    { key: 'language', label: 'Sprache' },
+  ],
+  gaming: [
+    { key: 'platform', label: 'Plattform', placeholder: 'PlayStation, Xbox, Switch, PC' },
+    { key: 'edition', label: 'Edition / Version' },
+  ],
+  'auto-accessories': [
+    { key: 'compatibility', label: 'Fahrzeug-Kompatibilität' },
+    { key: 'partNumber', label: 'Teilenummer' },
+  ],
+  'garden-tools': [
+    { key: 'powerSource', label: 'Antrieb', placeholder: 'Akku, Strom, Benzin, Handbetrieb' },
+    { key: 'dimensions', label: 'Maße' },
+  ],
+  other: [
+    { key: 'material', label: 'Material' },
+    { key: 'dimensions', label: 'Maße' },
+  ],
+};
 
 const VEHICLE_ICONS: Record<string, LucideIcon> = {
   cars: CarFront,
@@ -90,6 +150,9 @@ export const ListingWizard: React.FC = () => {
   const maxPhotos = offerType === 'REAL_ESTATE' ? Infinity : config.maxPhotosPerListing;
   const listingFee = getListingFee(offerType, subcategoryId, realEstateAction);
   const listingDurationDays = offerType === 'PRIVATE' ? config.listingExpiryDays : getListingDurationDays(offerType);
+  const showGenericBrand = !['REAL_ESTATE', 'AUTO_MOTOR', 'BOATS'].includes(offerType);
+  const showCondition = offerType !== 'REAL_ESTATE' && !(offerType === 'PRIVATE' && type === 'WANTED');
+  const privateDetailFields = PRIVATE_DETAIL_FIELDS[categoryId] ?? [];
 
   const updateDetail = (key: string, value: string | number | boolean | null) => {
     setDetails((currentDetails) => ({ ...currentDetails, [key]: value }));
@@ -197,6 +260,14 @@ export const ListingWizard: React.FC = () => {
   };
 
   const handleValidateStep4 = () => {
+    const hasNegativeValue = [price, maxBudget, ...Object.values(details)].some((value) => {
+      if (typeof value === 'number') return value < 0;
+      return typeof value === 'string' && /^\s*-/.test(value);
+    });
+    if (hasNegativeValue) {
+      showToast('Negative Werte sind nicht erlaubt.', 'warning');
+      return false;
+    }
     if (!title.trim()) {
       showToast('Bitte gib einen aussagekräftigen Titel an.', 'warning');
       return false;
@@ -679,12 +750,12 @@ export const ListingWizard: React.FC = () => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={t.titleHelp}
-                className="w-full pb-2 font-serif font-bold text-xl bg-transparent border-b border-gray-300 dark:border-white/20 text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors placeholder:font-sans placeholder:text-sm placeholder:tracking-widest"
+                className={`${detailInputClass} font-serif text-xl placeholder:font-sans placeholder:text-sm placeholder:tracking-widest`}
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              <div className="space-y-2">
+              {showGenericBrand && <div className="space-y-2">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   {t.brandField}
                 </label>
@@ -693,18 +764,18 @@ export const ListingWizard: React.FC = () => {
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
                   placeholder="z.B. Apple, IKEA"
-                  className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                  className={detailInputClass}
                 />
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {showCondition && <div className="space-y-2">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   Zustand *
                 </label>
                 <select
                   value={condition}
                   onChange={(e) => setCondition(e.target.value as ListingCondition)}
-                  className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white appearance-none cursor-pointer"
+                  className={detailInputClass}
                 >
                   <option value="NEW" className="dark:bg-[#111511]">{t.conditionNew}</option>
                   <option value="LIKE_NEW" className="dark:bg-[#111511]">{t.conditionLikeNew}</option>
@@ -713,7 +784,7 @@ export const ListingWizard: React.FC = () => {
                   <option value="USED" className="dark:bg-[#111511]">{t.conditionUsed}</option>
                   <option value="DEFECTIVE" className="dark:bg-[#111511]">{t.conditionDefective}</option>
                 </select>
-              </div>
+              </div>}
             </div>
 
             {offerType !== 'PRIVATE' && (
@@ -784,6 +855,43 @@ export const ListingWizard: React.FC = () => {
               </div>
             )}
 
+            {offerType === 'PRIVATE' && type === 'WANTED' && (
+              <div className="space-y-2 border-y border-gray-200 py-6 dark:border-white/10">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">Gewünschter Zustand</label>
+                <select
+                  value={String(details.preferredCondition ?? '')}
+                  onChange={(event) => updateDetail('preferredCondition', event.target.value)}
+                  className={detailInputClass}
+                >
+                  <option value="" className="dark:bg-[#111511]">Beliebig</option>
+                  <option value="NEW" className="dark:bg-[#111511]">Neu</option>
+                  <option value="LIKE_NEW" className="dark:bg-[#111511]">Wie neu</option>
+                  <option value="USED" className="dark:bg-[#111511]">Gebraucht</option>
+                </select>
+              </div>
+            )}
+
+            {offerType === 'PRIVATE' && type !== 'WANTED' && privateDetailFields.length > 0 && (
+              <div className="space-y-6 border-y border-gray-200 py-7 dark:border-white/10">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">Weitere Angaben</p>
+                  <p className="mt-2 text-sm text-gray-500">Optionale Details helfen anderen Mitgliedern bei der Einschätzung.</p>
+                </div>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  {privateDetailFields.map((field) => (
+                    <DetailInput
+                      key={field.key}
+                      label={field.label}
+                      type={field.type}
+                      placeholder={field.placeholder}
+                      value={details[field.key]}
+                      onChange={(value) => updateDetail(field.key, value)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* PREIS ODER BUDGET */}
             {type === 'SELL' && offerType !== 'REAL_ESTATE' && (
               <div className="space-y-2 pt-4 border-t border-gray-200 dark:border-white/10">
@@ -795,10 +903,11 @@ export const ListingWizard: React.FC = () => {
                     <span className="absolute left-0 bottom-2 font-serif font-bold text-2xl text-[#171A17] dark:text-white">€</span>
                     <input
                       type="number"
+                      min="0"
                       value={price}
-                      onChange={(e) => setPrice(e.target.value)}
+                      onChange={(e) => setPrice(e.target.value.startsWith('-') ? '' : e.target.value)}
                       placeholder="0"
-                      className="w-full pl-8 pb-1 font-serif font-bold text-3xl bg-transparent border-b border-gray-300 dark:border-white/20 text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                      className={`${detailInputClass} pl-8 font-serif text-3xl`}
                     />
                   </div>
 
@@ -825,10 +934,11 @@ export const ListingWizard: React.FC = () => {
                   <span className="absolute left-0 bottom-2 font-serif font-bold text-2xl text-[#171A17] dark:text-white">€</span>
                   <input
                     type="number"
+                    min="0"
                     value={maxBudget}
-                    onChange={(e) => setMaxBudget(e.target.value)}
+                    onChange={(e) => setMaxBudget(e.target.value.startsWith('-') ? '' : e.target.value)}
                     placeholder="0"
-                    className="w-full pl-8 pb-1 font-serif font-bold text-3xl bg-transparent border-b border-gray-300 dark:border-white/20 text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                    className={`${detailInputClass} pl-8 font-serif text-3xl`}
                   />
                 </div>
               </div>
@@ -843,7 +953,7 @@ export const ListingWizard: React.FC = () => {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={t.descriptionHelp}
-                className="w-full py-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors resize-none leading-relaxed"
+                className={`${detailInputClass} min-h-32 resize-none leading-relaxed`}
               />
             </div>
           </div>
@@ -946,7 +1056,7 @@ export const ListingWizard: React.FC = () => {
                   value={postalCode}
                   onChange={(e) => setPostalCode(e.target.value)}
                   placeholder="1100"
-                  className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-lg font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                  className={detailInputClass}
                 />
               </div>
 
@@ -959,7 +1069,7 @@ export const ListingWizard: React.FC = () => {
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="Wien"
-                  className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-lg font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                  className={detailInputClass}
                 />
               </div>
             </div>
@@ -971,7 +1081,7 @@ export const ListingWizard: React.FC = () => {
               <select
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
-                className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-lg font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white appearance-none cursor-pointer"
+                className={`${detailInputClass} appearance-none`}
               >
                 <option value="Österreich" className="dark:bg-[#111511]">Österreich</option>
                 <option value="Deutschland" className="dark:bg-[#111511]">Deutschland</option>
