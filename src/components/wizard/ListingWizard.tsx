@@ -499,11 +499,10 @@ export const ListingWizard: React.FC = () => {
                       <span className="block font-serif text-xl font-bold">{offer.title}</span>
                       <span className={`mt-1 block text-xs ${isSelected ? 'text-white/75 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{offer.description}</span>
                     </span>
-                    <span className="shrink-0 border-l-2 border-[#F4C430] pl-4 text-right text-[13px] font-bold uppercase tracking-widest">
-                      <span className="block">{offer.feeLabel}</span>
+                    <span className="shrink-0 text-right text-[13px] font-bold uppercase tracking-widest">
+                      <span className="block text-[#F4C430]">{offer.feeLabel}</span>
                       {offer.durationLabel && <span className={`mt-1 block font-normal tracking-normal ${isSelected ? 'text-white/70 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{offer.durationLabel}</span>}
                     </span>
-                    {isSelected && <Check className="h-5 w-5 shrink-0" />}
                   </button>
                 );
               })}
