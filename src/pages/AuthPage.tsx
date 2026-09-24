@@ -1,23 +1,23 @@
 import React, { useState } from 'react';
 import { 
-  Lock, Mail, ShieldCheck, UserCheck, ArrowRight, 
-  Sparkles, CheckCircle2, UserIcon, KeyRound, AlertTriangle, X, CircleCheck, CircleX
+  Lock, Mail, ShieldCheck, CheckCircle2, AlertTriangle, X, CircleCheck, CircleX
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { storage } from '../services/storage';
+import { createClient } from '../utils/supabase/client';
+import { getProfileForUser } from '../utils/supabase/auth';
 
 interface Props {
   initialMode?: 'login' | 'register' | 'reset';
 }
 
 export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
-  const { setUser, navigate, showToast, t } = useApp();
+  const { navigate, showToast, t } = useApp();
 
   const [mode, setMode] = useState<'login' | 'register' | 'reset'>(initialMode);
   
   // Login form state
-  const [loginEmail, setLoginEmail] = useState('amina.k@example.at');
-  const [loginPassword, setLoginPassword] = useState('password123');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [resetEmail, setResetEmail] = useState('');
 
   // Register form state
@@ -32,8 +32,8 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
   const [regAcceptRules, setRegAcceptRules] = useState(false);
   const [hasReadRules, setHasReadRules] = useState(false);
   const [showRulesModal, setShowRulesModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const sampleUsers = storage.getUsers();
   const passwordChecks = [
     { label: 'Mindestens 8 Zeichen', isValid: regPassword.length >= 8 },
     { label: 'Mindestens 1 Großbuchstabe', isValid: /[A-ZÄÖÜ]/.test(regPassword) },
@@ -43,40 +43,42 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
   const isPasswordStrong = passwordChecks.every((check) => check.isValid);
   const passwordsMatch = regPassword.length > 0 && regPassword === regPasswordRepeat;
 
-  const handleQuickLogin = (userId: string) => {
-    const target = sampleUsers.find((u) => u.id === userId);
-    if (target) {
-      storage.setCurrentUser(target);
-      setUser(target);
-      showToast(`Willkommen zurück, ${target.firstName}!`, 'success');
-      navigate('home');
-    }
-  };
-
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const found = sampleUsers.find((u) => u.email.toLowerCase() === loginEmail.toLowerCase());
-    if (found) {
-      storage.setCurrentUser(found);
-      setUser(found);
-      showToast(`Erfolgreich angemeldet als ${found.firstName}`, 'success');
+    setIsSubmitting(true);
+    const { error } = await createClient().auth.signInWithPassword({
+      email: loginEmail.trim(),
+      password: loginPassword,
+    });
+    setIsSubmitting(false);
+    if (!error) {
+      showToast('Erfolgreich angemeldet.', 'success');
       navigate('home');
     } else {
-      showToast('E-Mail oder Passwort nicht erkannt. Wähle ein Test-Profil.', 'error');
+      showToast(error.message, 'error');
     }
   };
 
-  const handleResetSubmit = (e: React.FormEvent) => {
+  const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!resetEmail.trim()) {
       showToast('Bitte gib deine E-Mail-Adresse ein.', 'warning');
+      return;
+    }
+    setIsSubmitting(true);
+    const { error } = await createClient().auth.resetPasswordForEmail(resetEmail.trim(), {
+      redirectTo: window.location.origin,
+    });
+    setIsSubmitting(false);
+    if (error) {
+      showToast(error.message, 'error');
       return;
     }
     showToast('Wenn die E-Mail-Adresse registriert ist, erhältst du eine Nachricht zum Zurücksetzen deines Passworts.', 'success');
     setMode('login');
   };
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!regFirstName || !regLastName || !regEmail || !regUsername || !regPassword || !regPasswordRepeat) {
       showToast('Bitte fülle alle Pflichtfelder aus.', 'warning');
@@ -100,34 +102,40 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
       return;
     }
 
-    const newUser = {
-      id: `usr-${Date.now()}`,
-      username: regUsername.toLowerCase().trim(),
+    setIsSubmitting(true);
+    const { data, error } = await createClient().auth.signUp({
       email: regEmail.trim(),
-      firstName: regFirstName.trim(),
-      lastName: regLastName.trim(),
-      postalCode: regPostalCode.trim(),
-      city: regCity.trim(),
-      country: 'Österreich',
-      language: 'de' as const,
-      role: 'MEMBER' as const,
-      status: 'ACTIVE' as const,
-      avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160`,
-      ratingAverage: 5.0,
-      ratingCount: 0,
-      responseRate: 'Neu in der Community',
-      activeListingsCount: 0,
-      blockedUserIds: [],
-      emailVerified: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+      password: regPassword,
+      options: {
+        emailRedirectTo: window.location.origin,
+        data: {
+          username: regUsername.toLowerCase().trim(),
+          first_name: regFirstName.trim(),
+          last_name: regLastName.trim(),
+          postal_code: regPostalCode.trim(),
+          city: regCity.trim(),
+        },
+      },
+    });
+    setIsSubmitting(false);
 
-    const saved = storage.addUser(newUser);
-    storage.setCurrentUser(saved);
-    setUser(saved);
-    showToast('Konto erfolgreich erstellt und verifiziert! Willkommen bei ONLINE BAZAR.', 'success');
-    navigate('home');
+    if (error) {
+      showToast(error.message, 'error');
+      return;
+    }
+
+    if (data.user && data.session) {
+      try {
+        await getProfileForUser(data.user);
+        showToast('Konto erfolgreich erstellt. Willkommen bei Be Halal Bazar.', 'success');
+        navigate('home');
+      } catch (profileError) {
+        showToast(profileError instanceof Error ? profileError.message : 'Dein Profil konnte nicht geladen werden.', 'error');
+      }
+    } else {
+      showToast('Konto erstellt. Bitte bestätige zuerst deine E-Mail-Adresse.', 'success');
+      setMode('login');
+    }
   };
 
   return (
@@ -220,6 +228,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
 
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="w-full py-4 bg-[#F4C430] text-[#123D2A] text-[11px] font-bold uppercase tracking-widest hover:bg-[#E4B528] transition-colors"
               >
                 Anmelden
@@ -259,6 +268,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
               <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3">
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="py-4 bg-[#F4C430] text-[#123D2A] text-[11px] font-bold uppercase tracking-widest hover:bg-[#E4B528] transition-colors"
                 >
                   Nachricht senden
@@ -453,6 +463,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
 
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="w-full py-4 bg-[#F4C430] text-[#123D2A] text-[11px] font-bold uppercase tracking-widest hover:bg-[#E4B528] transition-colors"
               >
                 Konto erstellen & loslegen
@@ -477,35 +488,14 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
           </div>
 
           <div className="space-y-6">
-            {sampleUsers.map((u) => (
-              <button
-                key={u.id}
-                onClick={() => handleQuickLogin(u.id)}
-                className="w-full pb-6 border-b border-gray-200 dark:border-white/10 flex items-center justify-between text-left group hover:opacity-70 transition-opacity"
-              >
-                <div className="flex items-center gap-6">
-                  <img
-                    src={u.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120'}
-                    alt=""
-                    className="w-16 h-16 object-cover grayscale group-hover:grayscale-0 transition-all"
-                  />
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className="font-serif font-bold text-xl text-[#171A17] dark:text-white">
-                        {u.firstName} {u.lastName.charAt(0)}.
-                      </span>
-                      <span className="text-[9px] px-2 py-1 uppercase tracking-widest bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 font-bold">
-                        {u.role}
-                      </span>
-                    </div>
-                    <span className="font-sans text-[10px] uppercase tracking-widest text-gray-500">
-                      {u.city} • {u.ratingAverage} ★ ({u.ratingCount})
-                    </span>
-                  </div>
-                </div>
-                <ArrowRight className="w-5 h-5 text-[#171A17] dark:text-white opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-              </button>
-            ))}
+            <div className="border-y border-gray-200 dark:border-white/10 py-6 space-y-4">
+              <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                Anmeldung und Registrierung werden sicher von Supabase Auth verwaltet. Deine zusätzlichen Profildaten werden separat in <code className="text-xs">public.profiles</code> gespeichert.
+              </p>
+              <p className="text-xs uppercase tracking-widest text-gray-500">
+                Für den ersten Login muss die Profil-Tabelle im Supabase SQL Editor angelegt worden sein.
+              </p>
+            </div>
           </div>
         </div>
 

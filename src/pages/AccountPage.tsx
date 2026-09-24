@@ -7,6 +7,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { storage } from '../services/storage';
 import { Listing, SavedSearch } from '../types';
+import { updateProfile } from '../utils/supabase/auth';
 
 export const AccountPage: React.FC = () => {
   const { user, setUser, navigate, favorites, showToast, t, language } = useApp();
@@ -77,19 +78,29 @@ export const AccountPage: React.FC = () => {
     }
   };
 
-const handleSaveProfile = (e: React.FormEvent) => {
+const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    const updated = storage.updateUserProfile(user.id, {
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      city: city.trim(),
-      postalCode: postalCode.trim(),
-      bio: bio.trim(),
-      avatarUrl,
-    });
-    if (updated) {
-      setUser(updated);
+    try {
+      await updateProfile(user.id, {
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        city: city.trim(),
+        postal_code: postalCode.trim(),
+        bio: bio.trim() || null,
+        avatar_url: avatarUrl || null,
+      });
+      const updated = storage.updateUserProfile(user.id, {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        city: city.trim(),
+        postalCode: postalCode.trim(),
+        bio: bio.trim(),
+        avatarUrl,
+      });
+      if (updated) setUser(updated);
       showToast(t.profileUpdated, 'success');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Dein Profil konnte nicht gespeichert werden.', 'error');
     }
   };
 
@@ -117,7 +128,7 @@ const handleSaveProfile = (e: React.FormEvent) => {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-8 pb-12 border-b border-[#123D2A]/10 dark:border-white/10">
         <div className="flex items-center gap-6">
           <img
-            src={user.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160'}
+            src={user.avatarUrl || '/assets/default-avatar.svg'}
             alt={user.firstName}
             className="w-24 h-24 object-cover"
           />
@@ -359,7 +370,7 @@ const handleSaveProfile = (e: React.FormEvent) => {
               <div className="flex flex-col sm:flex-row items-center gap-6">
                 <div className="relative group">
                   <img
-                    src={avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200'}
+                    src={avatarUrl || '/assets/default-avatar.svg'}
                     alt={firstName}
                     className="w-24 h-24 rounded-full object-cover grayscale border border-[#123D2A]/10 dark:border-white/10"
                   />

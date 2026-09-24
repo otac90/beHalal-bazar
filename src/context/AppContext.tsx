@@ -3,6 +3,8 @@ import { User, Language, Listing, Category, PlatformConfig } from '../types';
 import { storage } from '../services/storage';
 import { getTranslation } from '../i18n/translations';
 import { INITIAL_CATEGORIES } from '../data/categories';
+import { createClient } from '../utils/supabase/client';
+import { getProfileForUser } from '../utils/supabase/auth';
 
 export type AppRoute = 
   | 'home'
@@ -114,6 +116,48 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return unsub;
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+    const supabase = createClient();
+
+    const syncAuthUser = async (authUser: Awaited<ReturnType<typeof supabase.auth.getUser>>['data']['user']) => {
+      if (!isMounted) return;
+      if (!authUser) {
+        storage.setCurrentUser(null);
+        setUser(null);
+        return;
+      }
+
+      try {
+        const profile = await getProfileForUser(authUser);
+        if (!isMounted) return;
+        if (storage.getUsers().some((storedUser) => storedUser.id === profile.id)) {
+          storage.updateUser(profile);
+        } else {
+          storage.addUser(profile);
+        }
+        storage.setCurrentUser(profile);
+        setUser(profile);
+      } catch (error) {
+        console.error('Supabase profile could not be loaded', error);
+        if (isMounted) {
+          storage.setCurrentUser(null);
+          setUser(null);
+        }
+      }
+    };
+
+    void supabase.auth.getUser().then(({ data }) => syncAuthUser(data.user));
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setTimeout(() => void syncAuthUser(session?.user ?? null), 0);
+    });
+
+    return () => {
+      isMounted = false;
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
   const t = getTranslation(language);
 
   const navigate = (route: AppRoute, params: Record<string, string> = {}) => {
@@ -184,6 +228,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const logout = () => {
+    void createClient().auth.signOut();
     storage.setCurrentUser(null);
     setUser(null);
     setFavoritesList([]);

@@ -58,7 +58,7 @@ export const UserSwitcherModal: React.FC = () => {
               >
                 <div className="flex items-center gap-4">
                   <img
-                    src={u.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}
+                    src={u.avatarUrl || '/assets/default-avatar.svg'}
                     alt={u.firstName}
                     className="w-12 h-12 object-cover border border-[#171A17]/10 dark:border-white/10"
                   />
@@ -144,4 +144,3 @@ export const UserSwitcherModal: React.FC = () => {
     </div>
   );
 };
-

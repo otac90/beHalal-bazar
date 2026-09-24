@@ -58,7 +58,7 @@ export const UserProfilePage: React.FC = () => {
         
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8">
           <img
-            src={targetUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160'}
+            src={targetUser.avatarUrl || '/assets/default-avatar.svg'}
             alt={targetUser.firstName}
             className="w-32 h-32 object-cover rounded-none grayscale"
           />
@@ -165,7 +165,7 @@ export const UserProfilePage: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <img
-                          src={rev.reviewerAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120'}
+                          src={rev.reviewerAvatar || '/assets/default-avatar.svg'}
                           alt=""
                           className="w-12 h-12 rounded-none object-cover grayscale"
                         />

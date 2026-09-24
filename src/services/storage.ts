@@ -117,19 +117,13 @@ class StorageService {
 
   public getCurrentUser(): User | null {
     const currentId = localStorage.getItem(STORAGE_KEYS.CURRENT_USER_ID);
-    const users = this.getUsers();
     if (!currentId) {
-      // Default to Amina for convenient testing
-      const defaultUser = users[0] || null;
-      if (defaultUser) {
-        localStorage.setItem(STORAGE_KEYS.CURRENT_USER_ID, defaultUser.id);
-      }
-      return defaultUser;
+      return null;
     }
     if (currentId === 'guest') {
       return null;
     }
-    return users.find((u) => u.id === currentId) || users[0] || null;
+    return this.getUsers().find((u) => u.id === currentId) || null;
   }
 
   public setCurrentUser(userOrId: string | User | null) {

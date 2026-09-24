@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">Neutrales Profilbild</title>
+  <desc id="desc">Neutrales Personen-Symbol in der Akzentfarbe</desc>
+  <circle cx="80" cy="80" r="80" fill="#FAF2CC"/>
+  <circle cx="80" cy="58" r="25" fill="#F4C430"/>
+  <path d="M34 139c4-29 22-45 46-45s42 16 46 45" fill="#F4C430"/>
+</svg>

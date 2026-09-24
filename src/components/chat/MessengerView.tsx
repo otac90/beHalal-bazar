@@ -181,7 +181,7 @@ export const MessengerView: React.FC = () => {
                     }`}
                   >
                     <img
-                      src={partnerAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120'}
+                      src={partnerAvatar || '/assets/default-avatar.svg'}
                       alt=""
                       className="w-14 h-14 object-cover shrink-0 grayscale hover:grayscale-0 transition-all"
                     />

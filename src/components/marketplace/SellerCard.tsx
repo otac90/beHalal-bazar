@@ -30,7 +30,7 @@ export const SellerCard: React.FC<Props> = ({ seller }) => {
 
       <div className="flex items-center gap-4">
         <img
-          src={seller.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120'}
+          src={seller.avatarUrl || '/assets/default-avatar.svg'}
           alt={seller.firstName}
           className="w-16 h-16 rounded-full object-cover"
         />

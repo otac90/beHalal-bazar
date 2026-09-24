@@ -267,7 +267,7 @@ export const MarketplaceHeader: React.FC = () => {
                     className="flex items-center gap-2 p-1 hover:opacity-80 transition-opacity"
                   >
                     <img
-                      src={user.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}
+                      src={user.avatarUrl || '/assets/default-avatar.svg'}
                       alt={user.firstName}
                       className="w-9 h-9 object-cover grayscale"
                     />
