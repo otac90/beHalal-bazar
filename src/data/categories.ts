@@ -152,7 +152,10 @@ export const INITIAL_CATEGORIES: Category[] = [
     icon: 'Ship',
     name: { de: 'Boote & Yachten', en: 'Boats & Yachts' },
     subcategories: [
-      { id: 'boats-yachts-jetskis', slug: 'boote-yachten-jetskis', name: { de: 'Boote, Yachten & Jetskis', en: 'Boats, Yachts & Jet Skis' } },
+      { id: 'motorboats', slug: 'motorboote', name: { de: 'Motorboote', en: 'Motorboats' } },
+      { id: 'sailboats', slug: 'segelboote', name: { de: 'Segelboote', en: 'Sailboats' } },
+      { id: 'yachts', slug: 'yachten', name: { de: 'Yachten', en: 'Yachts' } },
+      { id: 'jetskis', slug: 'jetskis', name: { de: 'Jetskis', en: 'Jet Skis' } },
     ],
   },
   {

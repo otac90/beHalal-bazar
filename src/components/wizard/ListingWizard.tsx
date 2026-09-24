@@ -3,7 +3,7 @@ import {
   Plus, Upload, Trash2, Check, ArrowRight, ArrowLeft, 
   Sparkles, AlertTriangle, ShieldCheck, Eye, ImageIcon, 
   DollarSign, MapPin, Truck, Package, BriefcaseBusiness, Ship, CarFront, Building2, Gift,
-  Bike, Wrench, House, Map, Palmtree, Warehouse, KeyRound, Tag, type LucideIcon
+  Bike, Wrench, House, Map, Palmtree, Warehouse, KeyRound, Tag, Sailboat, Anchor, Waves, type LucideIcon
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { 
@@ -15,6 +15,7 @@ import { checkListingModeration } from '../../services/moderation';
 import { createListingWithImages } from '../../utils/supabase/marketplace';
 import {
   AUTO_MOTOR_CATEGORIES,
+  BOAT_CATEGORIES,
   getListingDurationDays,
   getListingFee,
   LISTING_OFFER_OPTIONS,
@@ -23,7 +24,7 @@ import {
   RealEstateAction,
 } from '../../data/listingOffers';
 
-const detailInputClass = 'w-full border-2 border-dashed border-[#F4C430] bg-transparent px-3 py-3 text-sm font-bold text-[#171A17] focus:border-[#123D2A] focus:outline-none dark:border-[#F4C430] dark:text-white dark:focus:border-white';
+const detailInputClass = 'w-full border-b border-gray-300 bg-transparent pb-2 text-sm font-bold text-[#171A17] focus:border-[#123D2A] focus:outline-none dark:border-white/20 dark:text-white dark:focus:border-white';
 
 interface DetailInputProps {
   label: string;
@@ -48,6 +49,16 @@ const DetailInput: React.FC<DetailInputProps> = ({ label, value, onChange, type 
       placeholder={placeholder}
       className={detailInputClass}
     />
+  </label>
+);
+
+const NegotiableToggle: React.FC<{ checked: boolean; onChange: (checked: boolean) => void }> = ({ checked, onChange }) => (
+  <label className="flex cursor-pointer items-center gap-3">
+    <span className={`flex h-5 w-5 items-center justify-center border transition-colors ${checked ? 'border-[#123D2A] bg-[#123D2A] dark:border-white dark:bg-white' : 'border-gray-400'}`}>
+      {checked && <Check className="h-3.5 w-3.5 text-white dark:text-[#171A17]" />}
+    </span>
+    <span className={`text-xs uppercase tracking-widest ${checked ? 'font-bold text-[#123D2A] dark:text-white' : 'text-gray-500'}`}>Verhandlungsbasis (VB)</span>
+    <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="sr-only" />
   </label>
 );
 
@@ -108,6 +119,20 @@ const VEHICLE_ICONS: Record<string, LucideIcon> = {
   'spare-parts-accessories': Wrench,
 };
 
+const BOAT_ICONS: Record<string, LucideIcon> = {
+  motorboats: Ship,
+  sailboats: Sailboat,
+  yachts: Anchor,
+  jetskis: Waves,
+};
+
+const VEHICLE_YEARS = Array.from({ length: 77 }, (_, index) => String(new Date().getFullYear() - index));
+const VEHICLE_MILEAGE_RANGES = ['0–10.000 km', '10.001–50.000 km', '50.001–100.000 km', '100.001–150.000 km', 'Über 150.000 km'];
+const MONTHS = [
+  'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+  'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
+];
+
 const REAL_ESTATE_ICONS: Record<string, LucideIcon> = {
   house: House,
   apartment: Building2,
@@ -163,7 +188,7 @@ export const ListingWizard: React.FC = () => {
     setType(nextOffer === 'PRIVATE' ? 'SELL' : 'SELL');
     if (nextOffer === 'BOATS') {
       setCategoryId('boats');
-      setSubcategoryId('boats-yachts-jetskis');
+      setSubcategoryId('motorboats');
     } else if (nextOffer === 'AUTO_MOTOR') {
       setCategoryId('auto-motor');
       setSubcategoryId('cars');
@@ -474,9 +499,9 @@ export const ListingWizard: React.FC = () => {
                       <span className="block font-serif text-xl font-bold">{offer.title}</span>
                       <span className={`mt-1 block text-xs ${isSelected ? 'text-white/75 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{offer.description}</span>
                     </span>
-                    <span className="shrink-0 text-right text-[10px] font-bold uppercase tracking-widest">
+                    <span className="shrink-0 border-l-2 border-[#F4C430] pl-4 text-right text-[13px] font-bold uppercase tracking-widest">
                       <span className="block">{offer.feeLabel}</span>
-                      <span className={`mt-1 block font-normal tracking-normal ${isSelected ? 'text-white/70 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{offer.durationLabel}</span>
+                      {offer.durationLabel && <span className={`mt-1 block font-normal tracking-normal ${isSelected ? 'text-white/70 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{offer.durationLabel}</span>}
                     </span>
                     {isSelected && <Check className="h-5 w-5 shrink-0" />}
                   </button>
@@ -556,6 +581,26 @@ export const ListingWizard: React.FC = () => {
                           <span className="block font-serif text-lg font-bold">{vehicle.title}</span>
                           <span className={`mt-1 block text-xs leading-relaxed ${isSubSelected ? 'text-white/75 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{vehicle.description}</span>
                           <span className={`mt-4 block border-t pt-3 text-[10px] font-bold uppercase tracking-widest ${isSubSelected ? 'border-white/20 text-[#F4C430] dark:border-[#171A17]/20 dark:text-[#123D2A]' : 'border-gray-200 text-[#123D2A] dark:border-white/10 dark:text-[#F4C430]'}`}>Inseratspreis: Ab € 0</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : offerType === 'BOATS' ? (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {BOAT_CATEGORIES.map((boat) => {
+                      const isSubSelected = subcategoryId === boat.id;
+                      const BoatIcon = BOAT_ICONS[boat.id] ?? Ship;
+                      return (
+                        <button
+                          key={boat.id}
+                          type="button"
+                          onClick={() => setSubcategoryId(boat.id)}
+                          className={`border p-4 text-left transition-colors ${isSubSelected ? 'border-[#123D2A] bg-[#123D2A] text-white dark:border-[#F4C430] dark:bg-[#F4C430] dark:text-[#171A17]' : 'border-gray-200 text-[#171A17] hover:border-[#123D2A] dark:border-white/10 dark:text-white dark:hover:border-[#F4C430]'}`}
+                        >
+                          <BoatIcon className={`mb-4 h-7 w-7 ${isSubSelected ? 'text-[#F4C430] dark:text-[#123D2A]' : 'text-[#F4C430]'}`} />
+                          <span className="block font-serif text-lg font-bold">{boat.title}</span>
+                          <span className={`mt-1 block text-xs leading-relaxed ${isSubSelected ? 'text-white/75 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{boat.description}</span>
+                          <span className={`mt-4 block border-t pt-3 text-[10px] font-bold uppercase tracking-widest ${isSubSelected ? 'border-white/20 text-[#F4C430] dark:border-[#171A17]/20 dark:text-[#123D2A]' : 'border-gray-200 text-[#123D2A] dark:border-white/10 dark:text-[#F4C430]'}`}>Inseratspreis: € 44,99 · 60 Tage</span>
                         </button>
                       );
                     })}
@@ -788,7 +833,7 @@ export const ListingWizard: React.FC = () => {
             </div>
 
             {offerType !== 'PRIVATE' && (
-              <div className="space-y-6 border-y border-gray-200 py-7 dark:border-white/10">
+              <div className="space-y-6 border-y-2 border-dashed border-[#F4C430] py-7">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">Spezifische Angaben</p>
                   <p className="mt-2 text-sm text-gray-500">Diese Angaben helfen Interessenten, das Angebot schnell und verlässlich einzuschätzen.</p>
@@ -821,11 +866,37 @@ export const ListingWizard: React.FC = () => {
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <DetailInput label="Marke *" value={details.make} onChange={(value) => updateDetail('make', value)} />
                     <DetailInput label="Modell *" value={details.model} onChange={(value) => updateDetail('model', value)} />
-                    <DetailInput label="Erstzulassung" type="date" value={details.firstRegistration} onChange={(value) => updateDetail('firstRegistration', value)} />
-                    <DetailInput label="Kilometerstand" type="number" value={details.mileage} onChange={(value) => updateDetail('mileage', value)} />
+                    <label className="space-y-2">
+                      <span className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">Baujahr</span>
+                      <select value={String(details.year ?? '')} onChange={(event) => updateDetail('year', event.target.value)} className={`${detailInputClass} appearance-none`}>
+                        <option value="" className="dark:bg-[#111511]">Bitte auswählen</option>
+                        {VEHICLE_YEARS.map((year) => <option key={year} value={year} className="dark:bg-[#111511]">{year}</option>)}
+                      </select>
+                    </label>
+                    <label className="space-y-2">
+                      <span className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">Erstzulassung Monat</span>
+                      <select value={String(details.firstRegistrationMonth ?? '')} onChange={(event) => updateDetail('firstRegistrationMonth', event.target.value)} className={`${detailInputClass} appearance-none`}>
+                        <option value="" className="dark:bg-[#111511]">Bitte auswählen</option>
+                        {MONTHS.map((month, index) => <option key={month} value={String(index + 1).padStart(2, '0')} className="dark:bg-[#111511]">{month}</option>)}
+                      </select>
+                    </label>
+                    <label className="space-y-2">
+                      <span className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">Kilometerstand</span>
+                      <select value={String(details.mileageRange ?? '')} onChange={(event) => updateDetail('mileageRange', event.target.value)} className={`${detailInputClass} appearance-none`}>
+                        <option value="" className="dark:bg-[#111511]">Bitte auswählen</option>
+                        {VEHICLE_MILEAGE_RANGES.map((range) => <option key={range} value={range} className="dark:bg-[#111511]">{range}</option>)}
+                      </select>
+                    </label>
                     <DetailInput label="Leistung in PS" type="number" value={details.power} onChange={(value) => updateDetail('power', value)} />
                     <DetailInput label="Kraftstoff" value={details.fuel} onChange={(value) => updateDetail('fuel', value)} placeholder="Benzin, Diesel, Hybrid" />
-                    <DetailInput label="Getriebe" value={details.transmission} onChange={(value) => updateDetail('transmission', value)} placeholder="Automatik oder Schaltung" />
+                    <label className="space-y-2">
+                      <span className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">Getriebe</span>
+                      <select value={String(details.transmission ?? '')} onChange={(event) => updateDetail('transmission', event.target.value)} className={`${detailInputClass} appearance-none`}>
+                        <option value="" className="dark:bg-[#111511]">Bitte auswählen</option>
+                        <option value="AUTOMATIC" className="dark:bg-[#111511]">Automatik</option>
+                        <option value="MANUAL" className="dark:bg-[#111511]">Schaltung</option>
+                      </select>
+                    </label>
                     <DetailInput label="Pickerl / HU gültig bis" type="date" value={details.inspectionValidUntil} onChange={(value) => updateDetail('inspectionValidUntil', value)} />
                   </div>
                 )}
@@ -842,10 +913,13 @@ export const ListingWizard: React.FC = () => {
                     <DetailInput label="Parkplätze / Stellplätze" type="number" value={details.parkingSpaces} onChange={(value) => updateDetail('parkingSpaces', value)} />
                     <DetailInput label={realEstateAction === 'SELL' ? 'Kaufpreis (€) *' : 'Monatlicher Mietpreis (€) *'} type="number" value={price} onChange={setPrice} />
                     <DetailInput label="Verfügbar ab" type="date" value={details.availableFrom} onChange={(value) => updateDetail('availableFrom', value)} />
+                    <div className="sm:col-span-2">
+                      <NegotiableToggle checked={negotiable} onChange={setNegotiable} />
+                    </div>
                   </div>
                 )}
 
-                <div className="border-t border-gray-200 pt-5 dark:border-white/10">
+                <div className="border-t-2 border-dashed border-[#F4C430] pt-5">
                   <div className="flex items-center justify-between gap-4 text-sm">
                     <span className="text-gray-500">Anzeigenpreis</span>
                     <span className="font-bold text-[#123D2A] dark:text-[#F4C430]">€ {listingFee.toFixed(2)} · {listingDurationDays} Tage</span>
@@ -856,7 +930,7 @@ export const ListingWizard: React.FC = () => {
             )}
 
             {offerType === 'PRIVATE' && type === 'WANTED' && (
-              <div className="space-y-2 border-y border-gray-200 py-6 dark:border-white/10">
+              <div className="space-y-2 border-y-2 border-dashed border-[#F4C430] py-6">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">Gewünschter Zustand</label>
                 <select
                   value={String(details.preferredCondition ?? '')}
@@ -894,7 +968,7 @@ export const ListingWizard: React.FC = () => {
 
             {/* PREIS ODER BUDGET */}
             {type === 'SELL' && offerType !== 'REAL_ESTATE' && (
-              <div className="space-y-2 pt-4 border-t border-gray-200 dark:border-white/10">
+              <div className="space-y-2 border-t-2 border-dashed border-[#F4C430] pt-4">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   Preis (€) *
                 </label>
@@ -911,22 +985,15 @@ export const ListingWizard: React.FC = () => {
                     />
                   </div>
 
-                  <label className="flex items-center gap-3 cursor-pointer group mt-4">
-                    <div className={`w-5 h-5 border flex items-center justify-center transition-colors ${
-                      negotiable ? 'bg-[#123D2A] border-[#123D2A] dark:bg-white dark:border-white' : 'border-gray-400 group-hover:border-gray-600'
-                    }`}>
-                      {negotiable && <Check className="w-3.5 h-3.5 text-white dark:text-[#171A17] stroke-[3]" />}
-                    </div>
-                    <span className={`text-xs uppercase tracking-widest ${negotiable ? 'font-bold text-[#123D2A] dark:text-white' : 'font-medium text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white'}`}>
-                      Verhandlungsbasis (VB)
-                    </span>
-                  </label>
+                  <div className="mt-4">
+                    <NegotiableToggle checked={negotiable} onChange={setNegotiable} />
+                  </div>
                 </div>
               </div>
             )}
 
             {type === 'WANTED' && (
-              <div className="space-y-2 pt-4 border-t border-gray-200 dark:border-white/10">
+              <div className="space-y-2 border-t-2 border-dashed border-[#F4C430] pt-4">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   Maximales Budget (€, optional)
                 </label>
@@ -941,10 +1008,13 @@ export const ListingWizard: React.FC = () => {
                     className={`${detailInputClass} pl-8 font-serif text-3xl`}
                   />
                 </div>
+                <div className="pt-3">
+                  <NegotiableToggle checked={negotiable} onChange={setNegotiable} />
+                </div>
               </div>
             )}
 
-            <div className="space-y-2 pt-4 border-t border-gray-200 dark:border-white/10">
+            <div className="space-y-2 border-t-2 border-dashed border-[#F4C430] pt-4">
               <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                 {t.descriptionField} *
               </label>

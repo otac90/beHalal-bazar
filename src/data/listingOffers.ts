@@ -15,7 +15,7 @@ export const LISTING_OFFER_OPTIONS: ListingOfferOption[] = [
     title: 'Kostenlose Anzeige',
     description: 'Private Dinge verkaufen, verschenken oder suchen.',
     feeLabel: 'Kostenlos',
-    durationLabel: 'Wie bisher',
+    durationLabel: '',
   },
   {
     id: 'COMMERCIAL',
@@ -79,6 +79,13 @@ export const AUTO_MOTOR_CATEGORIES = [
   { id: 'commercial-vehicles', title: 'Nutzfahrzeug & Pickup', description: 'Transporter, Lkw und Pickups.' },
   { id: 'caravans-motorhomes', title: 'Wohnwagen & Wohnmobil', description: 'Reisemobile und Wohnanhänger.' },
   { id: 'spare-parts-accessories', title: 'Ersatzteile & Zubehör', description: 'Teile, Reifen, Felgen und Fahrzeugzubehör.' },
+];
+
+export const BOAT_CATEGORIES = [
+  { id: 'motorboats', title: 'Motorboote', description: 'Sportboote, Daycruiser und Kabinenboote.' },
+  { id: 'sailboats', title: 'Segelboote', description: 'Segelboote, Katamarane und Jollen.' },
+  { id: 'yachts', title: 'Yachten', description: 'Motoryachten und größere Fahrtenyachten.' },
+  { id: 'jetskis', title: 'Jetskis', description: 'Wassermotorräder und persönliche Wasserfahrzeuge.' },
 ];
 
 export const REAL_ESTATE_CATEGORIES = [
