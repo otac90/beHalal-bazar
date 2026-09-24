@@ -1,15 +1,14 @@
-import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
-
-export function getStripe() {
+export async function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY fehlt in den Vercel-Umgebungsvariablen.');
+  const { default: Stripe } = await import('stripe');
   return new Stripe(process.env.STRIPE_SECRET_KEY);
 }
 
-export function getAdminSupabase() {
+export async function getAdminSupabase() {
   const url = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error('Supabase-Servervariablen fehlen in den Vercel-Umgebungsvariablen.');
+  const { createClient } = await import('@supabase/supabase-js');
   return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 }
 

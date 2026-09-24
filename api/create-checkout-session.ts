@@ -16,8 +16,8 @@ export default async function handler(request: RequestLike, response: ResponseLi
 
   try {
     ensureStripeConfiguration();
-    const stripe = getStripe();
-    const adminSupabase = getAdminSupabase();
+    const stripe = await getStripe();
+    const adminSupabase = await getAdminSupabase();
     const token = getBearerToken(request);
     if (!token) return response.status(401).json({ error: 'Nicht angemeldet.' });
 

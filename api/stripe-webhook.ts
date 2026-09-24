@@ -1,4 +1,3 @@
-import Stripe from 'stripe';
 import { ensureStripeConfiguration, getAdminSupabase, getStripe } from './_stripe';
 
 export const config = { api: { bodyParser: false } };
@@ -25,8 +24,8 @@ export default async function handler(request: RequestLike, response: ResponseLi
 
   try {
     ensureStripeConfiguration();
-    const stripe = getStripe();
-    const adminSupabase = getAdminSupabase();
+    const stripe = await getStripe();
+    const adminSupabase = await getAdminSupabase();
     const signature = getHeader(request, 'stripe-signature');
     const secret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!signature || !secret) return response.status(400).json({ error: 'Webhook ist nicht konfiguriert.' });
@@ -37,7 +36,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
       return response.status(200).json({ received: true });
     }
 
-    const session = event.data.object as Stripe.Checkout.Session;
+    const session = event.data.object as { payment_status: string | null; metadata?: Record<string, string>; payment_intent?: string | null };
     if (session.payment_status !== 'paid') return response.status(200).json({ received: true });
     const listingId = session.metadata?.listing_id;
     const userId = session.metadata?.user_id;
