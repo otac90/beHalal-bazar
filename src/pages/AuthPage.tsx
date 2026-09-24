@@ -158,7 +158,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
           <span>Geschlossene vertrauensvolle Community</span>
         </div>
         <h1 className="text-4xl sm:text-5xl font-serif font-bold text-[#171A17] dark:text-white">
-          {mode === 'login' ? 'Willkommen zurück' : mode === 'reset' ? 'Passwort zurücksetzen' : 'Mitglied werden'}
+          {mode === 'login' ? 'Willkommen zurück!' : mode === 'reset' ? 'Passwort zurücksetzen' : 'Mitglied werden'}
         </h1>
         <p className="font-sans text-xs uppercase tracking-widest text-gray-500">
           Kaufen, Verkaufen und Verschenken unter verifizierten Mitgliedern.
