@@ -424,14 +424,16 @@ export const ListingWizard: React.FC = () => {
         images: persisted.images,
       };
 
-      storage.saveListing(newListing);
-
       if (requiresPayment) {
+        // Keep the unpublished draft only for the return from Stripe. It must
+        // not appear in the account or participate in duplicate detection.
+        sessionStorage.setItem(`behalal_pending_listing_${newListing.id}`, JSON.stringify(newListing));
         const checkoutUrl = await createListingCheckout(newListing.id);
         window.location.assign(checkoutUrl);
         return;
       }
 
+      storage.saveListing(newListing);
       showToast(t.listingCreatedSuccess, 'success');
       navigate('listing-detail', { id: newListing.id });
     } catch (error) {

@@ -41,7 +41,7 @@ export const AccountPage: React.FC = () => {
     );
   }
 
-  const myListings = storage.getListingsByUserId(user.id);
+  const myListings = storage.getListingsByUserId(user.id).filter((listing) => listing.status !== 'PENDING');
   const myFavoritesListings = storage.getListings().filter((l) => favorites.includes(l.id));
   const mySavedSearches = storage.getSavedSearches(user.id);
 

@@ -31,7 +31,11 @@ export const PaymentResultPage: React.FC<PaymentResultPageProps> = ({ success })
         if (cancelled) return;
         setDetails(nextDetails);
         if (nextDetails.paid) {
-          const localListing = storage.getListingById(nextDetails.listing.id);
+          const pendingKey = `behalal_pending_listing_${nextDetails.listing.id}`;
+          const pendingDraft = sessionStorage.getItem(pendingKey);
+          const localListing = pendingDraft
+            ? JSON.parse(pendingDraft) as ReturnType<typeof storage.getListingById>
+            : storage.getListingById(nextDetails.listing.id);
           if (localListing) {
             storage.saveListing({
               ...localListing,
@@ -40,6 +44,7 @@ export const PaymentResultPage: React.FC<PaymentResultPageProps> = ({ success })
               expiresAt: nextDetails.listing.expiresAt || undefined,
             });
           }
+          sessionStorage.removeItem(pendingKey);
         }
         if (!nextDetails.paid && attempts < 8) {
           attempts += 1;
@@ -60,7 +65,7 @@ export const PaymentResultPage: React.FC<PaymentResultPageProps> = ({ success })
         <XCircle className="mx-auto h-14 w-14 text-[#B94A48]" />
         <h1 className="mt-6 font-serif text-4xl font-bold text-[#171A17] dark:text-white">Zahlung abgebrochen</h1>
         <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-          Es wurde nichts abgebucht. Dein Inserat wurde vorgemerkt und kann erneut bezahlt werden, sobald du den Vorgang wieder startest.
+          Es wurde nichts abgebucht und dein Inserat wurde nicht veröffentlicht. Du kannst den Vorgang später erneut starten.
         </p>
         <button onClick={() => navigate('account')} className="mt-8 inline-flex items-center gap-3 bg-[#123D2A] px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-white hover:bg-[#171A17]">
           Zu meinen Inseraten <ArrowRight className="h-4 w-4" />

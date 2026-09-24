@@ -36,7 +36,9 @@ export function checkListingModeration(
 
   const normalizedTitle = title.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
 
-  const userRecentListings = existingListings.filter((l) => l.userId === userId && l.status !== 'DELETED');
+  const userRecentListings = existingListings.filter((l) =>
+    l.userId === userId && l.status !== 'DELETED' && l.status !== 'PENDING'
+  );
 
   for (const l of userRecentListings) {
     const listingAge = now - new Date(l.createdAt).getTime();
