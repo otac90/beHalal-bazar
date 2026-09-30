@@ -31,7 +31,6 @@ export const ListingCard: React.FC<Props> = ({ listing }) => {
 
   const isWanted = listing.type === 'WANTED';
   const isFree = listing.type === 'FREE' || listing.isFree;
-  const isFreeAd = listing.details?.offerType === 'PRIVATE' || listing.listingFee === undefined;
   const isReserved = listing.status === 'RESERVED';
   const isSold = listing.status === 'SOLD';
 
@@ -66,11 +65,6 @@ export const ListingCard: React.FC<Props> = ({ listing }) => {
               {t.typeFree}
             </span>
           )}
-          {isFreeAd && (
-            <span className="px-2 py-0.5 text-[10px] font-bold bg-[#F4C430] text-[#123D2A] uppercase tracking-widest">
-              Kostenlose Anzeige
-            </span>
-          )}
           {isWanted && (
             <span className="px-2 py-0.5 text-[10px] font-bold bg-[#123D2A] text-[#F4C430] uppercase tracking-widest">
               {t.typeWanted}
@@ -103,17 +97,17 @@ export const ListingCard: React.FC<Props> = ({ listing }) => {
         </button>
 
         {/* DELIVERY ICON */}
-        <div className="absolute bottom-3 right-3 flex items-center gap-1 z-10 drop-shadow-md">
+        <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5 drop-shadow-md" title="Übergabeart">
           {listing.deliveryType === 'SHIPPING' && (
-            <Truck className="w-4 h-4 text-white" />
+            <span className="flex h-7 w-7 items-center justify-center bg-[#123D2A]/85"><Truck className="h-4 w-4 text-white" /></span>
           )}
           {listing.deliveryType === 'PICKUP' && (
-            <Package className="w-4 h-4 text-white" />
+            <span className="flex h-7 w-7 items-center justify-center bg-[#123D2A]/85"><Package className="h-4 w-4 text-white" /></span>
           )}
           {listing.deliveryType === 'BOTH' && (
-            <div className="flex -space-x-1">
-              <Truck className="w-4 h-4 text-white" />
-              <Package className="w-4 h-4 text-white" />
+            <div className="flex items-center gap-1.5">
+              <span className="flex h-7 w-7 items-center justify-center bg-[#123D2A]/85"><Package className="h-4 w-4 text-white" /></span>
+              <span className="flex h-7 w-7 items-center justify-center bg-[#123D2A]/85"><Truck className="h-4 w-4 text-white" /></span>
             </div>
           )}
         </div>

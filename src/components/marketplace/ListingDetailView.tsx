@@ -11,6 +11,7 @@ import { SellerCard } from './SellerCard';
 import { SafetyBox } from './SafetyBox';
 import { ReportDialog } from './ReportDialog';
 import { Listing } from '../../types';
+import { createConversation } from '../../utils/supabase/chat';
 
 export const ListingDetailView: React.FC = () => {
   const { routeParams, navigate, user, toggleFavorite, isFavorite, showToast, t, language } = useApp();
@@ -117,7 +118,7 @@ export const ListingDetailView: React.FC = () => {
     }
   };
 
-  const handleStartChat = () => {
+  const handleStartChat = async () => {
     if (!user) {
       showToast(t.closedCommunityNotice, 'warning');
       navigate('login');
@@ -127,8 +128,12 @@ export const ListingDetailView: React.FC = () => {
       showToast('Du bist der Ersteller dieses Inserats.', 'info');
       return;
     }
-    const conv = storage.startConversation(listing, user);
-    navigate('messages', { conversationId: conv.id });
+    try {
+      const conv = await createConversation(listing, user.id, `${user.firstName} ${user.lastName}`, user.avatarUrl);
+      navigate('messages', { conversationId: conv.id });
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Unterhaltung konnte nicht gestartet werden.', 'error');
+    }
   };
 
   const handleShare = () => {
@@ -354,7 +359,7 @@ export const ListingDetailView: React.FC = () => {
 
               
               {/* TITLE & PRICE TILE (Moved to right column) */}
-              <div className="bg-[#F5F1E8] dark:bg-[#111511] p-6 border border-[#123D2A]/10 dark:border-white/10">
+              <div className="min-w-0 bg-[#F5F1E8] dark:bg-[#111511] p-6 border border-[#123D2A]/10 dark:border-white/10">
                 <div className="flex flex-wrap items-center gap-2 mb-4">
                   <span className="px-2 py-0.5 text-[10px] font-bold bg-[#123D2A] text-[#F4C430] uppercase tracking-widest">
                     {isWanted ? t.typeWanted : isFree ? t.typeFree : t.typeSell}
@@ -366,7 +371,7 @@ export const ListingDetailView: React.FC = () => {
                     <span className="px-2 py-0.5 text-[10px] font-bold bg-[#171A17] text-white uppercase tracking-widest">Verkauft</span>
                   )}
                 </div>
-                <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#123D2A] dark:text-white leading-[1.1] mb-4">
+                <h1 className="break-words text-2xl md:text-3xl font-serif font-bold text-[#123D2A] dark:text-white leading-[1.1] mb-4 [overflow-wrap:anywhere]">
                   {listing.title}
                 </h1>
                 <div className="flex items-baseline gap-3">

@@ -4,7 +4,7 @@ import {
   Sparkles, AlertTriangle, ShieldCheck, Eye, ImageIcon, 
   DollarSign, MapPin, Truck, Package, BriefcaseBusiness, Ship, CarFront, Building2, Gift,
   Bike, Wrench, House, Map, Palmtree, Warehouse, KeyRound, Tag, Sailboat, Anchor, Waves, CreditCard, LockKeyhole, CheckCircle2,
-  Shirt, Baby, Smartphone, Utensils, Armchair, BookOpen, Gamepad2, Car, Layers, Sofa, BedDouble, Table2, Lamp, BookMarked, Joystick, type LucideIcon
+  Shirt, Baby, Smartphone, Tablet, Laptop, Tv, Headphones, Camera, Utensils, Armchair, BookOpen, Gamepad2, Car, Layers, Sofa, BedDouble, Table2, Lamp, BookMarked, Joystick, type LucideIcon
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { 
@@ -26,7 +26,7 @@ import {
   RealEstateAction,
 } from '../../data/listingOffers';
 
-const detailInputClass = 'w-full border-b border-gray-300 bg-transparent pb-2 text-sm font-bold text-[#171A17] focus:border-[#123D2A] focus:outline-none dark:border-white/20 dark:text-white dark:focus:border-white';
+const detailInputClass = 'w-full border border-[#123D2A]/20 bg-white/80 px-4 py-3 text-sm font-bold text-[#171A17] outline-none transition focus:border-[#F4C430] focus:ring-2 focus:ring-[#F4C430]/25 dark:border-white/15 dark:bg-[#111511] dark:text-white dark:focus:border-[#F4C430]';
 
 interface DetailInputProps {
   label: string;
@@ -34,23 +34,33 @@ interface DetailInputProps {
   onChange: (value: string) => void;
   type?: 'text' | 'number' | 'date';
   placeholder?: string;
+  options?: string[];
+  disabled?: boolean;
 }
 
-const DetailInput: React.FC<DetailInputProps> = ({ label, value, onChange, type = 'text', placeholder }) => (
+const DetailInput: React.FC<DetailInputProps> = ({ label, value, onChange, type = 'text', placeholder, options, disabled }) => (
   <label className="space-y-2">
     <span className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</span>
-    <input
-      type={type}
-      min={type === 'number' ? 0 : undefined}
-      value={value ?? ''}
-      onChange={(event) => {
-        const nextValue = event.target.value;
-        if (type === 'number' && nextValue.startsWith('-')) return;
-        onChange(nextValue);
-      }}
-      placeholder={placeholder}
-      className={detailInputClass}
-    />
+    {options ? (
+      <select disabled={disabled} value={String(value ?? '')} onChange={(event) => onChange(event.target.value)} className={`${detailInputClass} appearance-none disabled:cursor-not-allowed disabled:opacity-50`}>
+        <option value="" className="dark:bg-[#111511]">{placeholder ?? 'Bitte auswählen'}</option>
+        {options.map((option) => <option key={option} value={option} className="dark:bg-[#111511]">{option}</option>)}
+      </select>
+    ) : (
+      <input
+        type={type}
+        disabled={disabled}
+        min={type === 'number' ? 0 : undefined}
+        value={value ?? ''}
+        onChange={(event) => {
+          const nextValue = event.target.value;
+          if (type === 'number' && nextValue.startsWith('-')) return;
+          onChange(nextValue);
+        }}
+        placeholder={placeholder}
+        className={`${detailInputClass} disabled:cursor-not-allowed disabled:opacity-50`}
+      />
+    )}
   </label>
 );
 
@@ -64,39 +74,143 @@ const NegotiableToggle: React.FC<{ checked: boolean; onChange: (checked: boolean
   </label>
 );
 
-const PRIVATE_DETAIL_FIELDS: Record<string, { key: string; label: string; type?: 'text' | 'number'; placeholder?: string }[]> = {
+type DetailField = { key: string; label: string; type?: 'text' | 'number' | 'date'; placeholder?: string; options?: string[] };
+
+const SMARTPHONE_BRANDS = [
+  'Apple', 'Samsung', 'Xiaomi', 'Google', 'Huawei', 'Motorola', 'OnePlus', 'OPPO', 'vivo', 'HONOR',
+  'realme', 'Nokia', 'Sony', 'ASUS', 'Nothing', 'Fairphone', 'TCL', 'ZTE', 'Lenovo', 'CAT', 'Doro', 'Wiko', 'Andere',
+];
+const TABLET_BRANDS = ['Apple', 'Samsung', 'Lenovo', 'Microsoft', 'Xiaomi', 'Huawei', 'Google', 'Amazon', 'HUAWEI', 'ASUS', 'Andere'];
+const COMPUTER_BRANDS = ['Apple', 'Lenovo', 'HP', 'Dell', 'ASUS', 'Acer', 'Microsoft', 'MSI', 'Huawei', 'Samsung', 'Medion', 'Andere'];
+const TV_BRANDS = ['Samsung', 'LG', 'Sony', 'Philips', 'Panasonic', 'TCL', 'Hisense', 'Grundig', 'Sharp', 'Metz', 'Andere'];
+const APPLIANCE_BRANDS = ['Bosch', 'Siemens', 'Miele', 'AEG', 'Samsung', 'LG', 'Beko', 'Gorenje', 'Philips', 'Dyson', 'Andere'];
+const CLOTHING_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '34', '36', '38', '40', '42', '44', '46', '48', '50', 'Andere'];
+const MATERIAL_OPTIONS = ['Baumwolle', 'Leder', 'Holz', 'Metall', 'Kunststoff', 'Glas', 'Wolle', 'Keramik', 'Andere'];
+const TABLET_SCREEN_SIZES = ['7 Zoll', '8 Zoll', '8,3 Zoll', '9 Zoll', '10,1 Zoll', '10,9 Zoll', '11 Zoll', '12,4 Zoll', '12,9 Zoll', '13 Zoll', 'Andere'];
+const TV_SCREEN_SIZES = ['24 Zoll', '32 Zoll', '40 Zoll', '43 Zoll', '48 Zoll', '50 Zoll', '55 Zoll', '58 Zoll', '65 Zoll', '70 Zoll', '75 Zoll', '77 Zoll', '83 Zoll', '85 Zoll', '98 Zoll', 'Andere'];
+const PROCESSOR_MANUFACTURERS = ['Intel', 'AMD', 'Apple', 'Qualcomm', 'MediaTek', 'NVIDIA', 'Andere'];
+const PROCESSORS_BY_MANUFACTURER: Record<string, string[]> = {
+  Intel: ['Core Ultra 3', 'Core Ultra 5', 'Core Ultra 7', 'Core Ultra 9', 'Core i3', 'Core i5', 'Core i7', 'Core i9', 'Pentium', 'Celeron', 'Xeon'],
+  AMD: ['Ryzen 3', 'Ryzen 5', 'Ryzen 7', 'Ryzen 9', 'Ryzen AI 5', 'Ryzen AI 7', 'Ryzen AI 9', 'Athlon', 'Threadripper'],
+  Apple: ['M1', 'M2', 'M3', 'M4', 'M1 Pro', 'M2 Pro', 'M3 Pro', 'M4 Pro', 'M1 Max', 'M2 Max', 'M3 Max', 'M4 Max'],
+  Qualcomm: ['Snapdragon X Plus', 'Snapdragon X Elite', 'Snapdragon 8cx'],
+  MediaTek: ['Kompanio 520', 'Kompanio 800', 'Kompanio Ultra'],
+  NVIDIA: ['GeForce RTX Laptop GPU', 'GeForce GTX Laptop GPU'],
+  Andere: ['ARM / RISC-V', 'Unbekannt', 'Andere'],
+};
+const APPLIANCE_TYPES = ['Waschmaschine', 'Wäschetrockner', 'Geschirrspüler', 'Kühlschrank', 'Gefrierschrank', 'Herd / Backofen', 'Staubsauger', 'Klimagerät', 'Sonstiges'];
+const KITCHEN_APPLIANCE_TYPES = ['Kaffeemaschine', 'Küchenmaschine', 'Mikrowelle', 'Herd / Backofen', 'Geschirrspüler', 'Kühlschrank', 'Toaster', 'Wasserkocher', 'Sonstiges'];
+const APPLIANCE_BRANDS_BY_TYPE: Record<string, string[]> = {
+  Waschmaschine: ['Bosch', 'Siemens', 'Miele', 'AEG', 'Beko', 'Samsung', 'LG', 'Gorenje', 'Andere'],
+  'Wäschetrockner': ['Bosch', 'Siemens', 'Miele', 'AEG', 'Beko', 'Samsung', 'LG', 'Gorenje', 'Andere'],
+  Geschirrspüler: ['Bosch', 'Siemens', 'Miele', 'AEG', 'Beko', 'Gorenje', 'Neff', 'Andere'],
+  Kühlschrank: ['Bosch', 'Siemens', 'Miele', 'Liebherr', 'AEG', 'Samsung', 'LG', 'Beko', 'Gorenje', 'Andere'],
+  Gefrierschrank: ['Bosch', 'Siemens', 'Miele', 'Liebherr', 'AEG', 'Beko', 'Gorenje', 'Andere'],
+  'Herd / Backofen': ['Bosch', 'Siemens', 'Miele', 'AEG', 'Neff', 'Gorenje', 'Beko', 'Andere'],
+  Staubsauger: ['Dyson', 'Miele', 'Bosch', 'Siemens', 'Philips', 'Rowenta', 'AEG', 'Vorwerk', 'Andere'],
+  Klimagerät: ['Daikin', 'Mitsubishi Electric', 'Panasonic', 'Samsung', 'LG', 'Toshiba', 'Andere'],
+  Kaffeemaschine: ['De’Longhi', 'Jura', 'Sage', 'Siemens', 'Miele', 'Philips', 'Krups', 'Nespresso', 'Andere'],
+  Küchenmaschine: ['Kenwood', 'KitchenAid', 'Bosch', 'Moulinex', 'Smeg', 'Ninja', 'Andere'],
+  Mikrowelle: ['Samsung', 'Panasonic', 'Bosch', 'Siemens', 'LG', 'Sharp', 'Andere'],
+  Toaster: ['Smeg', 'Braun', 'Bosch', 'Philips', 'Russell Hobbs', 'Andere'],
+  Wasserkocher: ['Philips', 'Bosch', 'Siemens', 'WMF', 'Smeg', 'Russell Hobbs', 'Andere'],
+};
+const AUTO_BRANDS = ['Volkswagen', 'Škoda', 'Audi', 'BMW', 'Mercedes-Benz', 'Opel', 'Ford', 'SEAT', 'Toyota', 'Renault', 'Peugeot', 'Dacia', 'Hyundai', 'Kia', 'Tesla', 'Volvo', 'Mazda', 'Nissan', 'Honda', 'Fiat', 'Citroën', 'Porsche', 'Land Rover', 'Jeep', 'Mitsubishi', 'Suzuki', 'Subaru', 'Lexus', 'BYD', 'Cupra', 'Mini', 'Jaguar', 'Alfa Romeo', 'Chevrolet', 'Andere'];
+const AUTO_MODELS_BY_BRAND: Record<string, string[]> = {
+  Volkswagen: ['Golf', 'Polo', 'Passat', 'Tiguan', 'T-Roc', 'Touran', 'Caddy', 'Transporter', 'ID.3', 'ID.4', 'ID.7', 'Andere'],
+  'Škoda': ['Fabia', 'Scala', 'Octavia', 'Superb', 'Kamiq', 'Karoq', 'Kodiaq', 'Enyaq', 'Andere'],
+  Audi: ['A1', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'Q2', 'Q3', 'Q5', 'Q7', 'Q8', 'e-tron', 'Andere'],
+  BMW: ['1er', '2er', '3er', '4er', '5er', '7er', 'X1', 'X3', 'X5', 'X7', 'iX', 'i4', 'Andere'],
+  'Mercedes-Benz': ['A-Klasse', 'B-Klasse', 'C-Klasse', 'E-Klasse', 'S-Klasse', 'GLA', 'GLC', 'GLE', 'Sprinter', 'EQA', 'EQE', 'Andere'],
+  Opel: ['Corsa', 'Astra', 'Insignia', 'Mokka', 'Crossland', 'Grandland', 'Zafira', 'Vivaro', 'Andere'],
+  Ford: ['Fiesta', 'Focus', 'Mondeo', 'Puma', 'Kuga', 'Explorer', 'Ranger', 'Transit', 'Mustang Mach-E', 'Andere'],
+  SEAT: ['Ibiza', 'Leon', 'Arona', 'Ateca', 'Tarraco', 'Formentor', 'Andere'],
+  Toyota: ['Yaris', 'Corolla', 'Camry', 'C-HR', 'RAV4', 'Hilux', 'Land Cruiser', 'Prius', 'Andere'],
+  Renault: ['Clio', 'Megane', 'Captur', 'Arkana', 'Austral', 'Kadjar', 'Kangoo', 'Trafic', 'Andere'],
+  Peugeot: ['208', '308', '508', '2008', '3008', '5008', 'Partner', 'Expert', 'Andere'],
+  Dacia: ['Sandero', 'Logan', 'Duster', 'Jogger', 'Spring', 'Andere'],
+  Hyundai: ['i10', 'i20', 'i30', 'Kona', 'Tucson', 'Santa Fe', 'Ioniq 5', 'Andere'],
+  Kia: ['Picanto', 'Rio', 'Ceed', 'Stonic', 'Sportage', 'Sorento', 'EV6', 'Andere'],
+  Tesla: ['Model 3', 'Model Y', 'Model S', 'Model X', 'Andere'],
+  Volvo: ['EX30', 'XC40', 'XC60', 'XC90', 'V60', 'V90', 'Andere'],
+  Mazda: ['Mazda2', 'Mazda3', 'CX-3', 'CX-30', 'CX-5', 'MX-5', 'Andere'],
+  Nissan: ['Micra', 'Juke', 'Qashqai', 'X-Trail', 'Leaf', 'Navara', 'Andere'],
+  Honda: ['Jazz', 'Civic', 'HR-V', 'CR-V', 'e:Ny1', 'Andere'],
+  Fiat: ['500', 'Panda', 'Tipo', 'Punto', 'Doblo', 'Ducato', 'Andere'],
+  Citroën: ['C3', 'C4', 'C5 Aircross', 'Berlingo', 'Jumper', 'Andere'],
+  Porsche: ['911', '718', 'Panamera', 'Macan', 'Cayenne', 'Taycan', 'Andere'],
+  'Land Rover': ['Defender', 'Discovery', 'Discovery Sport', 'Range Rover', 'Evoque', 'Andere'],
+  Jeep: ['Renegade', 'Compass', 'Cherokee', 'Wrangler', 'Avenger', 'Andere'],
+  Cupra: ['Born', 'Formentor', 'Leon', 'Ateca', 'Tavascan', 'Andere'],
+  Mini: ['Cooper', 'Clubman', 'Countryman', 'Aceman', 'Andere'],
+  Andere: ['Anderes Modell'],
+};
+const AUTO_FUELS = ['Benzin', 'Diesel', 'Hybrid (Benzin)', 'Plug-in-Hybrid', 'Elektro', 'Wasserstoff', 'LPG / Autogas', 'CNG / Erdgas', 'Andere'];
+const MOTORCYCLE_BRANDS = ['BMW Motorrad', 'Honda', 'Yamaha', 'Kawasaki', 'Suzuki', 'KTM', 'Ducati', 'Harley-Davidson', 'Triumph', 'Aprilia', 'Husqvarna', 'Indian', 'Vespa', 'Piaggio', 'Royal Enfield', 'Andere'];
+const MOTORCYCLE_MODELS_BY_BRAND: Record<string, string[]> = {
+  'BMW Motorrad': ['R 1250 GS', 'R 1300 GS', 'S 1000 RR', 'F 900 R', 'F 900 XR', 'CE 04', 'Andere'],
+  Honda: ['CB125R', 'CB500F', 'CB650R', 'CBR650R', 'Africa Twin', 'Forza 350', 'Andere'],
+  Yamaha: ['MT-07', 'MT-09', 'YZF-R7', 'YZF-R1', 'Tracer 7', 'Tenere 700', 'Andere'],
+  Kawasaki: ['Ninja 400', 'Ninja 650', 'Ninja ZX-6R', 'Z650', 'Z900', 'Versys 650', 'Andere'],
+  Suzuki: ['GSX-8S', 'SV650', 'V-Strom 650', 'V-Strom 800', 'Hayabusa', 'Andere'],
+  KTM: ['125 Duke', '390 Duke', '790 Duke', '1290 Super Duke', '390 Adventure', 'Andere'],
+  Ducati: ['Monster', 'Panigale V2', 'Panigale V4', 'Multistrada V2', 'Scrambler', 'Andere'],
+  'Harley-Davidson': ['Sportster S', 'Nightster', 'Street Bob', 'Fat Boy', 'Road Glide', 'Andere'],
+  Vespa: ['Primavera', 'GTS', 'Sprint', 'Elettrica', 'Andere'],
+  Andere: ['Anderes Modell'],
+};
+const SUBCATEGORY_BRANDS: Record<string, string[]> = {
+  smartphones: SMARTPHONE_BRANDS,
+  tablets: TABLET_BRANDS,
+  laptops: COMPUTER_BRANDS,
+  tv: TV_BRANDS,
+  audio: ['Apple', 'Sony', 'Bose', 'Sennheiser', 'JBL', 'Bang & Olufsen', 'Marshall', 'Samsung', 'Sonos', 'Andere'],
+  cameras: ['Canon', 'Nikon', 'Sony', 'Fujifilm', 'Panasonic', 'OM System', 'Leica', 'GoPro', 'DJI', 'Andere'],
+};
+const CONSOLE_MODELS_BY_BRAND: Record<string, string[]> = {
+  Sony: ['PlayStation 5', 'PlayStation 5 Slim', 'PlayStation 5 Pro', 'PlayStation 4', 'PlayStation 4 Slim', 'PlayStation 4 Pro', 'PlayStation 3', 'PlayStation Vita', 'Andere'],
+  Microsoft: ['Xbox Series X', 'Xbox Series S', 'Xbox One X', 'Xbox One S', 'Xbox One', 'Xbox 360', 'Andere'],
+  Nintendo: ['Nintendo Switch', 'Nintendo Switch OLED', 'Nintendo Switch Lite', 'Wii U', 'Wii', 'Nintendo 3DS', 'Nintendo 2DS', 'Andere'],
+  Valve: ['Steam Deck 64 GB', 'Steam Deck 256 GB', 'Steam Deck 512 GB', 'Steam Deck OLED 512 GB', 'Steam Deck OLED 1 TB', 'Andere'],
+  Andere: ['Andere Konsole'],
+};
+const CONSOLE_STORAGE_OPTIONS = ['Keine Angabe', '32 GB', '64 GB', '128 GB', '256 GB', '512 GB', '1 TB', '2 TB', 'Andere'];
+
+const PRIVATE_DETAIL_FIELDS: Record<string, DetailField[]> = {
   'fashion-accessories': [
-    { key: 'size', label: 'Größe', placeholder: 'z. B. 38, M, 42' },
-    { key: 'material', label: 'Material' },
+    { key: 'size', label: 'Größe', options: CLOTHING_SIZES },
+    { key: 'color', label: 'Farbe', placeholder: 'z. B. Schwarz, Blau' },
+    { key: 'material', label: 'Material', options: MATERIAL_OPTIONS },
   ],
   'baby-kids': [
     { key: 'ageRange', label: 'Alter / Größe', placeholder: 'z. B. 2–3 Jahre oder 98' },
-    { key: 'material', label: 'Material' },
+    { key: 'gender', label: 'Für wen?', options: ['Mädchen', 'Buben', 'Unisex'] },
+    { key: 'material', label: 'Material', options: MATERIAL_OPTIONS },
   ],
   electronics: [
     { key: 'model', label: 'Modell / genaue Bezeichnung' },
-    { key: 'storage', label: 'Speicher', placeholder: 'z. B. 256 GB' },
-    { key: 'warranty', label: 'Garantie bis' },
+    { key: 'storage', label: 'Speicher', options: ['32 GB', '64 GB', '128 GB', '256 GB', '512 GB', '1 TB', '2 TB', 'Andere'] },
+    { key: 'warranty', label: 'Garantie bis', type: 'date' },
   ],
   household: [
     { key: 'dimensions', label: 'Maße', placeholder: 'Länge × Breite × Höhe' },
-    { key: 'material', label: 'Material' },
+    { key: 'material', label: 'Material', options: MATERIAL_OPTIONS },
   ],
   'furniture-living': [
     { key: 'dimensions', label: 'Maße', placeholder: 'Länge × Breite × Höhe' },
-    { key: 'material', label: 'Material' },
+    { key: 'material', label: 'Material', options: MATERIAL_OPTIONS },
   ],
   'sports-leisure': [
     { key: 'size', label: 'Größe', placeholder: 'Rahmen, Konfektion oder Schuhgröße' },
-    { key: 'material', label: 'Material' },
+    { key: 'material', label: 'Material', options: MATERIAL_OPTIONS },
   ],
   'books-media': [
     { key: 'author', label: 'Autor / Herausgeber' },
     { key: 'isbn', label: 'ISBN' },
-    { key: 'language', label: 'Sprache' },
+    { key: 'language', label: 'Sprache', options: ['Deutsch', 'Englisch', 'Arabisch', 'Französisch', 'Türkisch', 'Andere'] },
   ],
   gaming: [
-    { key: 'platform', label: 'Plattform', placeholder: 'PlayStation, Xbox, Switch, PC' },
+    { key: 'platform', label: 'Plattform', options: ['PlayStation 5', 'PlayStation 4', 'Xbox Series', 'Xbox One', 'Nintendo Switch', 'PC', 'Andere'] },
     { key: 'edition', label: 'Edition / Version' },
   ],
   'auto-accessories': [
@@ -104,13 +218,102 @@ const PRIVATE_DETAIL_FIELDS: Record<string, { key: string; label: string; type?:
     { key: 'partNumber', label: 'Teilenummer' },
   ],
   'garden-tools': [
-    { key: 'powerSource', label: 'Antrieb', placeholder: 'Akku, Strom, Benzin, Handbetrieb' },
+    { key: 'powerSource', label: 'Antrieb', options: ['Akku', 'Elektro', 'Benzin', 'Handbetrieb', 'Andere'] },
     { key: 'dimensions', label: 'Maße' },
   ],
   other: [
     { key: 'material', label: 'Material' },
     { key: 'dimensions', label: 'Maße' },
   ],
+};
+
+const PRIVATE_SUBCATEGORY_FIELDS: Record<string, DetailField[]> = {
+  smartphones: [
+    { key: 'model', label: 'Modell / genaue Bezeichnung' },
+    { key: 'storage', label: 'Speicher', options: ['32 GB', '64 GB', '128 GB', '256 GB', '512 GB', '1 TB', 'Andere'] },
+    { key: 'color', label: 'Farbe' },
+    { key: 'simType', label: 'SIM-Karte', options: ['Nano-SIM', 'eSIM', 'Nano-SIM + eSIM', 'Dual-SIM', 'Andere'] },
+  ],
+  tablets: [
+    { key: 'model', label: 'Modell' },
+    { key: 'brand', label: 'Hersteller', options: TABLET_BRANDS },
+    { key: 'storage', label: 'Speicher', options: ['32 GB', '64 GB', '128 GB', '256 GB', '512 GB', '1 TB', 'Andere'] },
+    { key: 'screenSize', label: 'Displaygröße (Zoll)', options: TABLET_SCREEN_SIZES },
+  ],
+  laptops: [
+    { key: 'brand', label: 'Hersteller', options: COMPUTER_BRANDS },
+    { key: 'model', label: 'Modell' },
+    { key: 'processorManufacturer', label: 'Prozessor-Hersteller', options: PROCESSOR_MANUFACTURERS },
+    { key: 'processor', label: 'Prozessor' },
+    { key: 'ram', label: 'Arbeitsspeicher', options: ['4 GB', '8 GB', '16 GB', '32 GB', '64 GB', 'Andere'] },
+    { key: 'storage', label: 'Speicher', options: ['128 GB SSD', '256 GB SSD', '512 GB SSD', '1 TB SSD', '2 TB SSD', 'Andere'] },
+  ],
+  tv: [
+    { key: 'brand', label: 'Hersteller', options: TV_BRANDS },
+    { key: 'screenSize', label: 'Bildschirmgröße (Zoll)', options: TV_SCREEN_SIZES },
+    { key: 'resolution', label: 'Auflösung', options: ['HD', 'Full HD', '4K UHD', '8K', 'Andere'] },
+    { key: 'smartTv', label: 'Smart-TV', options: ['Ja', 'Nein'] },
+  ],
+  audio: [
+    { key: 'brand', label: 'Hersteller', options: ['Apple', 'Sony', 'Bose', 'Sennheiser', 'JBL', 'Bang & Olufsen', 'Marshall', 'Samsung', 'Andere'] },
+    { key: 'audioType', label: 'Art', options: ['Kopfhörer', 'Lautsprecher', 'Soundbar', 'Hi-Fi-Anlage', 'Mikrofon', 'Andere'] },
+    { key: 'connection', label: 'Verbindung', options: ['Bluetooth', 'Kabel', 'Bluetooth + Kabel', 'WLAN', 'Andere'] },
+  ],
+  cameras: [
+    { key: 'brand', label: 'Hersteller', options: ['Canon', 'Nikon', 'Sony', 'Fujifilm', 'Panasonic', 'Olympus', 'Leica', 'GoPro', 'DJI', 'Andere'] },
+    { key: 'cameraType', label: 'Kameratyp', options: ['DSLR', 'Systemkamera', 'Kompaktkamera', 'Actionkamera', 'Videokamera', 'Andere'] },
+    { key: 'resolution', label: 'Auflösung', placeholder: 'z. B. 24 MP' },
+  ],
+  'women-clothes': [{ key: 'size', label: 'Größe', options: CLOTHING_SIZES }, { key: 'color', label: 'Farbe' }, { key: 'material', label: 'Material', options: MATERIAL_OPTIONS }],
+  'men-clothes': [{ key: 'size', label: 'Größe', options: CLOTHING_SIZES }, { key: 'color', label: 'Farbe' }, { key: 'material', label: 'Material', options: MATERIAL_OPTIONS }],
+  shoes: [{ key: 'size', label: 'Schuhgröße', options: ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', 'Andere'] }, { key: 'color', label: 'Farbe' }, { key: 'material', label: 'Material', options: MATERIAL_OPTIONS }],
+  'bags-accessories': [{ key: 'material', label: 'Material', options: MATERIAL_OPTIONS }, { key: 'color', label: 'Farbe' }, { key: 'dimensions', label: 'Maße' }],
+  'watches-jewelry': [{ key: 'brand', label: 'Marke' }, { key: 'material', label: 'Material', options: ['Gold', 'Silber', 'Edelstahl', 'Leder', 'Kunststoff', 'Andere'] }, { key: 'color', label: 'Farbe' }],
+  'traditional-clothing': [{ key: 'size', label: 'Größe', options: CLOTHING_SIZES }, { key: 'country', label: 'Herkunft / Stil' }, { key: 'material', label: 'Material', options: MATERIAL_OPTIONS }],
+  strollers: [{ key: 'brand', label: 'Hersteller' }, { key: 'ageRange', label: 'Geeignet für', placeholder: 'z. B. ab Geburt bis 4 Jahre' }, { key: 'color', label: 'Farbe' }],
+  'car-seats': [{ key: 'brand', label: 'Hersteller' }, { key: 'group', label: 'Gewichtsgruppe', options: ['0–13 kg', '9–18 kg', '15–36 kg', '0–36 kg', 'Andere'] }, { key: 'isofix', label: 'ISOFIX', options: ['Ja', 'Nein'] }],
+  toys: [{ key: 'ageRange', label: 'Altersempfehlung', placeholder: 'z. B. ab 3 Jahren' }, { key: 'material', label: 'Material', options: MATERIAL_OPTIONS }, { key: 'brand', label: 'Hersteller' }],
+  'home-appliances': [{ key: 'applianceType', label: 'Gerät', options: APPLIANCE_TYPES }, { key: 'energyClass', label: 'Energieeffizienzklasse', options: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'Unbekannt'] }, { key: 'dimensions', label: 'Maße' }],
+  kitchen: [{ key: 'applianceType', label: 'Küchengerät', options: KITCHEN_APPLIANCE_TYPES }, { key: 'dimensions', label: 'Maße' }, { key: 'material', label: 'Material', options: MATERIAL_OPTIONS }],
+  tableware: [{ key: 'material', label: 'Material', options: ['Porzellan', 'Keramik', 'Glas', 'Edelstahl', 'Holz', 'Andere'] }, { key: 'setSize', label: 'Anzahl Teile', type: 'number' }],
+  decoration: [{ key: 'material', label: 'Material', options: MATERIAL_OPTIONS }, { key: 'color', label: 'Farbe' }, { key: 'dimensions', label: 'Maße' }],
+  'house-accessories': [{ key: 'material', label: 'Material', options: MATERIAL_OPTIONS }, { key: 'dimensions', label: 'Maße' }],
+  'living-room': [{ key: 'furnitureType', label: 'Möbelart', options: ['Sofa', 'Sessel', 'Wohnwand', 'Couchtisch', 'Regal', 'Andere'] }, { key: 'dimensions', label: 'Maße' }, { key: 'material', label: 'Material', options: MATERIAL_OPTIONS }],
+  bedroom: [{ key: 'furnitureType', label: 'Möbelart', options: ['Bett', 'Kleiderschrank', 'Kommode', 'Nachttisch', 'Andere'] }, { key: 'dimensions', label: 'Maße' }, { key: 'material', label: 'Material', options: MATERIAL_OPTIONS }],
+  'tables-chairs': [{ key: 'furnitureType', label: 'Möbelart', options: ['Esstisch', 'Schreibtisch', 'Stuhl', 'Bank', 'Andere'] }, { key: 'dimensions', label: 'Maße' }, { key: 'material', label: 'Material', options: MATERIAL_OPTIONS }],
+  closets: [{ key: 'dimensions', label: 'Maße' }, { key: 'material', label: 'Material', options: MATERIAL_OPTIONS }, { key: 'color', label: 'Farbe' }],
+  lighting: [{ key: 'lightType', label: 'Lampentyp', options: ['Deckenlampe', 'Stehlampe', 'Tischlampe', 'Wandleuchte', 'Andere'] }, { key: 'bulbType', label: 'Leuchtmittel', options: ['LED', 'Halogen', 'E27', 'E14', 'Andere'] }],
+  carpets: [{ key: 'dimensions', label: 'Maße' }, { key: 'material', label: 'Material', options: MATERIAL_OPTIONS }, { key: 'color', label: 'Farbe' }],
+  bikes: [{ key: 'brand', label: 'Hersteller' }, { key: 'bikeType', label: 'Fahrradtyp', options: ['Citybike', 'Mountainbike', 'Rennrad', 'Trekkingrad', 'E-Bike', 'Kinderfahrrad', 'Andere'] }, { key: 'frameSize', label: 'Rahmengröße' }],
+  football: [{ key: 'sportType', label: 'Sportart', options: ['Fußball', 'Basketball', 'Volleyball', 'Handball', 'Andere'] }, { key: 'size', label: 'Größe / Ausführung' }],
+  fitness: [{ key: 'equipmentType', label: 'Geräteart', options: ['Hantel', 'Laufband', 'Ergometer', 'Yoga', 'Kraftstation', 'Andere'] }, { key: 'weight', label: 'Gewicht / Belastbarkeit', type: 'number' }],
+  outdoor: [{ key: 'equipmentType', label: 'Ausrüstung', options: ['Zelt', 'Schlafsack', 'Rucksack', 'Campingmöbel', 'Andere'] }, { key: 'capacity', label: 'Kapazität / Größe' }],
+  'water-sports': [{ key: 'equipmentType', label: 'Ausrüstung', options: ['Surfbrett', 'SUP', 'Neoprenanzug', 'Tauchausrüstung', 'Andere'] }, { key: 'size', label: 'Größe' }],
+  'islamic-books': [{ key: 'author', label: 'Autor / Herausgeber' }, { key: 'language', label: 'Sprache', options: ['Deutsch', 'Arabisch', 'Türkisch', 'Englisch', 'Andere'] }, { key: 'isbn', label: 'ISBN' }],
+  'kids-books': [{ key: 'author', label: 'Autor' }, { key: 'ageRange', label: 'Altersempfehlung' }, { key: 'language', label: 'Sprache', options: ['Deutsch', 'Englisch', 'Arabisch', 'Andere'] }],
+  education: [{ key: 'subject', label: 'Fach / Thema' }, { key: 'language', label: 'Sprache', options: ['Deutsch', 'Englisch', 'Arabisch', 'Andere'] }, { key: 'schoolLevel', label: 'Schulstufe / Niveau' }],
+  'general-books': [{ key: 'author', label: 'Autor' }, { key: 'language', label: 'Sprache', options: ['Deutsch', 'Englisch', 'Arabisch', 'Andere'] }, { key: 'isbn', label: 'ISBN' }],
+  'media-games': [{ key: 'mediaType', label: 'Art', options: ['Film', 'Serie', 'Brettspiel', 'Kartenspiel', 'Andere'] }, { key: 'ageRating', label: 'Altersfreigabe' }],
+  consoles: [{ key: 'brand', label: 'Hersteller', options: ['Sony', 'Microsoft', 'Nintendo', 'Valve', 'Andere'] }, { key: 'model', label: 'Modell' }, { key: 'storage', label: 'Speicher' }],
+  games: [{ key: 'platform', label: 'Plattform', options: ['PlayStation 5', 'PlayStation 4', 'Xbox Series', 'Xbox One', 'Nintendo Switch', 'PC', 'Andere'] }, { key: 'ageRating', label: 'USK / Altersfreigabe' }],
+  'gaming-accessories': [{ key: 'platform', label: 'Kompatibilität', options: ['PlayStation', 'Xbox', 'Nintendo Switch', 'PC', 'Universal', 'Andere'] }, { key: 'brand', label: 'Hersteller' }],
+  'pc-gaming': [{ key: 'componentType', label: 'Komponente', options: ['Grafikkarte', 'Prozessor', 'Monitor', 'Tastatur', 'Maus', 'PC', 'Andere'] }, { key: 'brand', label: 'Hersteller' }],
+  'tires-rims': [{ key: 'tireWidth', label: 'Reifenbreite (mm)', options: ['125', '135', '145', '155', '165', '175', '185', '195', '205', '215', '225', '235', '245', '255', '265', '275', '285', '295', '305', '315'] }, { key: 'tireProfile', label: 'Querschnitt / Höhe (%)', options: ['30', '35', '40', '45', '50', '55', '60', '65', '70', '75', '80'] }, { key: 'rimDiameter', label: 'Felgendurchmesser (Zoll)', options: ['12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24'] }, { key: 'season', label: 'Saison', options: ['Sommer', 'Winter', 'Ganzjahr'] }, { key: 'quantity', label: 'Anzahl Reifen', type: 'number' }],
+  'spare-parts': [{ key: 'compatibility', label: 'Fahrzeug-Kompatibilität' }, { key: 'partNumber', label: 'Teilenummer' }],
+  'car-accessories': [{ key: 'compatibility', label: 'Fahrzeug-Kompatibilität' }, { key: 'accessoryType', label: 'Zubehörart' }],
+  'roof-racks': [{ key: 'compatibility', label: 'Fahrzeug-Kompatibilität' }, { key: 'loadCapacity', label: 'Traglast in kg', type: 'number' }],
+  'power-tools': [{ key: 'brand', label: 'Hersteller' }, { key: 'powerSource', label: 'Antrieb', options: ['Akku', 'Elektro', 'Benzin', 'Druckluft', 'Handbetrieb'] }],
+  'hand-tools': [{ key: 'toolType', label: 'Werkzeugart' }, { key: 'material', label: 'Material', options: MATERIAL_OPTIONS }],
+  'garden-tools-cat': [{ key: 'brand', label: 'Hersteller' }, { key: 'powerSource', label: 'Antrieb', options: ['Akku', 'Elektro', 'Benzin', 'Handbetrieb'] }],
+  'garden-furniture': [{ key: 'material', label: 'Material', options: MATERIAL_OPTIONS }, { key: 'dimensions', label: 'Maße' }],
+  'baby-clothes': [{ key: 'size', label: 'Kleidergröße', options: ['50', '56', '62', '68', '74', '80', '86', '92', '98', '104', '110', '116', 'Andere'] }, { key: 'gender', label: 'Für wen?', options: ['Mädchen', 'Buben', 'Unisex'] }, { key: 'material', label: 'Material', options: MATERIAL_OPTIONS }],
+  'kids-clothes': [{ key: 'size', label: 'Kleidergröße', options: ['98', '104', '110', '116', '122', '128', '134', '140', '146', '152', '158', '164', 'Andere'] }, { key: 'gender', label: 'Für wen?', options: ['Mädchen', 'Buben', 'Unisex'] }, { key: 'material', label: 'Material', options: MATERIAL_OPTIONS }],
+  'baby-gear': [{ key: 'ageRange', label: 'Alter / Größe', placeholder: 'z. B. ab Geburt oder 6–12 Monate' }, { key: 'material', label: 'Material', options: MATERIAL_OPTIONS }],
+  'kids-furniture': [{ key: 'furnitureType', label: 'Möbelart', options: ['Kinderbett', 'Wickelkommode', 'Schreibtisch', 'Kinderstuhl', 'Regal', 'Andere'] }, { key: 'dimensions', label: 'Maße' }, { key: 'material', label: 'Material', options: MATERIAL_OPTIONS }],
+  cleaning: [{ key: 'productType', label: 'Produktart', options: ['Staubsauger', 'Reinigungsmittel', 'Wischsystem', 'Bürsten', 'Andere'] }, { key: 'brand', label: 'Hersteller' }],
+  'elec-accessories': [{ key: 'compatibility', label: 'Kompatibilität' }, { key: 'accessoryType', label: 'Zubehörart', options: ['Ladegerät', 'Kabel', 'Hülle', 'Adapter', 'Powerbank', 'Andere'] }],
+  'other-general': [{ key: 'productType', label: 'Art des Artikels' }, { key: 'material', label: 'Material', options: MATERIAL_OPTIONS }, { key: 'dimensions', label: 'Maße' }],
+  'other-crafts': [{ key: 'craftType', label: 'Art', options: ['Handarbeit', 'Bastelmaterial', 'Stoffe', 'Werkzeug', 'Andere'] }, { key: 'material', label: 'Material', options: MATERIAL_OPTIONS }],
 };
 
 const VEHICLE_ICONS: Record<string, LucideIcon> = {
@@ -173,11 +376,11 @@ const SUBCATEGORY_ICONS: Record<string, LucideIcon> = {
   'kids-furniture': Armchair,
   toys: Joystick,
   smartphones: Smartphone,
-  tablets: Smartphone,
-  laptops: Smartphone,
-  tv: Smartphone,
-  audio: Smartphone,
-  cameras: Smartphone,
+  tablets: Tablet,
+  laptops: Laptop,
+  tv: Tv,
+  audio: Headphones,
+  cameras: Camera,
   'elec-accessories': Tag,
   'home-appliances': Utensils,
   kitchen: Utensils,
@@ -252,7 +455,20 @@ export const ListingWizard: React.FC = () => {
   const listingDurationDays = offerType === 'PRIVATE' ? config.listingExpiryDays : getListingDurationDays(offerType);
   const showGenericBrand = !['REAL_ESTATE', 'AUTO_MOTOR', 'BOATS'].includes(offerType);
   const showCondition = offerType !== 'REAL_ESTATE' && !(offerType === 'PRIVATE' && type === 'WANTED');
-  const privateDetailFields = PRIVATE_DETAIL_FIELDS[categoryId] ?? [];
+  const applianceType = String(details.applianceType ?? '');
+  const brandOptions = subcategoryId === 'home-appliances' || subcategoryId === 'kitchen'
+    ? (APPLIANCE_BRANDS_BY_TYPE[applianceType] ?? APPLIANCE_BRANDS)
+    : SUBCATEGORY_BRANDS[subcategoryId];
+  const processorOptions = PROCESSORS_BY_MANUFACTURER[String(details.processorManufacturer ?? '')] ?? [];
+  const vehicleBrands = subcategoryId === 'motorcycles-quads' ? MOTORCYCLE_BRANDS : AUTO_BRANDS;
+  const vehicleModels = subcategoryId === 'motorcycles-quads'
+    ? MOTORCYCLE_MODELS_BY_BRAND[String(details.make ?? '')] ?? []
+    : AUTO_MODELS_BY_BRAND[String(details.make ?? '')] ?? [];
+  const privateDetailFields = (PRIVATE_SUBCATEGORY_FIELDS[subcategoryId] ?? PRIVATE_DETAIL_FIELDS[categoryId] ?? [])
+    .map((field) => subcategoryId === 'consoles' && field.key === 'brand' ? { ...field, options: ['Sony', 'Microsoft', 'Nintendo', 'Valve', 'Andere'] } : field)
+    .map((field) => subcategoryId === 'consoles' && field.key === 'model' ? { ...field, options: CONSOLE_MODELS_BY_BRAND[String(details.brand ?? '')] ?? ['Zuerst Hersteller auswählen'] } : field)
+    .map((field) => subcategoryId === 'consoles' && field.key === 'storage' ? { ...field, options: CONSOLE_STORAGE_OPTIONS } : field)
+    .filter((field) => field.key !== 'brand' || !showGenericBrand);
 
   const updateDetail = (key: string, value: string | number | boolean | null) => {
     setDetails((currentDetails) => ({ ...currentDetails, [key]: value }));
@@ -274,29 +490,6 @@ export const ListingWizard: React.FC = () => {
       setCategoryId('baby-kids');
       setSubcategoryId('strollers');
     }
-  };
-
-  // Pre-set stock images for quick addition
-  const sampleStockImages = [
-    'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=800',
-    'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800',
-    'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=800',
-    'https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?w=800',
-    'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800',
-  ];
-
-  const handleAddImage = (url: string) => {
-    if (images.length >= maxPhotos) {
-      showToast(`Maximal ${maxPhotos} Bilder erlaubt.`, 'warning');
-      return;
-    }
-    const newImg: ListingImage = {
-      id: `img-${Date.now()}-${Math.random()}`,
-      url,
-      sortOrder: images.length,
-      isCover: images.length === 0,
-    };
-    setImages([...images, newImg]);
   };
 
   const handleFileUploadSimulation = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -808,13 +1001,6 @@ export const ListingWizard: React.FC = () => {
                   />
                 </label>
 
-                <button
-                  type="button"
-                  onClick={() => handleAddImage(sampleStockImages[Math.floor(Math.random() * sampleStockImages.length)])}
-                  className="px-6 py-3 border border-gray-300 dark:border-white/20 text-[#171A17] dark:text-white text-[11px] font-bold uppercase tracking-widest hover:border-[#171A17] dark:hover:border-white transition-colors"
-                >
-                  Beispiel-Foto einfügen
-                </button>
               </div>
             </div>
 
@@ -880,6 +1066,11 @@ export const ListingWizard: React.FC = () => {
               </div>
             )}
 
+            <section className="space-y-5 border border-[#123D2A]/15 bg-white/65 p-5 sm:p-7 dark:border-white/10 dark:bg-white/[0.03]">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#123D2A] dark:text-[#F4C430]">Grundangaben</p>
+                <p className="mt-2 text-sm text-gray-500">Gib deinem Inserat einen klaren Titel und die wichtigsten Eckdaten.</p>
+              </div>
             <div className="space-y-2">
               <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                 {t.titleField} *
@@ -893,18 +1084,31 @@ export const ListingWizard: React.FC = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               {showGenericBrand && <div className="space-y-2">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   {t.brandField}
                 </label>
-                <input
-                  type="text"
-                  value={brand}
-                  onChange={(e) => setBrand(e.target.value)}
-                  placeholder="z.B. Apple, IKEA"
-                  className={detailInputClass}
-                />
+                {brandOptions ? (
+                  <select
+                    value={brand}
+                    onChange={(e) => setBrand(e.target.value)}
+                    className={`${detailInputClass} appearance-none`}
+                  >
+                    <option value="" className="dark:bg-[#111511]">Bitte auswählen</option>
+                    {brandOptions.map((manufacturer) => (
+                      <option key={manufacturer} value={manufacturer} className="dark:bg-[#111511]">{manufacturer}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={brand}
+                    onChange={(e) => setBrand(e.target.value)}
+                    placeholder="z.B. Apple, IKEA"
+                    className={detailInputClass}
+                  />
+                )}
               </div>}
 
               {showCondition && <div className="space-y-2">
@@ -925,9 +1129,10 @@ export const ListingWizard: React.FC = () => {
                 </select>
               </div>}
             </div>
+            </section>
 
             {offerType !== 'PRIVATE' && (
-              <div className="space-y-6 border-y-2 border-dashed border-[#F4C430] py-7">
+              <section className="space-y-6 border border-[#F4C430]/70 p-5 sm:p-7">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">Spezifische Angaben</p>
                   <p className="mt-2 text-sm text-gray-500">Diese Angaben helfen Interessenten, das Angebot schnell und verlässlich einzuschätzen.</p>
@@ -958,8 +1163,8 @@ export const ListingWizard: React.FC = () => {
 
                 {offerType === 'AUTO_MOTOR' && (
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <DetailInput label="Marke *" value={details.make} onChange={(value) => updateDetail('make', value)} />
-                    <DetailInput label="Modell *" value={details.model} onChange={(value) => updateDetail('model', value)} />
+                    <DetailInput label="Marke *" value={details.make} options={vehicleBrands} onChange={(value) => { updateDetail('make', value); updateDetail('model', ''); }} />
+                    <DetailInput label="Modell *" value={details.model} options={vehicleModels.length > 0 ? vehicleModels : ['Zuerst Marke auswählen']} disabled={vehicleModels.length === 0} onChange={(value) => updateDetail('model', value)} />
                     <label className="space-y-2">
                       <span className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">Baujahr</span>
                       <select value={String(details.year ?? '')} onChange={(event) => updateDetail('year', event.target.value)} className={`${detailInputClass} appearance-none`}>
@@ -982,7 +1187,7 @@ export const ListingWizard: React.FC = () => {
                       </select>
                     </label>
                     <DetailInput label="Leistung in PS" type="number" value={details.power} onChange={(value) => updateDetail('power', value)} />
-                    <DetailInput label="Kraftstoff" value={details.fuel} onChange={(value) => updateDetail('fuel', value)} placeholder="Benzin, Diesel, Hybrid" />
+                    <DetailInput label="Kraftstoff" value={details.fuel} options={AUTO_FUELS} onChange={(value) => updateDetail('fuel', value)} />
                     <label className="space-y-2">
                       <span className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">Getriebe</span>
                       <select value={String(details.transmission ?? '')} onChange={(event) => updateDetail('transmission', event.target.value)} className={`${detailInputClass} appearance-none`}>
@@ -991,7 +1196,22 @@ export const ListingWizard: React.FC = () => {
                         <option value="MANUAL" className="dark:bg-[#111511]">Schaltung</option>
                       </select>
                     </label>
-                    <DetailInput label="Pickerl / HU gültig bis" type="date" value={details.inspectionValidUntil} onChange={(value) => updateDetail('inspectionValidUntil', value)} />
+                    <div className="space-y-3 sm:col-span-2">
+                      <label className="flex cursor-pointer items-center gap-3 text-sm font-bold text-[#171A17] dark:text-white">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(details.inspectionExpired)}
+                          onChange={(event) => updateDetail('inspectionExpired', event.target.checked)}
+                          className="h-4 w-4 accent-[#123D2A]"
+                        />
+                        Pickerl / HU ist abgelaufen
+                      </label>
+                      {details.inspectionExpired ? (
+                        <p className="text-xs font-bold uppercase tracking-widest text-red-700 dark:text-red-400">Kein gültiges Pickerl / keine gültige HU vorhanden</p>
+                      ) : (
+                        <DetailInput label="Pickerl / HU gültig bis" type="date" value={details.inspectionValidUntil} onChange={(value) => updateDetail('inspectionValidUntil', value)} />
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -1000,10 +1220,9 @@ export const ListingWizard: React.FC = () => {
                     <DetailInput label="Wohnfläche / Nutzfläche in m² *" type="number" value={details.livingAreaSqm} onChange={(value) => updateDetail('livingAreaSqm', value)} />
                     <DetailInput label="Grundstücksfläche in m²" type="number" value={details.plotAreaSqm} onChange={(value) => updateDetail('plotAreaSqm', value)} />
                     <DetailInput label="Zimmer" type="number" value={details.rooms} onChange={(value) => updateDetail('rooms', value)} />
-                    <DetailInput label="Schlafzimmer" type="number" value={details.bedrooms} onChange={(value) => updateDetail('bedrooms', value)} />
                     <DetailInput label="Baujahr" type="number" value={details.yearBuilt} onChange={(value) => updateDetail('yearBuilt', value)} />
                     <DetailInput label="Etage" value={details.floor} onChange={(value) => updateDetail('floor', value)} placeholder="EG, 1. OG, Dachgeschoss" />
-                    <DetailInput label="Heizung" value={details.heating} onChange={(value) => updateDetail('heating', value)} placeholder="Gas, Fernwärme, Wärmepumpe" />
+                    <DetailInput label="Heizung" value={details.heating} options={['Gas', 'Fernwärme', 'Wärmepumpe', 'Pellets', 'Öl', 'Elektro', 'Holz', 'Solar', 'Keine / unbekannt', 'Andere']} onChange={(value) => updateDetail('heating', value)} />
                     <DetailInput label="Parkplätze / Stellplätze" type="number" value={details.parkingSpaces} onChange={(value) => updateDetail('parkingSpaces', value)} />
                     <DetailInput label={realEstateAction === 'SELL' ? 'Kaufpreis (€) *' : 'Monatlicher Mietpreis (€) *'} type="number" value={price} onChange={setPrice} />
                     <DetailInput label="Verfügbar ab" type="date" value={details.availableFrom} onChange={(value) => updateDetail('availableFrom', value)} />
@@ -1013,18 +1232,11 @@ export const ListingWizard: React.FC = () => {
                   </div>
                 )}
 
-                <div className="border-t-2 border-dashed border-[#F4C430] pt-5">
-                  <div className="flex items-center justify-between gap-4 text-sm">
-                    <span className="text-gray-500">Anzeigenpreis</span>
-                    <span className="font-bold text-[#123D2A] dark:text-[#F4C430]">€ {listingFee.toFixed(2)} · {listingDurationDays} Tage</span>
-                  </div>
-                  {offerType === 'REAL_ESTATE' && <p className="mt-2 text-xs text-gray-500">Immobilienanzeigen erlauben unbegrenzt viele Bilder.</p>}
-                </div>
-              </div>
+              </section>
             )}
 
             {offerType === 'PRIVATE' && type === 'WANTED' && (
-              <div className="space-y-2 border-y-2 border-dashed border-[#F4C430] py-6">
+              <section className="space-y-4 border border-[#F4C430]/70 p-5 sm:p-7">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">Gewünschter Zustand</label>
                 <select
                   value={String(details.preferredCondition ?? '')}
@@ -1036,11 +1248,11 @@ export const ListingWizard: React.FC = () => {
                   <option value="LIKE_NEW" className="dark:bg-[#111511]">Wie neu</option>
                   <option value="USED" className="dark:bg-[#111511]">Gebraucht</option>
                 </select>
-              </div>
+              </section>
             )}
 
             {offerType === 'PRIVATE' && type !== 'WANTED' && privateDetailFields.length > 0 && (
-              <div className="space-y-6 border-y border-gray-200 py-7 dark:border-white/10">
+              <section className="space-y-6 border border-[#123D2A]/15 bg-white/65 p-5 sm:p-7 dark:border-white/10 dark:bg-white/[0.03]">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">Weitere Angaben</p>
                   <p className="mt-2 text-sm text-gray-500">Optionale Details helfen anderen Mitgliedern bei der Einschätzung.</p>
@@ -1052,30 +1264,36 @@ export const ListingWizard: React.FC = () => {
                       label={field.label}
                       type={field.type}
                       placeholder={field.placeholder}
+                      options={field.key === 'processor' ? (processorOptions.length > 0 ? processorOptions : ['Zuerst Hersteller auswählen']) : field.options}
+                      disabled={(field.key === 'processor' && processorOptions.length === 0) || (field.key === 'model' && subcategoryId === 'consoles' && !details.brand)}
                       value={details[field.key]}
-                      onChange={(value) => updateDetail(field.key, value)}
+                      onChange={(value) => {
+                        updateDetail(field.key, value);
+                        if (field.key === 'processorManufacturer') updateDetail('processor', '');
+                        if (field.key === 'brand' && subcategoryId === 'consoles') updateDetail('model', '');
+                        if (field.key === 'applianceType') setBrand('');
+                      }}
                     />
                   ))}
                 </div>
-              </div>
+              </section>
             )}
 
             {/* PREIS ODER BUDGET */}
             {type === 'SELL' && offerType !== 'REAL_ESTATE' && (
-              <div className="space-y-2 border-t-2 border-dashed border-[#F4C430] pt-4">
+              <section className="space-y-4 border border-[#F4C430]/70 p-5 sm:p-7">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   Preis (€) *
                 </label>
                 <div className="flex items-center gap-8">
-                  <div className="relative flex-1 max-w-[200px]">
-                    <span className="absolute left-0 bottom-2 font-serif font-bold text-2xl text-[#171A17] dark:text-white">€</span>
+                    <div className="relative flex-1 max-w-[200px]">
                     <input
                       type="number"
                       min="0"
                       value={price}
                       onChange={(e) => setPrice(e.target.value.startsWith('-') ? '' : e.target.value)}
                       placeholder="0"
-                      className={`${detailInputClass} pl-8 font-serif text-3xl`}
+                      className={`${detailInputClass} font-serif text-3xl`}
                     />
                   </div>
 
@@ -1083,32 +1301,31 @@ export const ListingWizard: React.FC = () => {
                     <NegotiableToggle checked={negotiable} onChange={setNegotiable} />
                   </div>
                 </div>
-              </div>
+              </section>
             )}
 
             {type === 'WANTED' && (
-              <div className="space-y-2 border-t-2 border-dashed border-[#F4C430] pt-4">
+              <section className="space-y-4 border border-[#F4C430]/70 p-5 sm:p-7">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   Maximales Budget (€, optional)
                 </label>
                 <div className="relative max-w-[200px]">
-                  <span className="absolute left-0 bottom-2 font-serif font-bold text-2xl text-[#171A17] dark:text-white">€</span>
                   <input
                     type="number"
                     min="0"
                     value={maxBudget}
                     onChange={(e) => setMaxBudget(e.target.value.startsWith('-') ? '' : e.target.value)}
                     placeholder="0"
-                    className={`${detailInputClass} pl-8 font-serif text-3xl`}
+                    className={`${detailInputClass} font-serif text-3xl`}
                   />
                 </div>
                 <div className="pt-3">
                   <NegotiableToggle checked={negotiable} onChange={setNegotiable} />
                 </div>
-              </div>
+              </section>
             )}
 
-            <div className="space-y-2 border-t-2 border-dashed border-[#F4C430] pt-4">
+            <section className="space-y-4 border border-[#123D2A]/15 bg-white/65 p-5 sm:p-7 dark:border-white/10 dark:bg-white/[0.03]">
               <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                 {t.descriptionField} *
               </label>
@@ -1119,7 +1336,7 @@ export const ListingWizard: React.FC = () => {
                 placeholder={t.descriptionHelp}
                 className={`${detailInputClass} min-h-32 resize-none leading-relaxed`}
               />
-            </div>
+            </section>
           </div>
         )}
 
