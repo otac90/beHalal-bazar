@@ -43,7 +43,8 @@ export default async function handler(request: RequestLike, response: ResponseLi
     // A successful Checkout session is authoritative even if Stripe's webhook
     // is delayed or a delivery attempt failed. This keeps the listing pending
     // until Stripe has confirmed payment and safely reconciles the server state.
-    if (session.payment_status === 'paid' && listing.payment_status !== 'PAID') {
+    const listingHasExpired = listing.status === 'EXPIRED' || (listing.expires_at && new Date(listing.expires_at).getTime() <= Date.now());
+    if (session.payment_status === 'paid' && (listing.payment_status !== 'PAID' || listing.status !== 'ACTIVE' || listingHasExpired)) {
       const paidAt = new Date();
       const expiresAt = new Date(paidAt.getTime() + (listing.listing_duration_days || 30) * 24 * 60 * 60 * 1000);
       const { error: reconciliationError } = await adminSupabase

@@ -3,7 +3,7 @@ import { ensureStripeConfiguration, getAdminSupabase, getAppUrl, getBearerToken,
 interface RequestLike {
   method?: string;
   headers: Record<string, string | string[] | undefined>;
-  body?: { listingId?: string } | string;
+  body?: { listingId?: string; republish?: boolean } | string;
 }
 
 interface ResponseLike {
@@ -26,17 +26,21 @@ export default async function handler(request: RequestLike, response: ResponseLi
 
     const body = typeof request.body === 'string' ? JSON.parse(request.body) : request.body;
     const listingId = body?.listingId;
+    const isRepublish = body?.republish === true;
     if (typeof listingId !== 'string') return response.status(400).json({ error: 'Inserat fehlt.' });
 
     const { data: listing, error: listingError } = await adminSupabase
       .from('listings')
-      .select('id, user_id, title, listing_fee, listing_duration_days, payment_status, status')
+      .select('id, user_id, title, listing_fee, listing_duration_days, payment_status, status, expires_at')
       .eq('id', listingId)
       .eq('user_id', authData.user.id)
       .single();
 
     if (listingError || !listing) return response.status(404).json({ error: 'Inserat nicht gefunden.' });
-    if (listing.status !== 'PENDING' || listing.payment_status !== 'PENDING') {
+    const hasExpired = listing.status === 'EXPIRED' || (listing.expires_at && new Date(listing.expires_at).getTime() <= Date.now());
+    if (isRepublish) {
+      if (!hasExpired) return response.status(409).json({ error: 'Dieses Inserat ist noch nicht abgelaufen.' });
+    } else if (listing.status !== 'PENDING' || listing.payment_status !== 'PENDING') {
       return response.status(409).json({ error: 'Für dieses Inserat ist keine Zahlung mehr offen.' });
     }
     if (!Number.isFinite(Number(listing.listing_fee)) || Number(listing.listing_fee) <= 0) {

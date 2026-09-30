@@ -1,6 +1,6 @@
 import { createClient } from './supabase/client';
 
-export async function createListingCheckout(listingId: string) {
+export async function createListingCheckout(listingId: string, options?: { republish?: boolean }) {
   const supabase = createClient();
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
 
@@ -14,7 +14,7 @@ export async function createListingCheckout(listingId: string) {
       Authorization: `Bearer ${sessionData.session.access_token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ listingId }),
+    body: JSON.stringify({ listingId, republish: options?.republish === true }),
   });
 
   const rawResponse = await response.text();
@@ -34,6 +34,29 @@ export async function createListingCheckout(listingId: string) {
 
   return payload.url as string;
 }
+
+export async function republishFreeListing(listingId: string) {
+  const supabase = createClient();
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError || !sessionData.session?.access_token) {
+    throw new Error('Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.');
+  }
+
+  const response = await fetch('/api/republish-listing', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${sessionData.session.access_token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ listingId }),
+  });
+  const payload = await response.json().catch(() => ({})) as { expiresAt?: string; error?: string };
+  if (!response.ok || !payload.expiresAt) {
+    throw new Error(payload.error || `Das Inserat konnte nicht erneut veröffentlicht werden (HTTP ${response.status}).`);
+  }
+  return payload as { expiresAt: string };
+}
+
 
 export async function getListingPaymentStatus(sessionId: string) {
   const supabase = createClient();

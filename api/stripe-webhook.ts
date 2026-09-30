@@ -60,12 +60,14 @@ export default async function handler(request: RequestLike, response: ResponseLi
 
     const { data: listing, error: listingError } = await adminSupabase
       .from('listings')
-      .select('id, user_id, listing_duration_days, payment_status')
+      .select('id, user_id, listing_duration_days, payment_status, status, expires_at')
       .eq('id', listingId)
       .eq('user_id', userId)
       .single();
     if (listingError || !listing) return response.status(404).json({ error: 'Inserat nicht gefunden.' });
-    if (listing.payment_status === 'PAID') return response.status(200).json({ received: true });
+    if (listing.payment_status === 'PAID' && listing.status === 'ACTIVE' && (!listing.expires_at || new Date(listing.expires_at).getTime() > Date.now())) {
+      return response.status(200).json({ received: true });
+    }
 
     const paidAt = new Date();
     const expiresAt = new Date(paidAt.getTime() + (listing.listing_duration_days || 30) * 24 * 60 * 60 * 1000);
