@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Archive, ArrowLeft, Check, CheckCheck, FileText, Flag, MoreVertical, Paperclip, Send, ShieldAlert, ShieldCheck, Trash2, UserX, X } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { localizeText } from '../../i18n/translations';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { storage } from '../../services/storage';
 import type { Conversation, Message } from '../../types';
@@ -13,6 +14,8 @@ const formatFileSize = (bytes: number) => bytes < 1024 * 1024 ? `${Math.max(1, M
 
 interface ReportModalProps { conversation: Conversation; onClose: () => void; onSubmit: (reason: string, description: string) => Promise<void>; }
 const ChatReportModal: React.FC<ReportModalProps> = ({ conversation, onClose, onSubmit }) => {
+  const { language } = useApp();
+  const ui = (value: string) => localizeText(value, language);
   const [reason, setReason] = useState('SCAM_FRAUD');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,12 +23,12 @@ const ChatReportModal: React.FC<ReportModalProps> = ({ conversation, onClose, on
   const submit = async (event: React.FormEvent) => { event.preventDefault(); if (!description.trim()) return; setIsSubmitting(true); try { await onSubmit(reason, description.trim()); } finally { setIsSubmitting(false); } };
   return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
     <div className="w-full max-w-lg border border-[#123D2A]/10 bg-[#F5F1E8] p-6 shadow-2xl dark:border-white/10 dark:bg-[#111511] sm:p-8">
-      <div className="mb-6 flex items-center justify-between border-b border-[#123D2A]/10 pb-6 dark:border-white/10"><h3 className="flex items-center gap-2 font-serif text-2xl font-bold text-red-600"><ShieldAlert className="h-6 w-6" />Unterhaltung melden</h3><button onClick={onClose} aria-label="Schließen"><X className="h-6 w-6 text-gray-500" /></button></div>
+      <div className="mb-6 flex items-center justify-between border-b border-[#123D2A]/10 pb-6 dark:border-white/10"><h3 className="flex items-center gap-2 font-serif text-2xl font-bold text-red-600"><ShieldAlert className="h-6 w-6" />{ui('Unterhaltung melden')}</h3><button onClick={onClose} aria-label={ui('Schließen')}><X className="h-6 w-6 text-gray-500" /></button></div>
       <form onSubmit={submit} className="space-y-6"><div className="border border-[#123D2A]/10 bg-[#123D2A]/5 p-3 text-sm dark:border-white/10 dark:bg-white/5"><span className="font-bold">Gemeldete Unterhaltung: </span>{conversation.listingTitle}</div>
         <label className="block"><span className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-gray-300">Grund der Meldung *</span><select value={reason} onChange={(e) => setReason(e.target.value)} className="h-12 w-full border border-[#123D2A]/20 bg-transparent px-4 text-[#171A17] dark:border-white/20 dark:text-white"><option value="SCAM_FRAUD">Verdacht auf Betrug</option>{reasons.slice(1).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <label className="block"><span className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-gray-300">Details & Erläuterung *</span><textarea required rows={4} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Beschreibe kurz, was passiert ist ..." className="w-full border border-[#123D2A]/20 bg-transparent p-4 text-sm dark:border-white/20 dark:text-white" /></label>
         <div className="flex items-start gap-3 border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-900 dark:text-amber-300"><AlertTriangle className="h-5 w-5 shrink-0" /><span>Meldungen werden vertraulich vom Moderationsteam geprüft.</span></div>
-        <div className="flex justify-end gap-3 border-t border-[#123D2A]/10 pt-4 dark:border-white/10"><button type="button" onClick={onClose} className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest">Abbrechen</button><button disabled={isSubmitting} className="bg-red-600 px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-white disabled:opacity-50">{isSubmitting ? 'Wird übermittelt ...' : 'Meldung absenden'}</button></div>
+        <div className="flex justify-end gap-3 border-t border-[#123D2A]/10 pt-4 dark:border-white/10"><button type="button" onClick={onClose} className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest">{ui('Abbrechen')}</button><button disabled={isSubmitting} className="bg-red-600 px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-white disabled:opacity-50">{isSubmitting ? ui('Wird übermittelt ...') : ui('Meldung absenden')}</button></div>
       </form>
     </div>
   </div>;
@@ -33,6 +36,8 @@ const ChatReportModal: React.FC<ReportModalProps> = ({ conversation, onClose, on
 
 interface BlockModalProps { userName: string; onClose: () => void; onSubmit: (reason: string) => Promise<void>; }
 const BlockUserModal: React.FC<BlockModalProps> = ({ userName, onClose, onSubmit }) => {
+  const { language } = useApp();
+  const ui = (value: string) => localizeText(value, language);
   const [reason, setReason] = useState('Unerwünschte Nachrichten');
   const [details, setDetails] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,7 +46,8 @@ const BlockUserModal: React.FC<BlockModalProps> = ({ userName, onClose, onSubmit
 };
 
 export const MessengerView: React.FC = () => {
-  const { user, routeParams, navigate, showToast, t } = useApp();
+  const { user, routeParams, navigate, showToast, t, language } = useApp();
+  const ui = (value: string) => localizeText(value, language);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(routeParams.conversationId || null);
   const [messages, setMessages] = useState<Message[]>([]);

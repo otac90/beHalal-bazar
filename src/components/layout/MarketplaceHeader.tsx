@@ -296,11 +296,8 @@ export const MarketplaceHeader: React.FC = () => {
               </>
             ) : (
               <div className="flex items-center gap-3">
-                <button onClick={() => navigate('login')} className="px-4 py-2 text-sm font-semibold text-[#171A17] dark:text-white hover:opacity-70">
+                <button onClick={() => navigate('login')} className="cursor-pointer rounded-full bg-[#123D2A] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#0D2C1E]">
                   {t.login}
-                </button>
-                <button onClick={() => navigate('register')} className="px-5 py-2 rounded-full bg-[#123D2A] text-white text-sm font-semibold hover:bg-[#0D2C1E] transition-colors">
-                  {t.register}
                 </button>
               </div>
             )}

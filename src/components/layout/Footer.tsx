@@ -122,30 +122,16 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* NEWSLETTER */}
+          {/* COMMUNITY PRINCIPLES */}
           <div className="space-y-6">
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-[#F5F1E8] border-b border-[#F5F1E8]/10 pb-4">
-              Newsletter
+              {language === 'de' ? 'Fair handeln' : 'Trade fairly'}
             </h4>
-            <p className="text-sm font-medium text-[#F5F1E8]/60 leading-relaxed">
-              {t.newsletterDesc}
-            </p>
-            <form className="flex" onSubmit={(e) => e.preventDefault()}>
-              <input 
-                type="email" 
-                placeholder={t.emailPlaceholder} 
-                className="w-full bg-transparent border border-[#F5F1E8]/20 px-4 py-3 text-sm text-[#F5F1E8] placeholder-gray-500 focus:outline-none focus:border-white transition-colors"
-              />
-              <button 
-                type="submit" 
-                className="bg-[#F4C430] text-[#123D2A] px-4 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-[#E4B528] transition-colors"
-              >
-                Go
-              </button>
-            </form>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#F5F1E8]/60 pt-2">
-              {t.noSpam}
-            </p>
+            <div className="space-y-4 text-sm font-medium text-[#F5F1E8]/60 leading-relaxed">
+              <p>{language === 'de' ? 'Ein übersichtlicher Marktplatz lebt von ehrlichen Angaben, respektvoller Kommunikation und sicheren Übergaben.' : 'A trusted marketplace depends on honest listings, respectful communication, and safe handovers.'}</p>
+              <div className="flex items-center gap-3 text-[#F5F1E8]"><ShieldCheck className="h-5 w-5 text-[#F4C430]" /><span>{language === 'de' ? 'Sicher und transparent' : 'Safe and transparent'}</span></div>
+              <div className="flex items-center gap-3 text-[#F5F1E8]"><Globe className="h-5 w-5 text-[#F4C430]" /><span>{language === 'de' ? 'Für alle Menschen' : 'For everyone'}</span></div>
+            </div>
           </div>
 
         </div>
@@ -154,6 +140,14 @@ export const Footer: React.FC = () => {
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-[10px] font-bold uppercase tracking-widest text-[#F5F1E8]/60">
           <div>
             © {new Date().getFullYear()} ONLINE BAZAR. {t.allRightsReserved}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-3" aria-label={language === 'de' ? 'Akzeptierte Zahlungsmethoden' : 'Accepted payment methods'}>
+            {['visa.svg', 'mastercard.svg', 'paypal.svg', 'klarna.svg', 'apple-pay.svg', 'google-pay.svg'].map((icon) => (
+              <span key={icon} className="flex h-8 items-center justify-center overflow-hidden rounded-md border border-[#F5F1E8]/20 bg-transparent px-2.5 py-1.5">
+                <img src={`/assets/payment-methods/${icon}`} alt="" className="max-h-5 w-auto max-w-[62px] object-contain" />
+              </span>
+            ))}
           </div>
 
           <div className="flex items-center gap-6">

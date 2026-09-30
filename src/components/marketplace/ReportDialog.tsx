@@ -4,6 +4,7 @@ import { X, ShieldAlert, AlertTriangle } from 'lucide-react';
 import { ReportReason } from '../../types';
 import { storage } from '../../services/storage';
 import { useApp } from '../../context/AppContext';
+import { localizeText } from '../../i18n/translations';
 
 interface Props {
   isOpen: boolean;
@@ -20,7 +21,8 @@ export const ReportDialog: React.FC<Props> = ({
   listingTitle,
   reportedUserId,
 }) => {
-  const { user, showToast, t } = useApp();
+  const { user, showToast, t, language } = useApp();
+  const ui = (value: string) => localizeText(value, language);
   const [reason, setReason] = useState<ReportReason>('FORBIDDEN_PRODUCT');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,7 +49,7 @@ export const ReportDialog: React.FC<Props> = ({
       return;
     }
     if (!description.trim()) {
-      showToast('Bitte gib eine kurze Begründung an.', 'warning');
+      showToast(ui('Bitte gib eine kurze Begründung an.'), 'warning');
       return;
     }
     setIsSubmitting(true);
@@ -61,7 +63,7 @@ export const ReportDialog: React.FC<Props> = ({
       description,
     });
     setIsSubmitting(false);
-    showToast('Vielen Dank. Deine Meldung wurde an das Moderationsteam übermittelt.', 'success');
+    showToast(ui('Vielen Dank. Deine Meldung wurde an das Moderationsteam übermittelt.'), 'success');
     setDescription('');
     onClose();
   };
@@ -76,7 +78,7 @@ export const ReportDialog: React.FC<Props> = ({
         <div className="flex items-center justify-between pb-6 mb-6 border-b border-[#123D2A]/10 dark:border-white/10">
           <h3 className="font-serif font-bold text-2xl text-red-600 dark:text-red-400 flex items-center gap-2">
             <ShieldAlert className="w-6 h-6" />
-            Meldung
+            {ui('Meldung')}
           </h3>
           <button
             onClick={onClose}
@@ -89,14 +91,14 @@ export const ReportDialog: React.FC<Props> = ({
         <form onSubmit={handleSubmit} className="space-y-6">
           {listingTitle && (
             <div className="p-3 bg-[#123D2A]/5 dark:bg-white/5 border border-[#123D2A]/10 dark:border-white/10 text-sm text-[#171A17] dark:text-gray-300">
-              <span className="font-bold">Betrifft Inserat: </span>
+              <span className="font-bold">{ui('Betrifft Inserat: ')}</span>
               {listingTitle}
             </div>
           )}
 
           <div>
             <label className="block text-sm font-bold text-[#123D2A] dark:text-gray-300 mb-2 uppercase tracking-widest">
-              Grund der Meldung *
+              {ui('Grund der Meldung *')}
             </label>
             <select
               value={reason}
@@ -113,13 +115,13 @@ export const ReportDialog: React.FC<Props> = ({
 
           <div>
             <label className="block text-sm font-bold text-[#123D2A] dark:text-gray-300 mb-2 uppercase tracking-widest">
-              Details & Erläuterung *
+              {ui('Details & Erläuterung *')}
             </label>
             <textarea
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Beschreibe bitte kurz, warum dieses Inserat oder dieser Nutzer gegen die Regeln der ONLINE BAZAR Community verstößt..."
+              placeholder={ui('Beschreibe bitte kurz, warum dieses Inserat oder dieser Nutzer gegen die Regeln der ONLINE BAZAR Community verstößt...')}
               className="w-full p-4 bg-transparent border border-[#123D2A]/20 dark:border-white/20 text-[#171A17] dark:text-white placeholder:text-gray-400 focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
             />
           </div>
@@ -127,7 +129,7 @@ export const ReportDialog: React.FC<Props> = ({
           <div className="p-4 bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-sm text-amber-900 dark:text-amber-300">
             <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
             <span className="font-medium">
-              Meldungen werden vertraulich von unserem Moderationsteam geprüft. Missbräuchliche Falschmeldungen sind nicht gestattet.
+              {ui('Meldungen werden vertraulich von unserem Moderationsteam geprüft. Missbräuchliche Falschmeldungen sind nicht gestattet.')}
             </span>
           </div>
 
@@ -144,7 +146,7 @@ export const ReportDialog: React.FC<Props> = ({
               disabled={isSubmitting}
               className="w-full sm:w-auto px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold uppercase tracking-widest transition-colors disabled:opacity-50"
             >
-              {isSubmitting ? 'Wird übermittelt...' : 'Meldung absenden'}
+              {isSubmitting ? ui('Wird übermittelt...') : ui('Meldung absenden')}
             </button>
           </div>
         </form>
