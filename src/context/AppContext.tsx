@@ -5,6 +5,7 @@ import { getTranslation } from '../i18n/translations';
 import { INITIAL_CATEGORIES } from '../data/categories';
 import { createClient } from '../utils/supabase/client';
 import { getProfileForUser } from '../utils/supabase/auth';
+import { getUnreadMessageCount } from '../utils/supabase/chat';
 
 export type AppRoute = 
   | 'home'
@@ -90,6 +91,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [config, setConfig] = useState<PlatformConfig>(storage.getConfig());
   const [toasts, setToasts] = useState<ToastInfo[]>([]);
   const [favoritesList, setFavoritesList] = useState<string[]>(user ? storage.getFavorites(user.id) : []);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   // Sync with storage on mount and updates
   useEffect(() => {
@@ -116,6 +118,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     return unsub;
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setUnreadMessagesCount(0);
+      return;
+    }
+
+    let mounted = true;
+    const refreshUnreadCount = async () => {
+      try {
+        const count = await getUnreadMessageCount(user.id);
+        if (mounted) setUnreadMessagesCount(count);
+      } catch (error) {
+        console.warn('Unread message count unavailable', error);
+      }
+    };
+
+    void refreshUnreadCount();
+    const interval = window.setInterval(refreshUnreadCount, 10000);
+    window.addEventListener('messages-updated', refreshUnreadCount);
+    return () => {
+      mounted = false;
+      window.clearInterval(interval);
+      window.removeEventListener('messages-updated', refreshUnreadCount);
+    };
+  }, [user]);
 
   useEffect(() => {
     let isMounted = true;
@@ -251,10 +279,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const refreshState = () => {
     setUser(storage.getCurrentUser());
   };
-
-  const unreadMessagesCount = user 
-    ? storage.getConversations(user.id).reduce((sum, c) => sum + (c.unreadCountForUser || 0), 0)
-    : 0;
 
   const unreadNotificationsCount = user 
     ? storage.getNotifications(user.id).filter((n) => !n.read).length

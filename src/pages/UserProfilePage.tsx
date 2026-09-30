@@ -23,7 +23,7 @@ export const UserProfilePage: React.FC = () => {
           Dieses Mitglied existiert leider nicht oder das Profil wurde deaktiviert.
         </p>
         <button
-          onClick={() => navigate('home')}
+          onClick={() => navigate('account')}
           className="inline-flex items-center gap-2 px-8 py-4 bg-[#123D2A] dark:bg-white text-white dark:text-[#171A17] text-[11px] font-bold uppercase tracking-widest hover:opacity-80 transition-opacity"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -39,7 +39,7 @@ export const UserProfilePage: React.FC = () => {
       
       {/* NAV */}
       <button
-        onClick={() => navigate('home')}
+        onClick={() => navigate('account')}
         className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#171A17] dark:text-white hover:text-[#123D2A] dark:hover:text-[#F4C430] transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />

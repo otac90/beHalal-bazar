@@ -2,12 +2,17 @@ import React, { useState } from 'react';
 import { 
   User as UserIcon, Heart, Bookmark, Package, ShieldCheck, 
   Settings, Trash2, CheckCircle, Clock, Eye, 
-  ExternalLink, Camera 
+  ExternalLink, Camera, X, CreditCard, RefreshCw
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { storage } from '../services/storage';
 import { Listing, SavedSearch } from '../types';
 import { updateProfile } from '../utils/supabase/auth';
+import { createListingCheckout, republishFreeListing } from '../utils/stripe';
+import { ConfirmDialog } from '../components/common/ConfirmDialog';
+
+const profileInputClass = 'w-full border border-[#123D2A]/20 bg-white/80 px-4 py-3 text-sm text-[#171A17] outline-none transition focus:border-[#F4C430] focus:ring-2 focus:ring-[#F4C430]/25 dark:border-white/15 dark:bg-[#111511] dark:text-white';
+const profileSectionClass = 'space-y-6 border border-[#123D2A]/15 bg-white/65 p-5 sm:p-7 dark:border-white/10 dark:bg-white/[0.03]';
 
 export const AccountPage: React.FC = () => {
   const { user, setUser, navigate, favorites, showToast, t, language } = useApp();
@@ -21,6 +26,10 @@ export const AccountPage: React.FC = () => {
   const [city, setCity] = useState(user?.city || '');
   const [postalCode, setPostalCode] = useState(user?.postalCode || '');
   const [bio, setBio] = useState(user?.bio || '');
+  const [republishListing, setRepublishListing] = useState<Listing | null>(null);
+  const [isRepublishing, setIsRepublishing] = useState(false);
+  const [deleteListingId, setDeleteListingId] = useState<string | null>(null);
+  const [deleteSearchId, setDeleteSearchId] = useState<string | null>(null);
 
   if (!user) {
     return (
@@ -50,16 +59,56 @@ export const AccountPage: React.FC = () => {
     showToast(`Status auf "${status}" aktualisiert.`, 'success');
   };
 
-  const handleDeleteListing = (listingId: string) => {
-    if (window.confirm('Möchtest du dieses Inserat wirklich unwiderruflich löschen?')) {
-      storage.deleteListing(listingId);
-      showToast('Inserat wurde gelöscht.', 'info');
+  const handleRepublish = async () => {
+    if (!republishListing) return;
+    setIsRepublishing(true);
+    try {
+      const listingFee = Number(republishListing.listingFee ?? 0);
+      if (listingFee > 0) {
+        const checkoutUrl = await createListingCheckout(republishListing.id, { republish: true });
+        window.location.assign(checkoutUrl);
+        return;
+      }
+
+      const result = await republishFreeListing(republishListing.id);
+      storage.saveListing({
+        ...republishListing,
+        status: 'ACTIVE',
+        publishedAt: new Date().toISOString(),
+        expiresAt: result.expiresAt,
+        updatedAt: new Date().toISOString(),
+      });
+      setRepublishListing(null);
+      showToast('Dein Inserat wurde erneut veröffentlicht.', 'success');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Das Inserat konnte nicht erneut veröffentlicht werden.', 'error');
+    } finally {
+      setIsRepublishing(false);
     }
   };
 
+  const handleDeleteListing = (listingId: string) => {
+    setDeleteListingId(listingId);
+  };
+
+  const confirmDeleteListing = () => {
+    if (deleteListingId) {
+      storage.deleteListing(deleteListingId);
+      showToast('Inserat wurde gelöscht.', 'info');
+    }
+    setDeleteListingId(null);
+  };
+
   const handleDeleteSavedSearch = (searchId: string) => {
-    storage.deleteSavedSearch(searchId);
-    showToast('Suchauftrag gelöscht.', 'info');
+    setDeleteSearchId(searchId);
+  };
+
+  const confirmDeleteSavedSearch = () => {
+    if (deleteSearchId) {
+      storage.deleteSavedSearch(deleteSearchId);
+      showToast('Suchauftrag gelöscht.', 'info');
+    }
+    setDeleteSearchId(null);
   };
 
   
@@ -98,7 +147,7 @@ const handleSaveProfile = async (e: React.FormEvent) => {
         avatarUrl,
       });
       if (updated) setUser(updated);
-      showToast(t.profileUpdated, 'success');
+      showToast(t.profileUpdated || 'Dein Profil wurde erfolgreich gespeichert.', 'success');
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Dein Profil konnte nicht gespeichert werden.', 'error');
     }
@@ -204,8 +253,8 @@ const handleSaveProfile = async (e: React.FormEvent) => {
                     <div className="flex-1 flex flex-col justify-between">
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <span className={`px-2 py-0.5 font-sans text-[9px] font-bold uppercase tracking-widest ${lst.status === 'ACTIVE' ? 'bg-[#CBD9C6] text-[#123D2A]' : lst.status === 'RESERVED' ? 'bg-[#FAF2CC] text-[#123D2A]' : 'bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}>
-                            {lst.status === 'ACTIVE' ? 'Aktiv' : lst.status === 'RESERVED' ? 'Reserviert' : 'Verkauft'}
+                          <span className={`px-2 py-0.5 font-sans text-[9px] font-bold uppercase tracking-widest ${lst.status === 'ACTIVE' ? 'bg-[#CBD9C6] text-[#123D2A]' : lst.status === 'RESERVED' ? 'bg-[#FAF2CC] text-[#123D2A]' : lst.status === 'EXPIRED' ? 'bg-[#FCE4E4] text-[#8B2C2C]' : 'bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}>
+                            {lst.status === 'ACTIVE' ? 'Aktiv' : lst.status === 'RESERVED' ? 'Reserviert' : lst.status === 'EXPIRED' ? 'Abgelaufen' : 'Verkauft'}
                           </span>
                           <span className="text-[10px] uppercase tracking-widest text-gray-400">
                             {lst.views} Aufrufe
@@ -225,7 +274,15 @@ const handleSaveProfile = async (e: React.FormEvent) => {
                       {/* ACTIONS */}
                       <div className="flex items-center justify-between gap-4 mt-4">
                         <div className="flex items-center gap-3">
-                          {lst.status !== 'ACTIVE' && (
+                          {lst.status === 'EXPIRED' ? (
+                            <button
+                              onClick={() => setRepublishListing(lst)}
+                              className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#123D2A] hover:underline dark:text-[#F4C430]"
+                            >
+                              <RefreshCw className="h-3.5 w-3.5" />
+                              Erneut veröffentlichen
+                            </button>
+                          ) : lst.status !== 'ACTIVE' && (
                             <button
                               onClick={() => handleUpdateStatus(lst.id, 'ACTIVE')}
                               className="text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-white hover:underline"
@@ -367,6 +424,7 @@ const handleSaveProfile = async (e: React.FormEvent) => {
             <form onSubmit={handleSaveProfile} className="space-y-8">
               
               
+              <section className={profileSectionClass}>
               <div className="flex flex-col sm:flex-row items-center gap-6">
                 <div className="relative group">
                   <img
@@ -384,8 +442,14 @@ const handleSaveProfile = async (e: React.FormEvent) => {
                   <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">{t.profilePictureSize}</p>
                 </div>
               </div>
+              </section>
 
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+              <section className={profileSectionClass}>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#123D2A] dark:text-[#F4C430]">Persönliche Angaben</p>
+                <p className="mt-2 text-sm text-gray-500">Halte deine sichtbaren Kontaktdaten aktuell.</p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-400">
                     {t.firstName}
@@ -394,7 +458,7 @@ const handleSaveProfile = async (e: React.FormEvent) => {
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full pb-2 bg-transparent border-b border-[#123D2A]/20 dark:border-white/20 text-sm text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                    className={profileInputClass}
                   />
                 </div>
                 <div className="space-y-2">
@@ -405,12 +469,14 @@ const handleSaveProfile = async (e: React.FormEvent) => {
                     type="text"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="w-full pb-2 bg-transparent border-b border-[#123D2A]/20 dark:border-white/20 text-sm text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                    className={profileInputClass}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+              <div>
+                <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-[#123D2A] dark:text-[#F4C430]">Wohnort</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-400">
                     Postleitzahl
@@ -419,7 +485,7 @@ const handleSaveProfile = async (e: React.FormEvent) => {
                     type="text"
                     value={postalCode}
                     onChange={(e) => setPostalCode(e.target.value)}
-                    className="w-full pb-2 bg-transparent border-b border-[#123D2A]/20 dark:border-white/20 text-sm text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                    className={profileInputClass}
                   />
                 </div>
                 <div className="space-y-2">
@@ -430,9 +496,10 @@ const handleSaveProfile = async (e: React.FormEvent) => {
                     type="text"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    className="w-full pb-2 bg-transparent border-b border-[#123D2A]/20 dark:border-white/20 text-sm text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+                    className={profileInputClass}
                   />
                 </div>
+              </div>
               </div>
 
               <div className="space-y-2">
@@ -444,9 +511,10 @@ const handleSaveProfile = async (e: React.FormEvent) => {
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   placeholder="Ein paar nette Worte über dich..."
-                  className="w-full py-2 bg-transparent border-b border-[#123D2A]/20 dark:border-white/20 text-sm text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors resize-none"
+                  className={`${profileInputClass} resize-none`}
                 />
               </div>
+              </section>
 
               <div className="pt-4">
                 <button
@@ -478,6 +546,70 @@ const handleSaveProfile = async (e: React.FormEvent) => {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteListingId !== null}
+        title="Inserat löschen?"
+        message="Möchtest du dieses Inserat wirklich löschen? Es wird aus deiner Liste entfernt und kann nicht automatisch wiederhergestellt werden."
+        onClose={() => setDeleteListingId(null)}
+        onConfirm={confirmDeleteListing}
+      />
+      <ConfirmDialog
+        isOpen={deleteSearchId !== null}
+        title="Suchauftrag löschen?"
+        message="Möchtest du diesen gespeicherten Suchauftrag wirklich löschen?"
+        onClose={() => setDeleteSearchId(null)}
+        onConfirm={confirmDeleteSavedSearch}
+      />
+
+      {republishListing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#171A17]/70 px-4 py-8" role="dialog" aria-modal="true" aria-labelledby="republish-title">
+          <div className="w-full max-w-lg border border-[#123D2A]/15 bg-[#F5F1E8] p-6 shadow-2xl dark:border-white/10 dark:bg-[#111511] sm:p-8">
+            <div className="flex items-start justify-between gap-6 border-b border-[#123D2A]/10 pb-5 dark:border-white/10">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#123D2A] dark:text-[#F4C430]">Wiederveröffentlichung</p>
+                <h2 id="republish-title" className="mt-2 font-serif text-2xl font-bold text-[#171A17] dark:text-white">Inserat erneut veröffentlichen</h2>
+              </div>
+              <button type="button" onClick={() => setRepublishListing(null)} className="p-1 text-gray-500 hover:text-[#123D2A] dark:hover:text-[#F4C430]" aria-label="Modal schließen">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="mt-6 space-y-4">
+              <div className="flex items-center justify-between gap-4 border border-[#123D2A]/15 bg-white/60 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                <img src={republishListing.images[0]?.url || 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=200'} alt="" className="h-16 w-16 shrink-0 object-cover" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Inserat</p>
+                  <p className="mt-2 truncate font-serif text-xl font-bold text-[#171A17] dark:text-white">{republishListing.title}</p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Produktpreis</p>
+                  <p className="mt-2 font-bold text-[#171A17] dark:text-white">{republishListing.isFree ? 'Kostenlos' : `€ ${Number(republishListing.price).toFixed(2)}`}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="border border-[#123D2A]/15 p-4 dark:border-white/10">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Laufzeit</p>
+                  <p className="mt-2 font-bold text-[#171A17] dark:text-white">{republishListing.listingDurationDays ?? 30} Tage</p>
+                </div>
+                <div className="border border-[#123D2A]/15 p-4 dark:border-white/10">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Anzeigenpreis</p>
+                  <p className="mt-2 font-bold text-[#171A17] dark:text-white">{Number(republishListing.listingFee ?? 0) > 0 ? `€ ${Number(republishListing.listingFee).toFixed(2)}` : 'Kostenlos'}</p>
+                </div>
+              </div>
+              <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                Nach erfolgreicher Zahlung wird das Inserat wieder aktiviert und ist für die neue Laufzeit öffentlich sichtbar.
+              </p>
+            </div>
+            <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => setRepublishListing(null)} className="border border-[#123D2A]/20 px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:border-white/20 dark:text-white">Abbrechen</button>
+              <button type="button" disabled={isRepublishing} onClick={() => void handleRepublish()} className="inline-flex items-center justify-center gap-2 bg-[#123D2A] px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-white hover:bg-[#171A17] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#F4C430] dark:text-[#171A17]">
+                {Number(republishListing.listingFee ?? 0) > 0 && <CreditCard className="h-4 w-4" />}
+                {isRepublishing ? 'Wird vorbereitet...' : Number(republishListing.listingFee ?? 0) > 0 ? 'Zum Warenkorb & bezahlen' : 'Jetzt erneut veröffentlichen'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

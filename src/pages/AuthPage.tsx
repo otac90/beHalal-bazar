@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  Lock, Mail, ShieldCheck, CheckCircle2, AlertTriangle, X, CircleCheck, CircleX
+  Lock, Mail, ShieldCheck, CheckCircle2, AlertTriangle, X, CircleCheck, CircleX, ChevronRight
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { createClient } from '../utils/supabase/client';
@@ -376,6 +376,25 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                 </div>
               </div>
 
+              <div className="space-y-4 border border-[#123D2A]/15 dark:border-white/10 bg-white/70 dark:bg-white/5 px-5 py-5">
+                <div>
+                  <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">
+                    Passwortanforderungen
+                  </h2>
+                  <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                    Dein Passwort muss vor dem Absenden alle Kriterien erfüllen.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {passwordChecks.map((check) => (
+                    <div key={check.label} className={`flex items-center gap-2 text-xs font-bold ${check.isValid ? 'text-[#123D2A] dark:text-[#F4C430]' : 'text-gray-500 dark:text-gray-400'}`}>
+                      {check.isValid ? <CircleCheck className="w-4 h-4" /> : <CircleX className="w-4 h-4" />}
+                      <span>{check.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   Passwort *
@@ -387,30 +406,6 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                   onChange={(e) => setRegPassword(e.target.value)}
                   className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
                 />
-              </div>
-
-              <div className="space-y-4 border border-[#123D2A]/15 dark:border-white/10 bg-white/70 dark:bg-white/5 px-5 py-5">
-                <div>
-                  <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">
-                    Sicheres Passwort
-                  </h2>
-                  <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-                    Dein Passwort muss alle Kriterien erfüllen.
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {passwordChecks.map((check) => (
-                    <div
-                      key={check.label}
-                      className={`flex items-center gap-2 text-xs font-bold ${
-                        check.isValid ? 'text-[#123D2A] dark:text-[#F4C430]' : 'text-gray-500 dark:text-gray-400'
-                      }`}
-                    >
-                      {check.isValid ? <CircleCheck className="w-4 h-4" /> : <CircleX className="w-4 h-4" />}
-                      <span>{check.label}</span>
-                    </div>
-                  ))}
-                </div>
               </div>
 
               <div className="space-y-2">
@@ -449,7 +444,10 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                       </span>
                     </span>
                   </span>
-                  {hasReadRules && <CheckCircle2 className="w-5 h-5 text-[#123D2A] dark:text-[#F4C430] shrink-0" />}
+                  <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">
+                    {hasReadRules ? 'Gelesen' : 'Öffnen'}
+                    {hasReadRules ? <CheckCircle2 className="w-5 h-5 shrink-0" /> : <ChevronRight className="w-5 h-5 shrink-0" />}
+                  </span>
                 </button>
 
                 <label className={`flex items-start gap-4 cursor-pointer ${hasReadRules ? '' : 'opacity-60'}`}>

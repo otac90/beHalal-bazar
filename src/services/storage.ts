@@ -235,7 +235,22 @@ class StorageService {
       return INITIAL_LISTINGS;
     }
     try {
-      return JSON.parse(raw);
+      const listings = JSON.parse(raw) as Listing[];
+      const now = Date.now();
+      let changed = false;
+      const normalizedListings = listings.map((listing) => {
+        if (
+          (listing.status === 'ACTIVE' || listing.status === 'RESERVED') &&
+          listing.expiresAt &&
+          new Date(listing.expiresAt).getTime() <= now
+        ) {
+          changed = true;
+          return { ...listing, status: 'EXPIRED' as const, updatedAt: new Date().toISOString() };
+        }
+        return listing;
+      });
+      if (changed) localStorage.setItem(STORAGE_KEYS.LISTINGS, JSON.stringify(normalizedListings));
+      return normalizedListings;
     } catch {
       return INITIAL_LISTINGS;
     }
