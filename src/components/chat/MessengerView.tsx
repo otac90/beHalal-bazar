@@ -1,350 +1,103 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Send, ShieldCheck, CheckCheck, Clock, ImageIcon, 
-  MapPin, AlertTriangle, ArrowLeft, MoreVertical, Check, 
-  Sparkles
-} from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { AlertTriangle, Archive, ArrowLeft, Check, CheckCheck, FileText, Flag, MoreVertical, Paperclip, Send, ShieldAlert, ShieldCheck, Trash2, UserX, X } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { ConfirmDialog } from '../common/ConfirmDialog';
 import { storage } from '../../services/storage';
-import { Conversation, Message } from '../../types';
+import type { Conversation, Message } from '../../types';
+import { blockUser, deleteConversationForUser, getConversationMessages, listConversations, markConversationUnread, markMessagesAsRead, reportChatConversation, sendChatMessage, sendChatMessageWithAttachments, subscribeToChat } from '../../utils/supabase/chat';
+
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
+const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
+
+const formatFileSize = (bytes: number) => bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+
+interface ReportModalProps { conversation: Conversation; onClose: () => void; onSubmit: (reason: string, description: string) => Promise<void>; }
+const ChatReportModal: React.FC<ReportModalProps> = ({ conversation, onClose, onSubmit }) => {
+  const [reason, setReason] = useState('SCAM_FRAUD');
+  const [description, setDescription] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const reasons = [['SCAM_FRAUD', 'Verdacht auf Betrug'], ['OFFENSIVE', 'Beleidigende oder respektlose Inhalte'], ['SPAM', 'Spam oder unerwünschte Nachrichten'], ['OTHER', 'Sonstiger Grund']];
+  const submit = async (event: React.FormEvent) => { event.preventDefault(); if (!description.trim()) return; setIsSubmitting(true); try { await onSubmit(reason, description.trim()); } finally { setIsSubmitting(false); } };
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+    <div className="w-full max-w-lg border border-[#123D2A]/10 bg-[#F5F1E8] p-6 shadow-2xl dark:border-white/10 dark:bg-[#111511] sm:p-8">
+      <div className="mb-6 flex items-center justify-between border-b border-[#123D2A]/10 pb-6 dark:border-white/10"><h3 className="flex items-center gap-2 font-serif text-2xl font-bold text-red-600"><ShieldAlert className="h-6 w-6" />Unterhaltung melden</h3><button onClick={onClose} aria-label="Schließen"><X className="h-6 w-6 text-gray-500" /></button></div>
+      <form onSubmit={submit} className="space-y-6"><div className="border border-[#123D2A]/10 bg-[#123D2A]/5 p-3 text-sm dark:border-white/10 dark:bg-white/5"><span className="font-bold">Gemeldete Unterhaltung: </span>{conversation.listingTitle}</div>
+        <label className="block"><span className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-gray-300">Grund der Meldung *</span><select value={reason} onChange={(e) => setReason(e.target.value)} className="h-12 w-full border border-[#123D2A]/20 bg-transparent px-4 text-[#171A17] dark:border-white/20 dark:text-white"><option value="SCAM_FRAUD">Verdacht auf Betrug</option>{reasons.slice(1).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+        <label className="block"><span className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-gray-300">Details & Erläuterung *</span><textarea required rows={4} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Beschreibe kurz, was passiert ist ..." className="w-full border border-[#123D2A]/20 bg-transparent p-4 text-sm dark:border-white/20 dark:text-white" /></label>
+        <div className="flex items-start gap-3 border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-900 dark:text-amber-300"><AlertTriangle className="h-5 w-5 shrink-0" /><span>Meldungen werden vertraulich vom Moderationsteam geprüft.</span></div>
+        <div className="flex justify-end gap-3 border-t border-[#123D2A]/10 pt-4 dark:border-white/10"><button type="button" onClick={onClose} className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest">Abbrechen</button><button disabled={isSubmitting} className="bg-red-600 px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-white disabled:opacity-50">{isSubmitting ? 'Wird übermittelt ...' : 'Meldung absenden'}</button></div>
+      </form>
+    </div>
+  </div>;
+};
+
+interface BlockModalProps { userName: string; onClose: () => void; onSubmit: (reason: string) => Promise<void>; }
+const BlockUserModal: React.FC<BlockModalProps> = ({ userName, onClose, onSubmit }) => {
+  const [reason, setReason] = useState('Unerwünschte Nachrichten');
+  const [details, setDetails] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submit = async (event: React.FormEvent) => { event.preventDefault(); setIsSubmitting(true); try { await onSubmit(details.trim() ? `${reason}: ${details.trim()}` : reason); } finally { setIsSubmitting(false); } };
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"><div className="w-full max-w-lg border border-[#123D2A]/10 bg-[#F5F1E8] p-6 shadow-2xl dark:border-white/10 dark:bg-[#111511] sm:p-8"><div className="mb-6 flex items-start justify-between border-b border-[#123D2A]/10 pb-6 dark:border-white/10"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300"><UserX className="h-5 w-5" /></div><div><h3 className="font-serif text-2xl font-bold text-[#171A17] dark:text-white">Nutzer blockieren</h3><p className="mt-1 text-sm text-gray-500">{userName}</p></div></div><button type="button" onClick={onClose} aria-label="Dialog schließen"><X className="h-6 w-6 text-gray-500" /></button></div><form onSubmit={submit} className="space-y-6"><div className="flex items-start gap-3 border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-900 dark:text-amber-300"><AlertTriangle className="h-5 w-5 shrink-0" /><span>Nach dem Blockieren kann diese Person dir keine neuen Nachrichten senden.</span></div><label className="block"><span className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-gray-300">Warum möchtest du blockieren? *</span><select required value={reason} onChange={(event) => setReason(event.target.value)} className="h-12 w-full border border-[#123D2A]/20 bg-transparent px-4 text-sm dark:border-white/20 dark:bg-[#111511] dark:text-white"><option>Unerwünschte Nachrichten</option><option>Beleidigung oder respektloses Verhalten</option><option>Verdacht auf Betrug</option><option>Spam</option><option>Sonstiger Grund</option></select></label><label className="block"><span className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-gray-300">Zusätzliche Angaben (optional)</span><textarea rows={3} value={details} onChange={(event) => setDetails(event.target.value)} className="w-full border border-[#123D2A]/20 bg-transparent p-4 text-sm dark:border-white/20 dark:text-white" /></label><div className="flex justify-end gap-3 border-t border-[#123D2A]/10 pt-4 dark:border-white/10"><button type="button" onClick={onClose} className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest">Abbrechen</button><button type="submit" disabled={isSubmitting} className="bg-red-700 px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-white disabled:opacity-50">{isSubmitting ? 'Wird gespeichert ...' : 'Nutzer blockieren'}</button></div></form></div></div>;
+};
 
 export const MessengerView: React.FC = () => {
   const { user, routeParams, navigate, showToast, t } = useApp();
-  
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(
-    routeParams.conversationId || null
-  );
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(routeParams.conversationId || null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
-
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedConversationIds, setSelectedConversationIds] = useState<string[]>([]);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [reportConversation, setReportConversation] = useState<Conversation | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
+  const [chatError, setChatError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const userId = user?.id;
 
-  // Initialize or synchronize conversation list and active selection
   useEffect(() => {
-    if (!userId) return;
-    const convs = storage.getConversations(userId);
-    setConversations(convs);
+    if (!openMenuId) return;
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      const target = event.target;
+      if (target instanceof Element && !target.closest('[data-chat-menu]')) setOpenMenuId(null);
+    };
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    return () => document.removeEventListener('mousedown', closeOnOutsideClick);
+  }, [openMenuId]);
 
-    const initialId = routeParams.conversationId || (convs.length > 0 ? convs[0].id : null);
-    if (!activeConversationId && initialId) {
-      setActiveConversationId(initialId);
-    }
-  }, [userId, routeParams.conversationId]); // DO NOT ADD activeConversationId here to prevent loops
+  const reload = async (conversationId = activeConversationId) => { if (!userId) return; const convs = await listConversations(userId); setConversations(convs); if (conversationId) setMessages(await getConversationMessages(conversationId)); };
+  useEffect(() => { if (!userId) return; let mounted = true; void listConversations(userId).then((convs) => { if (!mounted) return; setConversations(convs); const initial = routeParams.conversationId || convs[0]?.id || null; if (!activeConversationId && initial) setActiveConversationId(initial); }).catch((error) => mounted && setChatError(error instanceof Error ? error.message : 'Der Chat konnte nicht geladen werden.')).finally(() => mounted && setIsLoading(false)); return () => { mounted = false; }; }, [userId, routeParams.conversationId]);
+  useEffect(() => { if (!userId || !activeConversationId) { setMessages([]); return; } let mounted = true; void getConversationMessages(activeConversationId).then((msgs) => { if (mounted) setMessages(msgs); return markMessagesAsRead(activeConversationId, userId); }).then(() => window.dispatchEvent(new Event('messages-updated'))).catch((error) => mounted && setChatError(error instanceof Error ? error.message : 'Nachrichten konnten nicht geladen werden.')); return () => { mounted = false; }; }, [userId, activeConversationId]);
+  useEffect(() => { if (!userId) return; return subscribeToChat(() => { void reload(); }); }, [userId, activeConversationId]);
+  useEffect(() => { if (messagesContainerRef.current) messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight; }, [messages.length, activeConversationId]);
 
-  // Load messages and mark as read when active conversation changes
-  useEffect(() => {
-    if (!userId || !activeConversationId) {
-      setMessages([]);
-      return;
-    }
-    const msgs = storage.getMessages(activeConversationId);
-    setMessages(msgs);
+  if (!user) return <div className="mx-auto max-w-md space-y-8 px-4 py-32 text-center"><h2 className="font-serif text-3xl font-bold text-[#171A17] dark:text-white">{t.closedCommunityNotice}</h2><p className="text-sm uppercase tracking-widest text-gray-500">Melde dich an, um Nachrichten zu lesen und zu versenden.</p><button onClick={() => navigate('login')} className="bg-[#F4C430] px-8 py-4 text-[11px] font-bold uppercase tracking-widest text-[#123D2A]">{t.login}</button></div>;
 
-    // Defer marking as read to prevent synchronously triggering storage subscriptions during effect phase
-    const timeout = setTimeout(() => {
-      const convs = storage.getConversations(userId);
-      const targetConv = convs.find((c) => c.id === activeConversationId);
-      if (targetConv && targetConv.unreadCountForUser && targetConv.unreadCountForUser > 0) {
-        storage.markConversationAsRead(activeConversationId, userId);
-      }
-    }, 100);
-
-    return () => clearTimeout(timeout);
-  }, [userId, activeConversationId]);
-
-  // Listen to background storage updates without calling state mutators that loop
-  useEffect(() => {
-    if (!userId) return;
-    const unsubscribe = storage.subscribe(() => {
-      const convs = storage.getConversations(userId);
-      setConversations(convs);
-      
-      // We read activeConversationId from the current closure, but since this runs on notify, it's fine
-      // However, we should prefer functional state updates or just read the latest state
-      setMessages((prevMsgs) => {
-        if (!activeConversationId) return prevMsgs;
-        const newMsgs = storage.getMessages(activeConversationId);
-        // Only update if lengths differ to avoid unnecessary renders
-        if (newMsgs.length !== prevMsgs.length) return newMsgs;
-        return prevMsgs;
-      });
-    });
-    return unsubscribe;
-  }, [userId, activeConversationId]);
-
-  const prevConvId = useRef(activeConversationId);
-  const prevMsgCount = useRef(messages.length);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (messagesContainerRef.current) {
-      if (prevConvId.current === activeConversationId) {
-        if (messages.length > prevMsgCount.current) {
-          messagesContainerRef.current.scrollTo({
-            top: messagesContainerRef.current.scrollHeight,
-            behavior: 'smooth'
-          });
-        }
-      } else {
-        // When switching chats, do not scroll all the way down
-        messagesContainerRef.current.scrollTop = 0;
-      }
-    }
-    prevConvId.current = activeConversationId;
-    prevMsgCount.current = messages.length;
-  }, [messages.length, activeConversationId]);
-
-  if (!user) {
-    return (
-      <div className="max-w-md mx-auto py-32 px-4 text-center space-y-8 animate-fade-in">
-        <h2 className="font-serif font-bold text-3xl text-[#171A17] dark:text-white">
-          {t.closedCommunityNotice}
-        </h2>
-        <p className="font-sans text-sm text-gray-500 uppercase tracking-widest leading-relaxed">
-          Melde dich an oder wechsle ein Test-Profil, um deine Nachrichten einzusehen.
-        </p>
-        <button
-          onClick={() => navigate('login')}
-          className="px-8 py-4 bg-[#F4C430] text-[#123D2A] text-[11px] font-bold uppercase tracking-widest hover:opacity-80 transition-opacity"
-        >
-          {t.login}
-        </button>
-      </div>
-    );
-  }
-
-  const activeConversation = conversations.find((c) => c.id === activeConversationId);
-
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!messageText.trim() || !activeConversationId) return;
-
-    storage.sendMessage(activeConversationId, user.id, messageText.trim());
-    setMessageText('');
-  };
-
-  const handleStatusChange = (newStatus: 'RESERVED' | 'SOLD' | 'ACTIVE') => {
-    if (!activeConversation) return;
-    storage.updateListingStatus(activeConversation.listingId, newStatus);
-    showToast(`Status auf "${newStatus}" aktualisiert.`, 'success');
-  };
-
+  const activeConversation = conversations.find((conversation) => conversation.id === activeConversationId);
   const isSeller = activeConversation?.sellerId === user.id;
-  const otherParticipantName = isSeller ? activeConversation?.buyerName : activeConversation?.sellerName;
+  const otherParticipantId = activeConversation ? (isSeller ? activeConversation.buyerId : activeConversation.sellerId) : null;
+  const otherParticipantName = activeConversation ? (isSeller ? activeConversation.buyerName : activeConversation.sellerName) : '';
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-4 md:py-8 h-[calc(100dvh-220px)] min-h-0 md:h-[calc(100dvh-88px)] md:min-h-[620px] flex">
-      
-      <div className="flex-1 min-h-0 border border-[#123D2A]/10 dark:border-white/10 flex overflow-hidden bg-white/75 dark:bg-[#111511]/80 shadow-[0_18px_60px_rgba(18,61,42,0.08)]">
-        
-        {/* ==================================================== */}
-        {/* LEFT COLUMN: CONVERSATION LIST */}
-        {/* ==================================================== */}
-        <div className={`w-full md:w-96 bg-[#F5F1E8] dark:bg-[#151B15] border-r border-[#123D2A]/15 dark:border-white/10 flex flex-col min-h-0 ${
-          activeConversationId ? 'hidden md:flex' : 'flex'
-        }`}>
-          {/* HEADER */}
-          <div className="py-6 px-6 border-b border-[#123D2A]/15 dark:border-white/10 flex items-center justify-between bg-[#123D2A] text-[#F5F1E8]">
-            <h2 className="font-serif font-bold text-3xl text-[#F5F1E8]">
-              {t.messages}
-            </h2>
-            <span className="font-serif font-bold text-xl text-[#F4C430]">
-              {conversations.length}
-            </span>
-          </div>
+  const handleFiles = (event: React.ChangeEvent<HTMLInputElement>) => { const files = Array.from(event.target.files ?? []) as File[]; const invalid = files.find((file) => file.size > MAX_FILE_SIZE || !ACCEPTED_TYPES.has(file.type)); if (invalid) { showToast(`${invalid.name} ist zu groß oder hat ein nicht unterstütztes Format.`, 'warning'); event.target.value = ''; return; } if (files.length > 5) { showToast('Du kannst maximal 5 Dateien gleichzeitig senden.', 'warning'); return; } setSelectedFiles(files); };
+  const handleSendMessage = async (event: React.FormEvent) => { event.preventDefault(); if (!activeConversationId || (!messageText.trim() && selectedFiles.length === 0) || isSending) return; setIsSending(true); try { const sent = selectedFiles.length ? await sendChatMessageWithAttachments(activeConversationId, user.id, messageText, selectedFiles) : await sendChatMessage(activeConversationId, user.id, messageText); setMessages((current) => [...current, sent]); setMessageText(''); setSelectedFiles([]); if (fileInputRef.current) fileInputRef.current.value = ''; window.dispatchEvent(new Event('messages-updated')); } catch (error) { showToast(error instanceof Error ? error.message : 'Nachricht konnte nicht gesendet werden.', 'error'); } finally { setIsSending(false); } };
+  const handleStatusChange = (status: 'RESERVED' | 'SOLD' | 'ACTIVE') => { if (!activeConversation) return; storage.updateListingStatus(activeConversation.listingId, status); showToast(`Status auf "${status}" aktualisiert.`, 'success'); };
+  const handleDelete = (conversation: Conversation) => setPendingDeleteIds([conversation.id]);
+  const toggleConversationSelection = (conversationId: string) => setSelectedConversationIds((current) => current.includes(conversationId) ? current.filter((id) => id !== conversationId) : [...current, conversationId]);
+  const handleDeleteSelected = async () => { if (selectedConversationIds.length > 0) setPendingDeleteIds(selectedConversationIds); };
+  const confirmDeleteConversations = async () => { try { await Promise.all(pendingDeleteIds.map((conversationId) => deleteConversationForUser(conversationId, user.id))); const wasMultiple = pendingDeleteIds.length > 1; setPendingDeleteIds([]); setSelectedConversationIds([]); setIsSelectionMode(false); setActiveConversationId(null); await reload(null); showToast(wasMultiple ? 'Ausgewählte Unterhaltungen wurden gelöscht.' : 'Unterhaltung wurde gelöscht.', 'success'); } catch (error) { showToast(error instanceof Error ? error.message : 'Unterhaltungen konnten nicht gelöscht werden.', 'error'); } };
+  const handleUnread = async (conversation: Conversation) => { try { await markConversationUnread(conversation.id, user.id); setOpenMenuId(null); await reload(); showToast('Unterhaltung als ungelesen markiert.', 'success'); } catch (error) { showToast(error instanceof Error ? error.message : 'Status konnte nicht geändert werden.', 'error'); } };
+  const handleBlock = () => { if (otherParticipantId) setShowBlockModal(true); };
+  const confirmBlock = async (reason: string) => { if (!otherParticipantId) return; try { await blockUser(otherParticipantId, user.id, reason); setShowBlockModal(false); showToast('Nutzer wurde blockiert.', 'success'); } catch (error) { showToast(error instanceof Error ? error.message : 'Nutzer konnte nicht blockiert werden.', 'error'); } };
 
-          {/* LIST */}
-          <div className="flex-1 min-h-0 overflow-y-auto">
-            {conversations.length > 0 ? (
-              conversations.map((conv) => {
-                const isConvSeller = conv.sellerId === user.id;
-                const partnerName = isConvSeller ? conv.buyerName : conv.sellerName;
-                const partnerAvatar = isConvSeller ? conv.buyerAvatar : conv.sellerAvatar;
-                const isSelected = conv.id === activeConversationId;
-
-                return (
-                  <button
-                    key={conv.id}
-                    onClick={() => {
-                      setActiveConversationId(conv.id);
-                      setMessages(storage.getMessages(conv.id));
-                    }}
-                    className={`w-full p-5 text-left flex items-start gap-4 transition-colors border-b border-[#123D2A]/10 dark:border-white/5 ${
-                      isSelected
-                        ? 'bg-[#F4C430]/28 dark:bg-[#F4C430]/15'
-                        : 'hover:bg-white/70 dark:hover:bg-white/5'
-                    }`}
-                  >
-                    <img
-                      src={partnerAvatar || '/assets/default-avatar.svg'}
-                      alt=""
-                      className="w-14 h-14 object-cover shrink-0 grayscale hover:grayscale-0 transition-all"
-                    />
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1 mb-1">
-                        <span className="font-serif font-bold text-lg text-[#171A17] dark:text-white truncate">
-                          {partnerName}
-                        </span>
-                        <span className="font-sans text-[10px] uppercase tracking-widest text-gray-400 shrink-0">
-                          {new Date(conv.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-
-                      <p className="font-sans text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430] truncate mb-1">
-                        {conv.listingTitle}
-                      </p>
-
-                      <p className="font-sans text-xs text-gray-500 truncate">
-                        {conv.lastMessage || 'Noch keine Nachrichten...'}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })
-            ) : (
-              <div className="p-8 text-center text-xs text-gray-400 space-y-4">
-                <p className="font-serif font-bold text-xl">Noch keine Unterhaltungen vorhanden.</p>
-                <p className="font-sans text-[10px] uppercase tracking-widest">Klicke bei einem Inserat auf „Nachricht schreiben“, um einen Chat zu starten.</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ==================================================== */}
-        {/* RIGHT COLUMN: ACTIVE CHAT & LISTING CONTEXT */}
-        {/* ==================================================== */}
-        {activeConversation ? (
-          <div className="flex-1 min-w-0 min-h-0 flex flex-col h-full bg-white dark:bg-[#0E140F]">
-            
-            {/* CHAT TOP BAR WITH LISTING CONTEXT */}
-            <div className="shrink-0 py-5 px-6 md:px-10 border-b border-[#123D2A]/10 dark:border-white/10 bg-[#FAF2CC]/70 dark:bg-[#191E19] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setActiveConversationId(null)}
-                  className="md:hidden p-2 -ml-2 text-gray-600 dark:text-gray-300"
-                >
-                  <ArrowLeft className="w-6 h-6" />
-                </button>
-
-                <img
-                  src={activeConversation.listingImage || 'https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=120'}
-                  alt=""
-                  className="w-16 h-16 object-cover shrink-0 cursor-pointer"
-                  onClick={() => navigate('listing-detail', { id: activeConversation.listingId })}
-                />
-
-                <div className="min-w-0">
-                  <div className="flex items-center gap-3">
-                    <h3 
-                      onClick={() => navigate('listing-detail', { id: activeConversation.listingId })}
-                      className="font-serif font-bold text-xl sm:text-2xl text-[#171A17] dark:text-white truncate cursor-pointer hover:opacity-70 transition-opacity"
-                    >
-                      {activeConversation.listingTitle}
-                    </h3>
-                    <span className="font-sans text-xs font-bold text-[#123D2A] dark:text-[#F4C430] uppercase tracking-widest mt-1">
-                      {activeConversation.listingPrice === 0 ? 'Kostenlos' : `${activeConversation.listingPrice} €`}
-                    </span>
-                  </div>
-                  <p className="font-sans text-[10px] uppercase tracking-widest text-gray-500 dark:text-gray-400 truncate mt-1">
-                    Gespräch mit <strong className="text-[#171A17] dark:text-white">{otherParticipantName}</strong>
-                  </p>
-                </div>
-              </div>
-
-              {/* SELLER ACTION BUTTONS */}
-              {isSeller && (
-                <div className="flex items-center gap-3 self-end sm:self-auto">
-                  <button
-                    onClick={() => handleStatusChange('RESERVED')}
-                    className="px-4 py-2 border border-[#171A17] dark:border-white text-[#171A17] dark:text-white text-[10px] font-bold uppercase tracking-widest hover:bg-[#171A17] hover:text-white dark:hover:bg-white dark:hover:text-[#171A17] transition-colors"
-                  >
-                    Reservieren
-                  </button>
-                  <button
-                    onClick={() => handleStatusChange('SOLD')}
-                    className="px-4 py-2 bg-[#F4C430] text-[#123D2A] text-[10px] font-bold uppercase tracking-widest hover:opacity-80 transition-opacity"
-                  >
-                    Verkauft
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* SAFETY NOTICE BANNER */}
-            <div className="shrink-0 px-6 md:px-10 py-3 border-b border-[#123D2A]/10 dark:border-white/10 bg-[#CBD9C6]/25 dark:bg-white/5 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-gray-500">
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="w-4 h-4 text-[#123D2A] dark:text-[#F4C430] shrink-0" />
-                <span>{t.safetyBoxTips}</span>
-              </div>
-            </div>
-
-            {/* MESSAGES THREAD */}
-            <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto px-6 md:px-10 py-8 space-y-6 bg-white dark:bg-[#0E140F]">
-              {messages.map((msg) => {
-                const isMe = msg.senderId === user.id;
-                return (
-                  <div
-                    key={msg.id}
-                    className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
-                  >
-                    <div
-                      className={`max-w-[80%] sm:max-w-[60%] p-5 text-sm leading-relaxed ${
-                        isMe
-                          ? 'bg-[#123D2A] text-[#F5F1E8] dark:bg-[#F4C430] dark:text-[#123D2A]'
-                          : 'bg-[#F5F1E8] text-[#123D2A] dark:bg-white/5 dark:text-gray-300'
-                      }`}
-                    >
-                      <p className="whitespace-pre-line">{msg.content}</p>
-                    </div>
-                    <span className="font-sans text-[9px] font-bold uppercase tracking-widest text-gray-400 mt-2 flex items-center gap-2">
-                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      {isMe && <CheckCheck className="w-3.5 h-3.5 text-[#123D2A] dark:text-[#F4C430]" />}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* MESSAGE INPUT BAR */}
-            <form
-              onSubmit={handleSendMessage}
-              className="shrink-0 px-6 md:px-10 py-5 border-t border-[#123D2A]/15 dark:border-white/10 bg-[#F5F1E8] dark:bg-[#151B15] flex items-end gap-4"
-            >
-              <textarea
-                value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
-                placeholder={t.typeMessagePlaceholder}
-                rows={1}
-                className="flex-1 max-h-28 min-h-12 px-4 py-3 bg-white dark:bg-[#0E140F] border border-[#123D2A]/15 dark:border-white/15 text-sm text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors resize-none placeholder:font-sans placeholder:text-[10px] placeholder:uppercase placeholder:tracking-widest"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage(e);
-                  }
-                }}
-              />
-              <button
-                type="submit"
-                disabled={!messageText.trim()}
-                className="h-12 w-12 shrink-0 flex items-center justify-center bg-[#F4C430] text-[#123D2A] hover:bg-[#E4B528] disabled:opacity-40 disabled:hover:bg-[#F4C430] transition-colors"
-                aria-label="Nachricht senden"
-              >
-                <Send className="w-6 h-6" />
-              </button>
-            </form>
-
-          </div>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-400">
-            <p className="font-serif font-bold text-2xl">Wähle eine Unterhaltung aus der linken Liste aus.</p>
-          </div>
-        )}
-
-      </div>
-
-    </div>
-  );
+  return <div className="mx-auto flex h-[calc(100dvh-220px)] min-h-0 max-w-7xl px-4 py-4 md:h-[calc(100dvh-88px)] md:min-h-[620px] md:py-8"><div className="relative flex min-h-0 flex-1 overflow-hidden border border-[#123D2A]/10 bg-white/75 shadow-[0_18px_60px_rgba(18,61,42,0.08)] dark:border-white/10 dark:bg-[#111511]/80">
+    {chatError && <div className="absolute z-20 mx-4 mt-4 border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800">{chatError}</div>}
+<div className={`flex w-full min-h-0 flex-col border-r border-[#123D2A]/15 bg-[#F5F1E8] dark:border-white/10 dark:bg-[#151B15] md:w-96 ${activeConversationId ? 'hidden md:flex' : 'flex'}`}><div className="flex items-center justify-between border-b border-[#123D2A]/15 bg-[#123D2A] px-6 py-6 text-[#F5F1E8]"><div><h2 className="font-serif text-3xl font-bold">{t.messages}</h2><span className="font-sans text-[10px] uppercase tracking-widest text-[#F4C430]">{conversations.length} {conversations.length === 1 ? 'Unterhaltung' : 'Unterhaltungen'}</span></div><div className="flex items-center gap-2"><button onClick={() => { setIsSelectionMode((current) => !current); setSelectedConversationIds([]); }} title="Mehrere Unterhaltungen auswählen" className={`p-2 ${isSelectionMode ? 'bg-[#F4C430] text-[#123D2A]' : 'text-[#F5F1E8] hover:text-[#F4C430]'}`}><CheckCheck className="h-5 w-5" /></button>{isSelectionMode && <button onClick={() => void handleDeleteSelected()} disabled={!selectedConversationIds.length} title="Ausgewählte Unterhaltungen löschen" className="p-2 text-[#F5F1E8] hover:text-red-300 disabled:opacity-40"><Trash2 className="h-5 w-5" /></button>}</div></div><div className="min-h-0 flex-1 overflow-y-auto">{isLoading ? <p className="p-8 text-center text-xs uppercase tracking-widest text-gray-400">Unterhaltungen werden geladen ...</p> : conversations.length ? conversations.map((conv) => { const seller = conv.sellerId === user.id; const partnerName = seller ? conv.buyerName : conv.sellerName; const partnerAvatar = seller ? conv.buyerAvatar : conv.sellerAvatar; return <div key={conv.id} className={`relative flex items-start gap-4 border-b border-[#123D2A]/10 p-5 dark:border-white/5 ${conv.id === activeConversationId ? 'bg-[#F4C430]/28' : 'hover:bg-white/70'}`}>{isSelectionMode && <button type="button" onClick={() => toggleConversationSelection(conv.id)} aria-label={`${partnerName} auswählen`} className={`mt-5 flex h-5 w-5 shrink-0 items-center justify-center border ${selectedConversationIds.includes(conv.id) ? 'border-[#123D2A] bg-[#123D2A] text-white' : 'border-gray-400'}`}>{selectedConversationIds.includes(conv.id) && <Check className="h-3.5 w-3.5" />}</button>}<button onClick={() => { if (isSelectionMode) { toggleConversationSelection(conv.id); return; } setActiveConversationId(conv.id); setOpenMenuId(null); }} className="flex min-w-0 flex-1 items-start gap-4 text-left"><img src={partnerAvatar || '/assets/default-avatar.svg'} alt="" className="h-14 w-14 shrink-0 object-cover" /><div className="min-w-0 flex-1"><div className="mb-1 flex items-center justify-between gap-1"><span className="truncate font-serif text-lg font-bold text-[#171A17] dark:text-white">{partnerName}</span><span className="shrink-0 text-[10px] uppercase tracking-widest text-gray-400">{new Date(conv.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div><p className="mb-1 truncate text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">{conv.listingTitle}</p><p className={`truncate text-xs ${conv.unreadCountForUser ? 'font-bold text-[#123D2A] dark:text-[#F4C430]' : 'text-gray-500'}`}>{conv.lastMessage || 'Noch keine Nachrichten ...'}</p></div></button>{!isSelectionMode && <div data-chat-menu className="relative"><button onClick={() => setOpenMenuId(openMenuId === conv.id ? null : conv.id)} aria-label="Unterhaltungsaktionen" className="p-1 text-gray-500 hover:text-[#123D2A]"><MoreVertical className="h-5 w-5" /></button>{conv.unreadCountForUser > 0 && <span className="absolute right-0 top-7 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white" aria-label={`${conv.unreadCountForUser} ungelesene Nachrichten`}>{conv.unreadCountForUser > 99 ? '99+' : conv.unreadCountForUser}</span>}{openMenuId === conv.id && <div className="absolute right-0 top-8 z-30 w-56 border border-[#123D2A]/15 bg-[#F5F1E8] p-2 shadow-xl dark:border-white/10 dark:bg-[#151B15]"><button onClick={() => void handleUnread(conv)} className="flex w-full items-center gap-3 px-3 py-3 text-left text-[10px] font-bold uppercase tracking-widest hover:bg-white/60 dark:hover:bg-white/5"><Archive className="h-4 w-4" />Als ungelesen markieren</button><button onClick={() => { setReportConversation(conv); setOpenMenuId(null); }} className="flex w-full items-center gap-3 px-3 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-red-700 hover:bg-white/60"><Flag className="h-4 w-4" />Unterhaltung melden</button><button onClick={() => void handleDelete(conv)} className="flex w-full items-center gap-3 px-3 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-red-700 hover:bg-white/60"><Trash2 className="h-4 w-4" />Unterhaltung löschen</button></div>}</div>}</div>; }) : <div className="space-y-4 p-8 text-center text-gray-400"><p className="font-serif text-xl font-bold">Noch keine Unterhaltungen vorhanden.</p><p className="text-[10px] uppercase tracking-widest">Öffne ein Inserat, um einen Chat zu starten.</p></div>}</div></div>
+{activeConversation ? <div className="flex min-w-0 flex-1 flex-col bg-white dark:bg-[#0E140F]"><div className="flex shrink-0 flex-col justify-between gap-4 border-b border-[#123D2A]/10 bg-[#FAF2CC]/70 px-6 py-5 dark:border-white/10 dark:bg-[#191E19] sm:flex-row sm:items-center"><div className="flex min-w-0 items-center gap-4"><button onClick={() => setActiveConversationId(null)} className="p-2 md:hidden"><ArrowLeft className="h-6 w-6" /></button><img src={activeConversation.listingImage || '/assets/default-avatar.svg'} alt="" className="h-16 w-16 shrink-0 cursor-pointer object-cover" onClick={() => navigate('listing-detail', { id: activeConversation.listingId })} /><div className="min-w-0"><div className="flex items-center gap-3"><h3 onClick={() => navigate('listing-detail', { id: activeConversation.listingId })} className="truncate font-serif text-xl font-bold text-[#171A17] dark:text-white">{activeConversation.listingTitle}</h3><span className="shrink-0 text-xs font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">{activeConversation.listingPrice === 0 ? 'Kostenlos' : `${activeConversation.listingPrice} €`}</span></div><p className="mt-1 truncate text-[10px] uppercase tracking-widest text-gray-500">Gespräch mit <strong>{otherParticipantName}</strong></p></div></div><div className="flex items-center gap-2 self-end sm:self-auto"><button onClick={() => void handleBlock()} title="Nutzer blockieren" className="p-2 text-gray-600 hover:text-red-600"><UserX className="h-5 w-5" /></button>{isSeller && <><button onClick={() => handleStatusChange('RESERVED')} className="border border-[#171A17] px-3 py-2 text-[10px] font-bold uppercase tracking-widest dark:border-white dark:text-white">Reservieren</button><button onClick={() => handleStatusChange('SOLD')} className="bg-[#F4C430] px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-[#123D2A]">Verkauft</button></>}</div></div><div className="flex shrink-0 items-center gap-3 border-b border-[#123D2A]/10 bg-[#CBD9C6]/25 px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:border-white/10"><ShieldCheck className="h-4 w-4 text-[#123D2A] dark:text-[#F4C430]" />{t.safetyBoxTips}</div><div ref={messagesContainerRef} className="min-h-0 flex-1 space-y-6 overflow-y-auto bg-white px-6 py-8 dark:bg-[#0E140F] md:px-10">{messages.map((msg) => { const mine = msg.senderId === user.id; return <div key={msg.id} className={`flex flex-col ${mine ? 'items-end' : 'items-start'}`}><div className={`max-w-[85%] p-5 text-sm leading-relaxed sm:max-w-[65%] ${mine ? 'bg-[#123D2A] text-[#F5F1E8] dark:bg-[#F4C430] dark:text-[#123D2A]' : 'bg-[#F5F1E8] text-[#123D2A] dark:bg-white/5 dark:text-gray-300'}`}>{msg.content && <p className="whitespace-pre-line">{msg.content}</p>}{msg.attachments?.map((attachment) => <a key={attachment.id} href={attachment.url || '#'} target={attachment.mimeType.startsWith('image/') ? undefined : '_blank'} rel={attachment.mimeType.startsWith('image/') ? undefined : 'noreferrer'} onClick={(event) => { if (attachment.mimeType.startsWith('image/')) { event.preventDefault(); if (attachment.url) setPreviewImageUrl(attachment.url); } }} className="mt-2 flex items-center gap-3 border border-current/20 p-2 hover:opacity-70">{attachment.mimeType.startsWith('image/') ? <img src={attachment.url} alt={attachment.fileName} className="max-h-48 max-w-full object-contain" /> : <><FileText className="h-5 w-5" /><span className="min-w-0"><span className="block truncate">{attachment.fileName}</span><span className="text-[10px] opacity-70">{formatFileSize(attachment.fileSize)}</span></span></>}</a>)}</div><span className="mt-2 flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest text-gray-400">{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{mine && <CheckCheck className="h-3.5 w-3.5" />}</span></div>; })}</div><form onSubmit={handleSendMessage} className="shrink-0 border-t border-[#123D2A]/15 bg-[#F5F1E8] px-6 py-5 dark:border-white/10 dark:bg-[#151B15] md:px-10">{selectedFiles.length > 0 && <div className="mb-3 flex flex-wrap gap-2">{selectedFiles.map((file) => <span key={file.name} className="flex max-w-full items-center gap-2 border border-[#123D2A]/20 px-3 py-2 text-xs"><Paperclip className="h-3.5 w-3.5" /><span className="max-w-[180px] truncate">{file.name}</span><button type="button" onClick={() => setSelectedFiles((current) => current.filter((item) => item !== file))} aria-label={`${file.name} entfernen`}><X className="h-3.5 w-3.5" /></button></span>)}</div>}<div className="flex items-end gap-3"><input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.txt,.doc,.docx,.xls,.xlsx" onChange={handleFiles} className="hidden" /><button type="button" onClick={() => fileInputRef.current?.click()} title="Foto oder Dokument anhängen" className="flex h-12 w-12 shrink-0 items-center justify-center border border-[#123D2A]/20 text-[#123D2A] hover:bg-white dark:border-white/20 dark:text-[#F4C430]"><Paperclip className="h-5 w-5" /></button><textarea value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder={t.typeMessagePlaceholder} rows={1} className="min-h-12 max-h-28 flex-1 resize-none border border-[#123D2A]/15 bg-white px-4 py-3 text-sm dark:border-white/15 dark:bg-[#0E140F] dark:text-white" onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSendMessage(e); } }} /><button type="submit" disabled={isSending || (!messageText.trim() && selectedFiles.length === 0)} aria-label="Nachricht senden" className="flex h-12 w-12 shrink-0 items-center justify-center bg-[#F4C430] text-[#123D2A] disabled:opacity-40"><Send className="h-6 w-6" /></button></div></form></div> : <div className="flex flex-1 items-center justify-center p-8 text-center text-gray-400"><p className="font-serif text-2xl font-bold">Wähle eine Unterhaltung aus der linken Liste aus.</p></div>}
+</div><ConfirmDialog isOpen={pendingDeleteIds.length > 0} title={pendingDeleteIds.length > 1 ? "Unterhaltungen löschen?" : "Unterhaltung löschen?"} message={pendingDeleteIds.length > 1 ? `${pendingDeleteIds.length} Unterhaltungen werden aus deiner Nachrichtenliste entfernt.` : "Diese Unterhaltung wird aus deiner Nachrichtenliste entfernt."} onClose={() => setPendingDeleteIds([])} onConfirm={() => void confirmDeleteConversations()} />{showBlockModal && <BlockUserModal userName={otherParticipantName} onClose={() => setShowBlockModal(false)} onSubmit={confirmBlock} />}{reportConversation && <ChatReportModal conversation={reportConversation} onClose={() => setReportConversation(null)} onSubmit={async (reason, description) => { const seller = reportConversation.sellerId === user.id; await reportChatConversation(reportConversation.id, user.id, seller ? reportConversation.buyerId : reportConversation.sellerId, reason, description); setReportConversation(null); showToast('Vielen Dank. Deine Meldung wurde übermittelt.', 'success'); }} />}{previewImageUrl && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4" onClick={() => setPreviewImageUrl(null)}><button type="button" onClick={() => setPreviewImageUrl(null)} aria-label="Bildvorschau schließen" className="absolute right-5 top-5 p-2 text-white hover:text-[#F4C430]"><X className="h-7 w-7" /></button><img src={previewImageUrl} alt="Große Bildvorschau" className="max-h-[90vh] max-w-[94vw] object-contain" onClick={(event) => event.stopPropagation()} /></div>}</div>;
 };

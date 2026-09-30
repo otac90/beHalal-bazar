@@ -118,8 +118,18 @@ export interface Message {
   senderId: string;
   content: string;
   imageUrl?: string;
+  attachments?: ChatAttachment[];
   readAt?: string;
   createdAt: string;
+}
+
+export interface ChatAttachment {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  storagePath: string;
+  url?: string;
 }
 
 export interface Conversation {
@@ -140,6 +150,7 @@ export interface Conversation {
   lastMessageAt: string;
   unreadCountForUser: number;
   isArchived?: boolean;
+  deletedForUser?: boolean;
 }
 
 export interface SavedSearch {
