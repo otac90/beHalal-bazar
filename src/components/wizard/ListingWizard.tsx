@@ -7,6 +7,7 @@ import {
   Shirt, Baby, Smartphone, Tablet, Laptop, Tv, Headphones, Camera, Utensils, Armchair, BookOpen, Gamepad2, Car, Layers, Sofa, BedDouble, Table2, Lamp, BookMarked, Joystick, type LucideIcon
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { localizeText } from '../../i18n/translations';
 import { 
   ListingType, ListingCondition, DeliveryType, 
   ListingImage, Listing 
@@ -36,15 +37,18 @@ interface DetailInputProps {
   placeholder?: string;
   options?: string[];
   disabled?: boolean;
+  language?: 'de' | 'en';
 }
 
-const DetailInput: React.FC<DetailInputProps> = ({ label, value, onChange, type = 'text', placeholder, options, disabled }) => (
+const DetailInput: React.FC<DetailInputProps> = ({ label, value, onChange, type = 'text', placeholder, options, disabled }) => {
+  const { language } = useApp();
+  return (
   <label className="space-y-2">
-    <span className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">{label}</span>
+    <span className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">{localizeText(label, language)}</span>
     {options ? (
       <select disabled={disabled} value={String(value ?? '')} onChange={(event) => onChange(event.target.value)} className={`${detailInputClass} appearance-none disabled:cursor-not-allowed disabled:opacity-50`}>
-        <option value="" className="dark:bg-[#111511]">{placeholder ?? 'Bitte auswählen'}</option>
-        {options.map((option) => <option key={option} value={option} className="dark:bg-[#111511]">{option}</option>)}
+        <option value="" className="dark:bg-[#111511]">{placeholder ? localizeText(placeholder, language) : localizeText('Bitte auswählen', language)}</option>
+        {options.map((option) => <option key={option} value={option} className="dark:bg-[#111511]">{localizeText(option, language)}</option>)}
       </select>
     ) : (
       <input
@@ -57,12 +61,13 @@ const DetailInput: React.FC<DetailInputProps> = ({ label, value, onChange, type 
           if (type === 'number' && nextValue.startsWith('-')) return;
           onChange(nextValue);
         }}
-        placeholder={placeholder}
+        placeholder={placeholder ? localizeText(placeholder, language) : undefined}
         className={`${detailInputClass} disabled:cursor-not-allowed disabled:opacity-50`}
       />
     )}
   </label>
-);
+  );
+};
 
 const NegotiableToggle: React.FC<{ checked: boolean; onChange: (checked: boolean) => void }> = ({ checked, onChange }) => (
   <label className="flex cursor-pointer items-center gap-3">
@@ -422,6 +427,7 @@ const SUBCATEGORY_ICONS: Record<string, LucideIcon> = {
 
 export const ListingWizard: React.FC = () => {
   const { user, categories, navigate, showToast, config, t, language } = useApp();
+  const ui = (value: string) => localizeText(value, language);
 
   const [step, setStep] = useState(1);
 
@@ -760,7 +766,7 @@ export const ListingWizard: React.FC = () => {
         {step === 1 && (
           <div className="space-y-8 animate-fade-in">
             <h2 className="font-serif font-bold text-2xl text-[#171A17] dark:text-white text-center mb-8">
-              Welche Art von Anzeige möchtest du erstellen?
+              {ui('Welche Art von Anzeige möchtest du erstellen?')}
             </h2>
             <div className="grid grid-cols-1 gap-3">
               {LISTING_OFFER_OPTIONS.map((offer) => {
@@ -775,12 +781,12 @@ export const ListingWizard: React.FC = () => {
                   >
                     <Icon className={`h-7 w-7 shrink-0 ${isSelected ? 'text-[#F4C430] dark:text-[#123D2A]' : 'text-[#123D2A] dark:text-[#F4C430]'}`} />
                     <span className="min-w-0 flex-1">
-                      <span className="block font-serif text-xl font-bold">{offer.title}</span>
-                      <span className={`mt-1 block text-xs ${isSelected ? 'text-white/75 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{offer.description}</span>
+                      <span className="block font-serif text-xl font-bold">{ui(offer.title)}</span>
+                      <span className={`mt-1 block text-xs ${isSelected ? 'text-white/75 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{ui(offer.description)}</span>
                     </span>
                     <span className="shrink-0 text-right text-[13px] font-bold uppercase tracking-widest">
-                      <span className="block text-[#F4C430]">{offer.feeLabel}</span>
-                      {offer.durationLabel && <span className={`mt-1 block font-normal tracking-normal ${isSelected ? 'text-white/70 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{offer.durationLabel}</span>}
+                      <span className="block text-[#F4C430]">{ui(offer.feeLabel)}</span>
+                      {offer.durationLabel && <span className={`mt-1 block font-normal tracking-normal ${isSelected ? 'text-white/70 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{ui(offer.durationLabel)}</span>}
                     </span>
                   </button>
                 );
@@ -789,7 +795,7 @@ export const ListingWizard: React.FC = () => {
 
             {offerType === 'PRIVATE' && (
               <div className="border-t border-gray-200 pt-7 dark:border-white/10">
-                <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">Was möchtest du anbieten?</p>
+                <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">{ui('Was möchtest du anbieten?')}</p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   {[
                     { id: 'SELL' as const, title: t.typeSell, description: t.step1SellDesc },
@@ -837,7 +843,7 @@ export const ListingWizard: React.FC = () => {
                     <span className="min-w-0">
                       <span className="block font-serif text-lg font-bold">{c.name[language]}</span>
                       <span className={`mt-1 block text-[10px] font-bold uppercase tracking-widest ${isSelected ? 'text-white/70 dark:text-[#171A17]/70' : 'text-gray-500'}`}>
-                        {c.subcategories.length} Unterkategorien
+                        {c.subcategories.length} {ui('Unterkategorien')}
                       </span>
                     </span>
                   </button>
@@ -848,7 +854,7 @@ export const ListingWizard: React.FC = () => {
             {selectedCategoryObj && selectedCategoryObj.subcategories.length > 0 && (
               <div className="pt-8 space-y-4 animate-fade-in">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                  Unterkategorie
+                  {ui('Unterkategorie')}
                 </label>
                 {offerType === 'AUTO_MOTOR' ? (
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -863,9 +869,9 @@ export const ListingWizard: React.FC = () => {
                           className={`border p-4 text-left transition-colors ${isSubSelected ? 'border-[#123D2A] bg-[#123D2A] text-white dark:border-[#F4C430] dark:bg-[#F4C430] dark:text-[#171A17]' : 'border-gray-200 text-[#171A17] hover:border-[#123D2A] dark:border-white/10 dark:text-white dark:hover:border-[#F4C430]'}`}
                         >
                           <VehicleIcon className={`mb-4 h-7 w-7 ${isSubSelected ? 'text-[#F4C430] dark:text-[#123D2A]' : 'text-[#F4C430]'}`} />
-                          <span className="block font-serif text-lg font-bold">{vehicle.title}</span>
-                          <span className={`mt-1 block text-xs leading-relaxed ${isSubSelected ? 'text-white/75 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{vehicle.description}</span>
-                          <span className={`mt-4 block border-t pt-3 text-[10px] font-bold uppercase tracking-widest ${isSubSelected ? 'border-white/20 text-[#F4C430] dark:border-[#171A17]/20 dark:text-[#123D2A]' : 'border-gray-200 text-[#123D2A] dark:border-white/10 dark:text-[#F4C430]'}`}>Inseratspreis: Ab € 0</span>
+                          <span className="block font-serif text-lg font-bold">{ui(vehicle.title)}</span>
+                          <span className={`mt-1 block text-xs leading-relaxed ${isSubSelected ? 'text-white/75 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{ui(vehicle.description)}</span>
+                          <span className={`mt-4 block border-t pt-3 text-[10px] font-bold uppercase tracking-widest ${isSubSelected ? 'border-white/20 text-[#F4C430] dark:border-[#171A17]/20 dark:text-[#123D2A]' : 'border-gray-200 text-[#123D2A] dark:border-white/10 dark:text-[#F4C430]'}`}>{ui('Inseratspreis')}: From € 0</span>
                         </button>
                       );
                     })}
@@ -883,8 +889,8 @@ export const ListingWizard: React.FC = () => {
                           className={`border p-4 text-left transition-colors ${isSubSelected ? 'border-[#123D2A] bg-[#123D2A] text-white dark:border-[#F4C430] dark:bg-[#F4C430] dark:text-[#171A17]' : 'border-gray-200 text-[#171A17] hover:border-[#123D2A] dark:border-white/10 dark:text-white dark:hover:border-[#F4C430]'}`}
                         >
                           <BoatIcon className={`mb-4 h-7 w-7 ${isSubSelected ? 'text-[#F4C430] dark:text-[#123D2A]' : 'text-[#F4C430]'}`} />
-                          <span className="block font-serif text-lg font-bold">{boat.title}</span>
-                          <span className={`mt-1 block text-xs leading-relaxed ${isSubSelected ? 'text-white/75 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{boat.description}</span>
+                          <span className="block font-serif text-lg font-bold">{ui(boat.title)}</span>
+                          <span className={`mt-1 block text-xs leading-relaxed ${isSubSelected ? 'text-white/75 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{ui(boat.description)}</span>
                           <span className={`mt-4 block border-t pt-3 text-[10px] font-bold uppercase tracking-widest ${isSubSelected ? 'border-white/20 text-[#F4C430] dark:border-[#171A17]/20 dark:text-[#123D2A]' : 'border-gray-200 text-[#123D2A] dark:border-white/10 dark:text-[#F4C430]'}`}>Inseratspreis: € 44,99 · 60 Tage</span>
                         </button>
                       );
@@ -903,8 +909,8 @@ export const ListingWizard: React.FC = () => {
                           className={`border p-4 text-left transition-colors ${isSubSelected ? 'border-[#123D2A] bg-[#123D2A] text-white dark:border-[#F4C430] dark:bg-[#F4C430] dark:text-[#171A17]' : 'border-gray-200 text-[#171A17] hover:border-[#123D2A] dark:border-white/10 dark:text-white dark:hover:border-[#F4C430]'}`}
                         >
                           <PropertyIcon className={`mb-4 h-7 w-7 ${isSubSelected ? 'text-[#F4C430] dark:text-[#123D2A]' : 'text-[#F4C430]'}`} />
-                          <span className="block font-serif text-lg font-bold">{property.title}</span>
-                          <span className={`mt-1 block text-xs leading-relaxed ${isSubSelected ? 'text-white/75 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{property.description}</span>
+                          <span className="block font-serif text-lg font-bold">{ui(property.title)}</span>
+                          <span className={`mt-1 block text-xs leading-relaxed ${isSubSelected ? 'text-white/75 dark:text-[#171A17]/70' : 'text-gray-500'}`}>{ui(property.description)}</span>
                         </button>
                       );
                     })}
@@ -933,7 +939,7 @@ export const ListingWizard: React.FC = () => {
 
             {offerType === 'REAL_ESTATE' && (
               <div className="border-t border-gray-200 pt-8 dark:border-white/10">
-                <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">Art des Inserats</p>
+                <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">{ui('Art des Inserats')}</p>
                 <div className="grid grid-cols-2 gap-3">
                   {(['SELL', 'RENT'] as const).map((action) => (
                     <button key={action} type="button" onClick={() => setRealEstateAction(action)} className={`flex items-center justify-between gap-4 border px-5 py-4 text-left ${realEstateAction === action ? 'border-[#123D2A] bg-[#123D2A] text-white dark:border-[#F4C430] dark:bg-[#F4C430] dark:text-[#171A17]' : 'border-gray-200 text-gray-500 dark:border-white/10'}`}>

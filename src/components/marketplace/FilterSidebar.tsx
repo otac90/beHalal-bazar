@@ -4,6 +4,7 @@ import {
   MapPin, Check
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { localizeText } from '../../i18n/translations';
 import { ListingType, ListingCondition, DeliveryType } from '../../types';
 import { storage } from '../../services/storage';
 import { AUSTRIA_DISTRICTS, AUSTRIA_STATES } from '../../data/austriaLocations';
@@ -64,6 +65,7 @@ export const FilterSidebar: React.FC<FilterProps> = ({
     searchQuery,
     t 
   } = useApp();
+  const ui = (value: string) => localizeText(value, language);
 
   const handleSaveSearch = () => {
     if (!user) {
@@ -138,7 +140,7 @@ export const FilterSidebar: React.FC<FilterProps> = ({
       {/* INSERAT-TYP (VERKAUFEN, VERSCHENKEN, GESUCHT) */}
       <div className="space-y-4">
         <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-400">
-          Inserattyp
+          {ui('Inserattyp')}
         </label>
         <div className="flex flex-col gap-2">
           {['ALL', 'SELL', 'FREE', 'WANTED'].map((type) => {
@@ -292,7 +294,7 @@ export const FilterSidebar: React.FC<FilterProps> = ({
             onChange={(event) => { setStateFilter(event.target.value); setCityFilter(''); }}
             className="w-full appearance-none border border-[#123D2A]/20 bg-white/70 py-3 pl-10 pr-4 text-sm font-bold text-[#171A17] outline-none transition focus:border-[#F4C430] focus:ring-2 focus:ring-[#F4C430]/25 dark:border-white/15 dark:bg-[#111511] dark:text-white"
           >
-            <option value="" className="dark:bg-[#111511]">Bundesland auswählen</option>
+            <option value="" className="dark:bg-[#111511]">{ui('Bundesland auswählen')}</option>
             {AUSTRIA_STATES.map((state) => <option key={state} value={state} className="dark:bg-[#111511]">{state}</option>)}
           </select>
         </div>
@@ -328,7 +330,7 @@ export const FilterSidebar: React.FC<FilterProps> = ({
       {/* ZUSTAND */}
       <div className="space-y-4 pt-4 border-t border-[#123D2A]/10 dark:border-white/10">
         <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-400">
-          Zustand
+          {ui('Zustand')}
         </label>
         <div className="flex flex-col gap-3">
           {conditionsList.map((cond) => {
@@ -365,7 +367,7 @@ export const FilterSidebar: React.FC<FilterProps> = ({
           onChange={(e) => setSelectedDelivery(e.target.value as DeliveryType | 'ALL')}
           className="w-full pb-2 bg-transparent border-b border-[#123D2A]/20 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-white appearance-none cursor-pointer"
         >
-          <option value="ALL" className="dark:bg-[#111511]">Alle Übergabearten</option>
+          <option value="ALL" className="dark:bg-[#111511]">{ui('Alle Übergabearten')}</option>
           <option value="PICKUP" className="dark:bg-[#111511]">{t.deliveryPickup}</option>
           <option value="SHIPPING" className="dark:bg-[#111511]">{t.deliveryShipping}</option>
           <option value="BOTH" className="dark:bg-[#111511]">{t.deliveryBoth}</option>

@@ -12,9 +12,11 @@ import { SafetyBox } from './SafetyBox';
 import { ReportDialog } from './ReportDialog';
 import { Listing } from '../../types';
 import { createConversation } from '../../utils/supabase/chat';
+import { localizeText } from '../../i18n/translations';
 
 export const ListingDetailView: React.FC = () => {
   const { routeParams, navigate, user, toggleFavorite, isFavorite, showToast, t, language } = useApp();
+  const ui = (value: string) => localizeText(value, language);
   const listingId = routeParams.id;
   
   const [listing, setListing] = useState<Listing | null>(null);
@@ -78,17 +80,17 @@ export const ListingDetailView: React.FC = () => {
     return (
       <div className="max-w-4xl mx-auto px-4 py-32 text-center flex flex-col items-center">
         <h2 className="text-3xl font-serif font-bold text-[#123D2A] dark:text-white mb-4">
-          Inserat nicht gefunden
+          {ui('Inserat nicht gefunden')}
         </h2>
         <p className="text-lg text-gray-500 mb-8 max-w-md">
-          Dieses Inserat wurde möglicherweise bereits verkauft, gelöscht oder existiert nicht.
+          {ui('Dieses Inserat wurde möglicherweise bereits verkauft, gelöscht oder existiert nicht.')}
         </p>
         <button
           onClick={() => navigate('home')}
           className="inline-flex items-center gap-2 px-6 py-3 bg-[#123D2A] text-white text-sm font-bold shadow-xs hover:opacity-90"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Zurück zum Marktplatz</span>
+          <span>{ui('Zurück zum Marktplatz')}</span>
         </button>
       </div>
     );
@@ -125,20 +127,20 @@ export const ListingDetailView: React.FC = () => {
       return;
     }
     if (isOwner) {
-      showToast('Du bist der Ersteller dieses Inserats.', 'info');
+      showToast(ui('Du bist der Ersteller dieses Inserats.'), 'info');
       return;
     }
     try {
       const conv = await createConversation(listing, user.id, `${user.firstName} ${user.lastName}`, user.avatarUrl);
       navigate('messages', { conversationId: conv.id });
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Unterhaltung konnte nicht gestartet werden.', 'error');
+      showToast(error instanceof Error ? error.message : ui('Unterhaltung konnte nicht gestartet werden.'), 'error');
     }
   };
 
   const handleShare = () => {
     navigator.clipboard?.writeText(window.location.href);
-    showToast('Link zum Inserat in die Zwischenablage kopiert!', 'info');
+    showToast(ui('Link zum Inserat in die Zwischenablage kopiert!'), 'info');
   };
 
   
@@ -160,11 +162,11 @@ export const ListingDetailView: React.FC = () => {
           
           <div className="flex gap-4">
             <button onClick={handleShare} className="text-sm font-bold uppercase tracking-widest text-[#123D2A] dark:text-white hover:opacity-60 flex items-center gap-2">
-              <Share2 className="w-4 h-4" /> Teilen
+              <Share2 className="w-4 h-4" /> {ui('Teilen')}
             </button>
             <button onClick={() => toggleFavorite(listing.id)} className="text-sm font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430] hover:opacity-60 flex items-center gap-2">
               <Heart className={`w-4 h-4 ${isFav ? 'fill-current' : ''}`} />
-              {isFav ? 'Gemerkt' : 'Merken'}
+              {isFav ? ui('Gemerkt') : ui('Merken')}
             </button>
           </div>
         </div>
@@ -248,17 +250,17 @@ export const ListingDetailView: React.FC = () => {
             {/* SPECIFICATIONS GRID */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-8 py-8 border-y border-[#123D2A]/10 dark:border-white/10">
               <div>
-                <span className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Zustand</span>
+                <span className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{ui('Zustand')}</span>
                 <span className="text-lg font-serif font-bold text-[#123D2A] dark:text-white">{getConditionLabel()}</span>
               </div>
               {listing.brand && (
                 <div>
-                  <span className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Marke</span>
+                  <span className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{ui('Marke')}</span>
                   <span className="text-lg font-serif font-bold text-[#123D2A] dark:text-white">{listing.brand}</span>
                 </div>
               )}
               <div>
-                <span className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Übergabe</span>
+                <span className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{ui('Übergabe')}</span>
                 <span className="text-lg font-serif font-bold text-[#123D2A] dark:text-white flex items-center gap-2">
                   {listing.deliveryType === 'PICKUP' && <Package className="w-5 h-5"/>}
                   {listing.deliveryType === 'SHIPPING' && <Truck className="w-5 h-5"/>}
