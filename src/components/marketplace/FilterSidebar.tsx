@@ -1,11 +1,12 @@
 import React from 'react';
 import { 
-  SlidersHorizontal, RotateCcw, Bookmark, ChevronRight, 
+  SlidersHorizontal, Bookmark, ChevronRight,
   MapPin, Check
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { ListingType, ListingCondition, DeliveryType } from '../../types';
 import { storage } from '../../services/storage';
+import { AUSTRIA_DISTRICTS, AUSTRIA_STATES } from '../../data/austriaLocations';
 
 interface FilterProps {
   selectedType: ListingType | 'ALL';
@@ -22,6 +23,8 @@ interface FilterProps {
   setSelectedDelivery: (d: DeliveryType | 'ALL') => void;
   cityFilter: string;
   setCityFilter: (city: string) => void;
+  stateFilter: string;
+  setStateFilter: (state: string) => void;
   radiusKm: number;
   setRadiusKm: (radius: number) => void;
   onReset: () => void;
@@ -43,6 +46,8 @@ export const FilterSidebar: React.FC<FilterProps> = ({
   setSelectedDelivery,
   cityFilter,
   setCityFilter,
+  stateFilter,
+  setStateFilter,
   radiusKm,
   setRadiusKm,
   onReset,
@@ -108,9 +113,9 @@ export const FilterSidebar: React.FC<FilterProps> = ({
     <aside className="w-full space-y-10">
       
       {/* HEADER & RESET */}
-      <div className="flex items-center justify-between pb-4 border-b border-[#123D2A]/10 dark:border-white/10">
-        <div className="flex items-center gap-2 font-serif font-bold text-xl text-[#123D2A] dark:text-white">
-          <SlidersHorizontal className="w-5 h-5" />
+      <div className="flex items-center justify-between gap-4 pb-4 border-b border-[#123D2A]/10 dark:border-white/10">
+        <div className="flex min-w-0 items-center gap-3 whitespace-nowrap font-serif font-bold text-lg text-[#123D2A] dark:text-white">
+          <SlidersHorizontal className="h-5 w-5 shrink-0" />
           <span>{t.filterResults}</span>
           {activeFiltersCount > 0 && (
             <span className="text-sm font-sans font-bold text-gray-500">
@@ -119,15 +124,6 @@ export const FilterSidebar: React.FC<FilterProps> = ({
           )}
         </div>
 
-        {activeFiltersCount > 0 && (
-          <button
-            onClick={onReset}
-            className="text-[11px] font-bold tracking-widest uppercase text-gray-500 hover:text-red-500 transition-colors flex items-center gap-1"
-          >
-            <RotateCcw className="w-3 h-3" />
-            <span>{t.clearAllFilters}</span>
-          </button>
-        )}
       </div>
 
       {/* SAVE SEARCH ACTION */}
@@ -251,18 +247,20 @@ export const FilterSidebar: React.FC<FilterProps> = ({
         <div className="flex items-center gap-4">
           <input
             type="number"
+            min="0"
             value={minPrice}
-            onChange={(e) => setMinPrice(e.target.value)}
+            onChange={(e) => setMinPrice(e.target.value.startsWith('-') ? '' : e.target.value)}
             placeholder={t.fromPrice}
-            className="w-full pb-2 bg-transparent border-b border-[#123D2A]/20 dark:border-white/20 text-sm text-[#171A17] dark:text-white placeholder:text-gray-400 focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+            className="w-full border border-[#123D2A]/20 bg-white/70 px-4 py-3 text-sm font-bold text-[#171A17] outline-none transition focus:border-[#F4C430] focus:ring-2 focus:ring-[#F4C430]/25 dark:border-white/15 dark:bg-[#111511] dark:text-white"
           />
           <span className="text-gray-400">-</span>
           <input
             type="number"
+            min="0"
             value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
+            onChange={(e) => setMaxPrice(e.target.value.startsWith('-') ? '' : e.target.value)}
             placeholder={t.toPrice}
-            className="w-full pb-2 bg-transparent border-b border-[#123D2A]/20 dark:border-white/20 text-sm text-[#171A17] dark:text-white placeholder:text-gray-400 focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
+            className="w-full border border-[#123D2A]/20 bg-white/70 px-4 py-3 text-sm font-bold text-[#171A17] outline-none transition focus:border-[#F4C430] focus:ring-2 focus:ring-[#F4C430]/25 dark:border-white/15 dark:bg-[#111511] dark:text-white"
           />
         </div>
 
@@ -282,21 +280,31 @@ export const FilterSidebar: React.FC<FilterProps> = ({
         </button>
       </div>
 
-      {/* STANDORT / ORT */}
+      {/* STANDORT / BUNDESLAND UND BEZIRK */}
       <div className="space-y-4 pt-4 border-t border-[#123D2A]/10 dark:border-white/10">
         <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-400">
           {t.locationFilter}
         </label>
         <div className="relative">
-          <input
-            type="text"
-            value={cityFilter}
-            onChange={(e) => setCityFilter(e.target.value)}
-            placeholder="PLZ oder Ort"
-            className="w-full pb-2 pl-6 bg-transparent border-b border-[#123D2A]/20 dark:border-white/20 text-sm text-[#171A17] dark:text-white placeholder:text-gray-400 focus:outline-none focus:border-[#123D2A] dark:focus:border-white transition-colors"
-          />
-          <MapPin className="w-4 h-4 text-gray-400 absolute left-0 top-0 pointer-events-none" />
+          <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <select
+            value={stateFilter}
+            onChange={(event) => { setStateFilter(event.target.value); setCityFilter(''); }}
+            className="w-full appearance-none border border-[#123D2A]/20 bg-white/70 py-3 pl-10 pr-4 text-sm font-bold text-[#171A17] outline-none transition focus:border-[#F4C430] focus:ring-2 focus:ring-[#F4C430]/25 dark:border-white/15 dark:bg-[#111511] dark:text-white"
+          >
+            <option value="" className="dark:bg-[#111511]">Bundesland auswählen</option>
+            {AUSTRIA_STATES.map((state) => <option key={state} value={state} className="dark:bg-[#111511]">{state}</option>)}
+          </select>
         </div>
+        <select
+          value={cityFilter}
+          disabled={!stateFilter}
+          onChange={(event) => setCityFilter(event.target.value)}
+          className="w-full appearance-none border border-[#123D2A]/20 bg-white/70 px-4 py-3 text-sm font-bold text-[#171A17] outline-none transition focus:border-[#F4C430] focus:ring-2 focus:ring-[#F4C430]/25 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/15 dark:bg-[#111511] dark:text-white"
+        >
+          <option value="" className="dark:bg-[#111511]">Bezirk / Ort auswählen</option>
+          {(AUSTRIA_DISTRICTS[stateFilter] ?? []).map((district) => <option key={district} value={district} className="dark:bg-[#111511]">{district}</option>)}
+        </select>
 
         {cityFilter && (
           <div className="space-y-2 pt-4">

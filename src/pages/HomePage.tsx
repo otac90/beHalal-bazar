@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
-  SlidersHorizontal, X
+  SlidersHorizontal, RotateCcw, X
 } from 'lucide-react';
 import {
   Armchair,
@@ -22,6 +22,7 @@ import { storage } from '../services/storage';
 import { ListingType, ListingCondition, DeliveryType } from '../types';
 import { ListingGrid, SortOption } from '../components/marketplace/ListingGrid';
 import { FilterSidebar } from '../components/marketplace/FilterSidebar';
+import { AUSTRIA_DISTRICTS } from '../data/austriaLocations';
 
 
 const CATEGORY_ICONS: Record<string, Icon> = {
@@ -62,6 +63,7 @@ export const HomePage: React.FC = () => {
   const [onlyFree, setOnlyFree] = useState(false);
   const [selectedConditions, setSelectedConditions] = useState<ListingCondition[]>([]);
   const [selectedDelivery, setSelectedDelivery] = useState<DeliveryType | 'ALL'>('ALL');
+  const [stateFilter, setStateFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
   const [radiusKm, setRadiusKm] = useState(25);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
@@ -79,10 +81,36 @@ export const HomePage: React.FC = () => {
     if (onlyFree) count++;
     if (selectedConditions.length > 0) count += selectedConditions.length;
     if (selectedDelivery !== 'ALL') count++;
+    if (stateFilter) count++;
     if (cityFilter) count++;
     if (selectedCategory) count++;
     return count;
-  }, [selectedType, minPrice, maxPrice, onlyFree, selectedConditions, selectedDelivery, cityFilter, selectedCategory]);
+  }, [selectedType, minPrice, maxPrice, onlyFree, selectedConditions, selectedDelivery, stateFilter, cityFilter, selectedCategory]);
+
+  const activeFilterChips = useMemo(() => {
+    const chips: { key: string; label: string; onRemove: () => void }[] = [];
+    if (selectedType !== 'ALL') chips.push({ key: 'type', label: selectedType === 'SELL' ? t.typeSell : selectedType === 'FREE' ? t.typeFree : t.typeWanted, onRemove: () => setSelectedType('ALL') });
+    if (minPrice) chips.push({ key: 'min-price', label: `Ab € ${minPrice}`, onRemove: () => setMinPrice('') });
+    if (maxPrice) chips.push({ key: 'max-price', label: `Bis € ${maxPrice}`, onRemove: () => setMaxPrice('') });
+    if (onlyFree) chips.push({ key: 'free', label: t.onlyFree, onRemove: () => setOnlyFree(false) });
+    selectedConditions.forEach((condition) => chips.push({
+      key: `condition-${condition}`,
+      label: {
+        NEW: t.conditionNew,
+        LIKE_NEW: t.conditionLikeNew,
+        VERY_GOOD: t.conditionVeryGood,
+        GOOD: t.conditionGood,
+        USED: t.conditionUsed,
+        DEFECTIVE: t.conditionDefective,
+      }[condition],
+      onRemove: () => setSelectedConditions(selectedConditions.filter((item) => item !== condition)),
+    }));
+    if (selectedDelivery !== 'ALL') chips.push({ key: 'delivery', label: selectedDelivery === 'PICKUP' ? t.deliveryPickup : selectedDelivery === 'SHIPPING' ? t.deliveryShipping : t.deliveryBoth, onRemove: () => setSelectedDelivery('ALL') });
+    if (stateFilter) chips.push({ key: 'state', label: stateFilter, onRemove: () => { setStateFilter(''); setCityFilter(''); } });
+    if (cityFilter) chips.push({ key: 'district', label: cityFilter, onRemove: () => setCityFilter('') });
+    if (selectedCategory) chips.push({ key: 'category', label: categories.find((category) => category.id === selectedCategory)?.name[language] ?? selectedCategory, onRemove: () => setSelectedCategory(null) });
+    return chips;
+  }, [selectedType, minPrice, maxPrice, onlyFree, selectedConditions, selectedDelivery, stateFilter, cityFilter, selectedCategory, categories, language, t]);
 
   const handleResetFilters = () => {
     setSelectedType('ALL');
@@ -91,6 +119,7 @@ export const HomePage: React.FC = () => {
     setOnlyFree(false);
     setSelectedConditions([]);
     setSelectedDelivery('ALL');
+    setStateFilter('');
     setCityFilter('');
     setRadiusKm(25);
     setSelectedCategory(null);
@@ -120,6 +149,10 @@ export const HomePage: React.FC = () => {
         if (selectedDelivery === 'PICKUP' && item.deliveryType === 'SHIPPING') return false;
         if (selectedDelivery === 'SHIPPING' && item.deliveryType === 'PICKUP') return false;
       }
+      if (stateFilter) {
+        const stateMatches = (AUSTRIA_DISTRICTS[stateFilter] ?? []).some((district) => item.city.toLowerCase().includes(district.toLowerCase()));
+        if (!stateMatches) return false;
+      }
       if (cityFilter.trim()) {
         const c = cityFilter.toLowerCase().trim();
         const matchCity = item.city.toLowerCase().includes(c) || item.postalCode.includes(c);
@@ -134,7 +167,7 @@ export const HomePage: React.FC = () => {
       if (sortBy === 'popular') return (b.views + b.favoritesCount * 3) - (a.views + a.favoritesCount * 3);
       return 0;
     });
-  }, [allListings, searchQuery, selectedCategory, selectedSubcategory, selectedType, onlyFree, minPrice, maxPrice, selectedConditions, selectedDelivery, cityFilter, sortBy]);
+  }, [allListings, searchQuery, selectedCategory, selectedSubcategory, selectedType, onlyFree, minPrice, maxPrice, selectedConditions, selectedDelivery, stateFilter, cityFilter, sortBy]);
 
   return (
     <div className="pb-24">
@@ -150,7 +183,7 @@ export const HomePage: React.FC = () => {
               <div className="w-12 h-1 bg-[#F4C430] mb-6"></div>
               <h1 className="text-[3rem] sm:text-[4rem] md:text-[5rem] lg:text-[6rem] leading-[0.95] font-serif font-bold text-[#F5F1E8] tracking-tight">
                 {t.heroSearchTitle.split('\n').map((line, index) => (
-                  <span key={line} className={`block ${index > 0 ? 'text-[2rem] sm:text-[2.75rem] md:text-[3.5rem] lg:text-[4.25rem]' : ''}`}>
+                  <span key={line} className={`block ${index > 0 ? 'mt-3 text-[1.35rem] sm:text-[1.65rem] md:text-[2rem] lg:text-[2.45rem]' : ''}`}>
                     {line}
                   </span>
                 ))}
@@ -216,8 +249,18 @@ export const HomePage: React.FC = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 md:mt-20">
         
         {/* ACTIVE SEARCH BANNER */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-12">
+        <div className="mb-12">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
+            {activeFiltersCount > 0 && (
+              <button
+                onClick={handleResetFilters}
+                className="inline-flex shrink-0 items-center gap-2 border border-[#123D2A]/20 px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-gray-600 transition-colors hover:border-red-400 hover:text-red-600 dark:border-white/20 dark:text-gray-300"
+              >
+                <RotateCcw className="h-4 w-4" />
+                <span>{t.clearAllFilters}</span>
+              </button>
+            )}
             {searchQuery && (
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-none bg-[#CBD9C6] dark:bg-[#CBD9C6] text-[#123D2A] dark:text-[#123D2A] text-sm font-bold">
                 <span>Suche: {searchQuery}</span>
@@ -227,14 +270,20 @@ export const HomePage: React.FC = () => {
               </div>
             )}
 
-            {selectedCategory && (
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-none bg-[#CBD9C6] dark:bg-[#CBD9C6] text-[#123D2A] dark:text-[#123D2A] text-sm font-bold">
-                <span>{categories.find(c => c.id === selectedCategory)?.name[language]}</span>
-                <button onClick={() => setSelectedCategory(null)} className="hover:opacity-60">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
+            {activeFilterChips.map((chip) => (
+              <button
+                key={chip.key}
+                type="button"
+                onClick={chip.onRemove}
+                title="Filter entfernen"
+                className="relative inline-flex items-center bg-[#CBD9C6] px-4 py-2 text-sm font-bold text-[#123D2A] transition hover:bg-[#F4C430] dark:bg-[#CBD9C6] dark:text-[#123D2A]"
+              >
+                <span>{chip.label}</span>
+                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#123D2A] text-[#CBD9C6] shadow-sm" aria-hidden="true">
+                  <X className="h-3 w-3" />
+                </span>
+              </button>
+            ))}
           </div>
 
           <button
@@ -245,6 +294,7 @@ export const HomePage: React.FC = () => {
             <span>Filter</span>
             {activeFiltersCount > 0 && <span>({activeFiltersCount})</span>}
           </button>
+        </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
@@ -264,6 +314,8 @@ export const HomePage: React.FC = () => {
               setSelectedConditions={setSelectedConditions}
               selectedDelivery={selectedDelivery}
               setSelectedDelivery={setSelectedDelivery}
+              stateFilter={stateFilter}
+              setStateFilter={setStateFilter}
               cityFilter={cityFilter}
               setCityFilter={setCityFilter}
               radiusKm={radiusKm}
@@ -297,6 +349,8 @@ export const HomePage: React.FC = () => {
                     setSelectedConditions={setSelectedConditions}
                     selectedDelivery={selectedDelivery}
                     setSelectedDelivery={setSelectedDelivery}
+                    stateFilter={stateFilter}
+                    setStateFilter={setStateFilter}
                     cityFilter={cityFilter}
                     setCityFilter={setCityFilter}
                     radiusKm={radiusKm}
