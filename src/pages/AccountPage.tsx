@@ -10,12 +10,14 @@ import { Listing, SavedSearch } from '../types';
 import { updateProfile } from '../utils/supabase/auth';
 import { createListingCheckout, republishFreeListing } from '../utils/stripe';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
+import { localizeText } from '../i18n/translations';
 
 const profileInputClass = 'w-full border border-[#123D2A]/20 bg-white/80 px-4 py-3 text-sm text-[#171A17] outline-none transition focus:border-[#F4C430] focus:ring-2 focus:ring-[#F4C430]/25 dark:border-white/15 dark:bg-[#111511] dark:text-white';
 const profileSectionClass = 'space-y-6 border border-[#123D2A]/15 bg-white/65 p-5 sm:p-7 dark:border-white/10 dark:bg-white/[0.03]';
 
 export const AccountPage: React.FC = () => {
   const { user, setUser, navigate, favorites, showToast, t, language } = useApp();
+  const ui = (value: string) => localizeText(value, language);
   
   const [activeTab, setActiveTab] = useState<'listings' | 'favorites' | 'searches' | 'settings'>('listings');
   
@@ -38,7 +40,7 @@ export const AccountPage: React.FC = () => {
           {t.closedCommunityNotice}
         </h2>
         <p className="font-sans text-sm text-gray-500 uppercase tracking-widest">
-          Bitte logge dich ein, um dein Konto zu verwalten.
+          {ui('Bitte logge dich ein, um dein Konto zu verwalten.')}
         </p>
         <button
           onClick={() => navigate('login')}
@@ -79,9 +81,9 @@ export const AccountPage: React.FC = () => {
         updatedAt: new Date().toISOString(),
       });
       setRepublishListing(null);
-      showToast('Dein Inserat wurde erneut veröffentlicht.', 'success');
+      showToast(ui('Dein Inserat wurde erneut veröffentlicht.'), 'success');
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Das Inserat konnte nicht erneut veröffentlicht werden.', 'error');
+      showToast(error instanceof Error ? error.message : ui('Das Inserat konnte nicht erneut veröffentlicht werden.'), 'error');
     } finally {
       setIsRepublishing(false);
     }
@@ -94,7 +96,7 @@ export const AccountPage: React.FC = () => {
   const confirmDeleteListing = () => {
     if (deleteListingId) {
       storage.deleteListing(deleteListingId);
-      showToast('Inserat wurde gelöscht.', 'info');
+      showToast(ui('Inserat wurde gelöscht.'), 'info');
     }
     setDeleteListingId(null);
   };
@@ -106,7 +108,7 @@ export const AccountPage: React.FC = () => {
   const confirmDeleteSavedSearch = () => {
     if (deleteSearchId) {
       storage.deleteSavedSearch(deleteSearchId);
-      showToast('Suchauftrag gelöscht.', 'info');
+      showToast(ui('Suchauftrag gelöscht.'), 'info');
     }
     setDeleteSearchId(null);
   };
@@ -147,9 +149,9 @@ const handleSaveProfile = async (e: React.FormEvent) => {
         avatarUrl,
       });
       if (updated) setUser(updated);
-      showToast(t.profileUpdated || 'Dein Profil wurde erfolgreich gespeichert.', 'success');
+      showToast(t.profileUpdated || ui('Dein Profil wurde erfolgreich gespeichert.'), 'success');
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Dein Profil konnte nicht gespeichert werden.', 'error');
+      showToast(error instanceof Error ? error.message : ui('Dein Profil konnte nicht gespeichert werden.'), 'error');
     }
   };
 
@@ -167,7 +169,7 @@ const handleSaveProfile = async (e: React.FormEvent) => {
     a.href = url;
     a.download = `be-halal-export-${user.username}.json`;
     a.click();
-    showToast('DSGVO-Datenexport erfolgreich generiert.', 'info');
+    showToast(ui('DSGVO-Datenexport erfolgreich generiert.'), 'info');
   };
 
   return (
@@ -201,14 +203,14 @@ const handleSaveProfile = async (e: React.FormEvent) => {
             onClick={() => navigate('user-profile', { username: user.username })}
             className="px-6 py-3 border border-[#123D2A]/20 dark:border-white/20 text-[#171A17] dark:text-white text-[11px] font-bold uppercase tracking-widest hover:border-[#123D2A] dark:hover:border-white transition-colors"
           >
-            Öffentliches Profil
+            {ui('Öffentliches Profil')}
           </button>
           
           <button
             onClick={() => navigate('create-listing')}
             className="px-6 py-3 bg-[#123D2A] dark:bg-white text-white dark:text-[#171A17] text-[11px] font-bold uppercase tracking-widest hover:bg-[#171A17] dark:hover:bg-gray-200 transition-colors"
           >
-            Neues Inserat
+            {ui('Neues Inserat')}
           </button>
         </div>
       </div>
@@ -217,7 +219,7 @@ const handleSaveProfile = async (e: React.FormEvent) => {
       <div className="flex items-center gap-8 border-b border-[#123D2A]/10 dark:border-white/10 overflow-x-auto pb-4">
         {[
           { id: 'listings', label: `${t.myListings} (${myListings.length})`, icon: Package },
-          { id: 'favorites', label: `${t.myFavorites} (${myFavoritesListings.length})`, icon: Heart },
+          { id: 'favorites', label: `${t.favorites} (${myFavoritesListings.length})`, icon: Heart },
           { id: 'searches', label: `${t.savedSearches} (${mySavedSearches.length})`, icon: Bookmark },
           { id: 'settings', label: t.profileSettings, icon: Settings },
         ].map(tab => (
@@ -254,10 +256,10 @@ const handleSaveProfile = async (e: React.FormEvent) => {
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <span className={`px-2 py-0.5 font-sans text-[9px] font-bold uppercase tracking-widest ${lst.status === 'ACTIVE' ? 'bg-[#CBD9C6] text-[#123D2A]' : lst.status === 'RESERVED' ? 'bg-[#FAF2CC] text-[#123D2A]' : lst.status === 'EXPIRED' ? 'bg-[#FCE4E4] text-[#8B2C2C]' : 'bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}>
-                            {lst.status === 'ACTIVE' ? 'Aktiv' : lst.status === 'RESERVED' ? 'Reserviert' : lst.status === 'EXPIRED' ? 'Abgelaufen' : 'Verkauft'}
+                            {lst.status === 'ACTIVE' ? ui('Aktiv') : lst.status === 'RESERVED' ? ui('Reserviert') : lst.status === 'EXPIRED' ? ui('Abgelaufen') : ui('Verkauft')}
                           </span>
                           <span className="text-[10px] uppercase tracking-widest text-gray-400">
-                            {lst.views} Aufrufe
+                            {lst.views} {ui('Aufrufe')}
                           </span>
                         </div>
                         <h3
@@ -267,7 +269,7 @@ const handleSaveProfile = async (e: React.FormEvent) => {
                           {lst.title}
                         </h3>
                         <div className="font-sans text-sm text-[#171A17] dark:text-gray-300 mt-2">
-                          {lst.isFree ? 'Kostenlos' : `${lst.price} €`}
+                          {lst.isFree ? t.freePrice : `${lst.price} €`}
                         </div>
                       </div>
 
@@ -280,14 +282,14 @@ const handleSaveProfile = async (e: React.FormEvent) => {
                               className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#123D2A] hover:underline dark:text-[#F4C430]"
                             >
                               <RefreshCw className="h-3.5 w-3.5" />
-                              Erneut veröffentlichen
+                              {ui('Erneut veröffentlichen')}
                             </button>
                           ) : lst.status !== 'ACTIVE' && (
                             <button
                               onClick={() => handleUpdateStatus(lst.id, 'ACTIVE')}
                               className="text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-white hover:underline"
                             >
-                              Aktivieren
+                              {ui('Aktivieren')}
                             </button>
                           )}
                           {lst.status !== 'RESERVED' && (
@@ -295,7 +297,7 @@ const handleSaveProfile = async (e: React.FormEvent) => {
                               onClick={() => handleUpdateStatus(lst.id, 'RESERVED')}
                               className="text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-[#171A17] dark:hover:text-white transition-colors"
                             >
-                              Reservieren
+                              {ui('Reservieren')}
                             </button>
                           )}
                           {lst.status !== 'SOLD' && (
@@ -303,7 +305,7 @@ const handleSaveProfile = async (e: React.FormEvent) => {
                               onClick={() => handleUpdateStatus(lst.id, 'SOLD')}
                               className="text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-[#171A17] dark:hover:text-white transition-colors"
                             >
-                              Verkauft
+                              {ui('Verkauft')}
                             </button>
                           )}
                         </div>
@@ -311,7 +313,7 @@ const handleSaveProfile = async (e: React.FormEvent) => {
                         <button
                           onClick={() => handleDeleteListing(lst.id)}
                           className="text-gray-400 hover:text-red-600 transition-colors"
-                          title="Inserat löschen"
+                          title={ui('Inserat löschen')}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -323,12 +325,12 @@ const handleSaveProfile = async (e: React.FormEvent) => {
             ) : (
               <div className="py-24 text-center space-y-6">
                 <Package className="w-12 h-12 text-gray-300 mx-auto" />
-                <p className="font-sans text-xs uppercase tracking-widest text-gray-500">Du hast aktuell noch keine Inserate eingestellt.</p>
+                <p className="font-sans text-xs uppercase tracking-widest text-gray-500">{ui('Du hast aktuell noch keine Inserate eingestellt.')}</p>
                 <button
                   onClick={() => navigate('create-listing')}
                   className="px-6 py-3 border border-[#123D2A] dark:border-white text-[#123D2A] dark:text-white text-[11px] font-bold uppercase tracking-widest hover:bg-[#123D2A] hover:text-white dark:hover:bg-white dark:hover:text-[#171A17] transition-colors inline-block"
                 >
-                  Erstes Inserat aufgeben
+                  {ui('Erstes Inserat aufgeben')}
                 </button>
               </div>
             )}
@@ -352,7 +354,7 @@ const handleSaveProfile = async (e: React.FormEvent) => {
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-sans text-sm font-bold text-[#171A17] dark:text-white">
-                          {lst.isFree ? 'Kostenlos' : `${lst.price} €`}
+                          {lst.isFree ? t.freePrice : `${lst.price} €`}
                         </span>
                         <span className="text-[10px] uppercase tracking-widest text-gray-400">{lst.city}</span>
                       </div>
@@ -366,7 +368,7 @@ const handleSaveProfile = async (e: React.FormEvent) => {
             ) : (
               <div className="py-24 text-center space-y-6">
                 <Heart className="w-12 h-12 text-gray-300 mx-auto" />
-                <p className="font-sans text-xs uppercase tracking-widest text-gray-500">Du hast noch keine Favoriten markiert.</p>
+                <p className="font-sans text-xs uppercase tracking-widest text-gray-500">{ui('Du hast noch keine Favoriten markiert.')}</p>
               </div>
             )}
           </div>
@@ -387,21 +389,21 @@ const handleSaveProfile = async (e: React.FormEvent) => {
                         {s.title}
                       </h4>
                       <p className="font-sans text-[10px] uppercase tracking-widest text-gray-500">
-                        Benachrichtigung: <span className="font-bold text-[#123D2A] dark:text-[#F4C430]">{s.notificationFrequency}</span>
+                        {ui('Benachrichtigung')}: <span className="font-bold text-[#123D2A] dark:text-[#F4C430]">{s.notificationFrequency}</span>
                       </p>
                     </div>
                     <div className="flex items-center gap-4">
                       <button
                         onClick={() => navigate('search', { query: s.query })}
                         className="text-gray-400 hover:text-[#123D2A] dark:hover:text-white transition-colors"
-                        title="Suche jetzt ausführen"
+                        title={ui('Suche jetzt ausführen')}
                       >
                         <ExternalLink className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => handleDeleteSavedSearch(s.id)}
                         className="text-gray-400 hover:text-red-600 transition-colors"
-                        title="Suchauftrag löschen"
+                        title={ui('Suchauftrag löschen')}
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>
@@ -412,7 +414,7 @@ const handleSaveProfile = async (e: React.FormEvent) => {
             ) : (
               <div className="py-24 text-center space-y-6">
                 <Bookmark className="w-12 h-12 text-gray-300 mx-auto" />
-                <p className="font-sans text-xs uppercase tracking-widest text-gray-500">Keine gespeicherten Suchaufträge vorhanden.</p>
+                <p className="font-sans text-xs uppercase tracking-widest text-gray-500">{ui('Keine gespeicherten Suchaufträge vorhanden.')}</p>
               </div>
             )}
           </div>
@@ -446,8 +448,8 @@ const handleSaveProfile = async (e: React.FormEvent) => {
 
               <section className={profileSectionClass}>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#123D2A] dark:text-[#F4C430]">Persönliche Angaben</p>
-                <p className="mt-2 text-sm text-gray-500">Halte deine sichtbaren Kontaktdaten aktuell.</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#123D2A] dark:text-[#F4C430]">{ui('Persönliche Angaben')}</p>
+                <p className="mt-2 text-sm text-gray-500">{ui('Halte deine sichtbaren Kontaktdaten aktuell.')}</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -475,11 +477,11 @@ const handleSaveProfile = async (e: React.FormEvent) => {
               </div>
 
               <div>
-                <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-[#123D2A] dark:text-[#F4C430]">Wohnort</p>
+                <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-[#123D2A] dark:text-[#F4C430]">{ui('Wohnort')}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-400">
-                    Postleitzahl
+                    {ui('Postleitzahl')}
                   </label>
                   <input
                     type="text"
@@ -490,7 +492,7 @@ const handleSaveProfile = async (e: React.FormEvent) => {
                 </div>
                 <div className="space-y-2">
                   <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-400">
-                    Stadt
+                    {ui('Stadt')}
                   </label>
                   <input
                     type="text"
@@ -504,13 +506,13 @@ const handleSaveProfile = async (e: React.FormEvent) => {
 
               <div className="space-y-2">
                 <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-400">
-                  Über mich (Bio)
+                  {ui('Über mich (Bio)')}
                 </label>
                 <textarea
                   rows={4}
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
-                  placeholder="Ein paar nette Worte über dich..."
+                  placeholder={ui('Ein paar nette Worte über dich...')}
                   className={`${profileInputClass} resize-none`}
                 />
               </div>
@@ -521,7 +523,7 @@ const handleSaveProfile = async (e: React.FormEvent) => {
                   type="submit"
                   className="px-8 py-3 bg-[#123D2A] dark:bg-white text-white dark:text-[#171A17] text-[11px] font-bold uppercase tracking-widest hover:bg-[#171A17] dark:hover:bg-gray-200 transition-colors"
                 >
-                  Änderungen speichern
+                  {ui('Änderungen speichern')}
                 </button>
               </div>
             </form>
@@ -530,17 +532,17 @@ const handleSaveProfile = async (e: React.FormEvent) => {
             <div className="pt-16 border-t border-[#123D2A]/10 dark:border-white/10 space-y-6">
               <div className="space-y-2">
                 <h3 className="font-serif font-bold text-2xl text-[#171A17] dark:text-white">
-                  Datenschutz & DSGVO
+                  {ui('Datenschutz & DSGVO')}
                 </h3>
                 <p className="font-sans text-sm text-gray-500 leading-relaxed max-w-lg">
-                  Du hast das Recht, jederzeit eine Kopie deiner bei ONLINE BAZAR gespeicherten Daten (Profil, Inserate, Favoriten) herunterzuladen.
+                  {ui('Du hast das Recht, jederzeit eine Kopie deiner bei ONLINE BAZAR gespeicherten Daten (Profil, Inserate, Favoriten) herunterzuladen.')}
                 </p>
               </div>
               <button
                 onClick={handleExportData}
                 className="px-6 py-3 border border-gray-300 dark:border-white/20 text-[#171A17] dark:text-white text-[11px] font-bold uppercase tracking-widest hover:border-[#171A17] dark:hover:border-white transition-colors"
               >
-                Meine Daten exportieren (JSON)
+                {ui('Meine Daten exportieren (JSON)')}
               </button>
             </div>
           </div>
@@ -567,10 +569,10 @@ const handleSaveProfile = async (e: React.FormEvent) => {
           <div className="w-full max-w-lg border border-[#123D2A]/15 bg-[#F5F1E8] p-6 shadow-2xl dark:border-white/10 dark:bg-[#111511] sm:p-8">
             <div className="flex items-start justify-between gap-6 border-b border-[#123D2A]/10 pb-5 dark:border-white/10">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#123D2A] dark:text-[#F4C430]">Wiederveröffentlichung</p>
-                <h2 id="republish-title" className="mt-2 font-serif text-2xl font-bold text-[#171A17] dark:text-white">Inserat erneut veröffentlichen</h2>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#123D2A] dark:text-[#F4C430]">{ui('Wiederveröffentlichung')}</p>
+                <h2 id="republish-title" className="mt-2 font-serif text-2xl font-bold text-[#171A17] dark:text-white">{ui('Inserat erneut veröffentlichen')}</h2>
               </div>
-              <button type="button" onClick={() => setRepublishListing(null)} className="p-1 text-gray-500 hover:text-[#123D2A] dark:hover:text-[#F4C430]" aria-label="Modal schließen">
+              <button type="button" onClick={() => setRepublishListing(null)} className="p-1 text-gray-500 hover:text-[#123D2A] dark:hover:text-[#F4C430]" aria-label={ui('Modal schließen')}>
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -578,33 +580,33 @@ const handleSaveProfile = async (e: React.FormEvent) => {
               <div className="flex items-center justify-between gap-4 border border-[#123D2A]/15 bg-white/60 p-4 dark:border-white/10 dark:bg-white/[0.03]">
                 <img src={republishListing.images[0]?.url || 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=200'} alt="" className="h-16 w-16 shrink-0 object-cover" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Inserat</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{ui('Inserat')}</p>
                   <p className="mt-2 truncate font-serif text-xl font-bold text-[#171A17] dark:text-white">{republishListing.title}</p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Produktpreis</p>
-                  <p className="mt-2 font-bold text-[#171A17] dark:text-white">{republishListing.isFree ? 'Kostenlos' : `€ ${Number(republishListing.price).toFixed(2)}`}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{ui('Produktpreis')}</p>
+                  <p className="mt-2 font-bold text-[#171A17] dark:text-white">{republishListing.isFree ? t.freePrice : `€ ${Number(republishListing.price).toFixed(2)}`}</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="border border-[#123D2A]/15 p-4 dark:border-white/10">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Laufzeit</p>
-                  <p className="mt-2 font-bold text-[#171A17] dark:text-white">{republishListing.listingDurationDays ?? 30} Tage</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{ui('Laufzeit')}</p>
+                  <p className="mt-2 font-bold text-[#171A17] dark:text-white">{republishListing.listingDurationDays ?? 30} {ui('Tage')}</p>
                 </div>
                 <div className="border border-[#123D2A]/15 p-4 dark:border-white/10">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Anzeigenpreis</p>
-                  <p className="mt-2 font-bold text-[#171A17] dark:text-white">{Number(republishListing.listingFee ?? 0) > 0 ? `€ ${Number(republishListing.listingFee).toFixed(2)}` : 'Kostenlos'}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{ui('Anzeigenpreis')}</p>
+                  <p className="mt-2 font-bold text-[#171A17] dark:text-white">{Number(republishListing.listingFee ?? 0) > 0 ? `€ ${Number(republishListing.listingFee).toFixed(2)}` : t.freePrice}</p>
                 </div>
               </div>
               <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-                Nach erfolgreicher Zahlung wird das Inserat wieder aktiviert und ist für die neue Laufzeit öffentlich sichtbar.
+                {ui('Nach erfolgreicher Zahlung wird das Inserat wieder aktiviert und ist für die neue Laufzeit öffentlich sichtbar.')}
               </p>
             </div>
             <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button type="button" onClick={() => setRepublishListing(null)} className="border border-[#123D2A]/20 px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:border-white/20 dark:text-white">Abbrechen</button>
               <button type="button" disabled={isRepublishing} onClick={() => void handleRepublish()} className="inline-flex items-center justify-center gap-2 bg-[#123D2A] px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-white hover:bg-[#171A17] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#F4C430] dark:text-[#171A17]">
                 {Number(republishListing.listingFee ?? 0) > 0 && <CreditCard className="h-4 w-4" />}
-                {isRepublishing ? 'Wird vorbereitet...' : Number(republishListing.listingFee ?? 0) > 0 ? 'Zum Warenkorb & bezahlen' : 'Jetzt erneut veröffentlichen'}
+                {isRepublishing ? ui('Wird vorbereitet...') : Number(republishListing.listingFee ?? 0) > 0 ? ui('Zum Warenkorb & bezahlen') : ui('Jetzt erneut veröffentlichen')}
               </button>
             </div>
           </div>

@@ -5,13 +5,18 @@ import {
 import { useApp } from '../context/AppContext';
 import { createClient } from '../utils/supabase/client';
 import { getProfileForUser } from '../utils/supabase/auth';
+import { localizeText } from '../i18n/translations';
 
 interface Props {
   initialMode?: 'login' | 'register' | 'reset';
 }
 
+const authInputClass = 'w-full h-12 border border-[#123D2A]/20 bg-white/80 px-4 text-sm font-bold text-[#171A17] outline-none transition focus:border-[#F4C430] focus:ring-2 focus:ring-[#F4C430]/25 dark:border-white/15 dark:bg-[#111511] dark:text-white';
+const authSectionClass = 'space-y-6 border border-[#123D2A]/15 bg-white/65 p-5 sm:p-7 dark:border-white/10 dark:bg-white/[0.03]';
+
 export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
-  const { navigate, showToast, t } = useApp();
+  const { navigate, showToast, t, language } = useApp();
+  const ui = (value: string) => localizeText(value, language);
 
   const [mode, setMode] = useState<'login' | 'register' | 'reset'>(initialMode);
   
@@ -35,10 +40,10 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const passwordChecks = [
-    { label: 'Mindestens 8 Zeichen', isValid: regPassword.length >= 8 },
-    { label: 'Mindestens 1 Großbuchstabe', isValid: /[A-ZÄÖÜ]/.test(regPassword) },
-    { label: 'Mindestens 1 Zahl', isValid: /\d/.test(regPassword) },
-    { label: 'Mindestens 1 Sonderzeichen', isValid: /[^A-Za-zÄÖÜäöüß0-9]/.test(regPassword) },
+    { label: ui('Mindestens 8 Zeichen'), isValid: regPassword.length >= 8 },
+    { label: ui('Mindestens 1 Großbuchstabe'), isValid: /[A-ZÄÖÜ]/.test(regPassword) },
+    { label: ui('Mindestens 1 Zahl'), isValid: /\d/.test(regPassword) },
+    { label: ui('Mindestens 1 Sonderzeichen'), isValid: /[^A-Za-zÄÖÜäöüß0-9]/.test(regPassword) },
   ];
   const isPasswordStrong = passwordChecks.every((check) => check.isValid);
   const passwordsMatch = regPassword.length > 0 && regPassword === regPasswordRepeat;
@@ -55,10 +60,10 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
         showToast(error.message, 'error');
         return;
       }
-      showToast('Erfolgreich angemeldet.', 'success');
+      showToast(ui('Erfolgreich angemeldet.'), 'success');
       navigate('home');
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Die Anmeldung ist derzeit nicht verfügbar.', 'error');
+      showToast(error instanceof Error ? error.message : ui('Die Anmeldung ist derzeit nicht verfügbar.'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -67,7 +72,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
   const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!resetEmail.trim()) {
-      showToast('Bitte gib deine E-Mail-Adresse ein.', 'warning');
+      showToast(ui('Bitte gib deine E-Mail-Adresse ein.'), 'warning');
       return;
     }
     setIsSubmitting(true);
@@ -79,10 +84,10 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
         showToast(error.message, 'error');
         return;
       }
-      showToast('Wenn die E-Mail-Adresse registriert ist, erhältst du eine Nachricht zum Zurücksetzen deines Passworts.', 'success');
+      showToast(ui('Wenn die E-Mail-Adresse registriert ist, erhältst du eine Nachricht zum Zurücksetzen deines Passworts.'), 'success');
       setMode('login');
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Der Passwort-Reset ist derzeit nicht verfügbar.', 'error');
+      showToast(error instanceof Error ? error.message : ui('Der Passwort-Reset ist derzeit nicht verfügbar.'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -91,24 +96,24 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!regFirstName || !regLastName || !regEmail || !regUsername || !regPassword || !regPasswordRepeat) {
-      showToast('Bitte fülle alle Pflichtfelder aus.', 'warning');
+      showToast(ui('Bitte fülle alle Pflichtfelder aus.'), 'warning');
       return;
     }
     if (!isPasswordStrong) {
-      showToast('Bitte wähle ein Passwort, das alle Kriterien erfüllt.', 'warning');
+      showToast(ui('Bitte wähle ein Passwort, das alle Kriterien erfüllt.'), 'warning');
       return;
     }
     if (!passwordsMatch) {
-      showToast('Die beiden Passwörter müssen übereinstimmen.', 'warning');
+      showToast(ui('Die beiden Passwörter müssen übereinstimmen.'), 'warning');
       return;
     }
     if (!hasReadRules) {
-      showToast('Bitte lies die Community-Regeln vor der Registrierung.', 'warning');
+      showToast(ui('Bitte lies die Community-Regeln vor der Registrierung.'), 'warning');
       setShowRulesModal(true);
       return;
     }
     if (!regAcceptRules) {
-      showToast('Bitte akzeptiere die Community-Regeln.', 'warning');
+      showToast(ui('Bitte akzeptiere die Community-Regeln.'), 'warning');
       return;
     }
 
@@ -139,87 +144,88 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
         showToast('Konto erfolgreich erstellt. Willkommen bei Be Halal Bazar.', 'success');
         navigate('home');
       } else {
-        showToast('Konto erstellt. Bitte bestätige zuerst deine E-Mail-Adresse.', 'success');
+        showToast(ui('Konto erstellt. Bitte bestätige zuerst deine E-Mail-Adresse.'), 'success');
         setMode('login');
       }
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Die Registrierung ist derzeit nicht verfügbar.', 'error');
+      showToast(error instanceof Error ? error.message : ui('Die Registrierung ist derzeit nicht verfügbar.'), 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 pt-16 pb-32 md:py-16 space-y-16">
+    <div className="mx-auto max-w-4xl px-4 pb-32 pt-12 md:pt-16">
       
-      <div className="text-center space-y-6 max-w-2xl mx-auto">
+      <div className="mx-auto max-w-2xl space-y-5 text-center">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#123D2A] text-[#F5F1E8] dark:bg-[#123D2A] dark:text-[#F5F1E8] text-[10px] uppercase tracking-widest font-bold">
           <Lock className="w-3.5 h-3.5" />
-          <span>Vertrauensvoller Marktplatz für alle</span>
+          <span>{ui('Vertrauensvoller Marktplatz für alle')}</span>
         </div>
         <h1 className="text-4xl sm:text-5xl font-serif font-bold text-[#171A17] dark:text-white">
-          {mode === 'login' ? 'Willkommen zurück!' : mode === 'reset' ? 'Passwort zurücksetzen' : 'Mitglied werden'}
+          {mode === 'login' ? ui('Willkommen zurück!') : mode === 'reset' ? ui('Passwort zurücksetzen') : ui('Mitglied werden')}
         </h1>
         <p className="font-sans text-xs uppercase tracking-widest text-gray-500">
-          Kaufen, Verkaufen und Verschenken unter verifizierten Mitgliedern.
+          {ui('Kaufen, Verkaufen und Verschenken unter verifizierten Mitgliedern.')}
         </p>
       </div>
 
-      <div className="max-w-xl mx-auto w-full">
+      <div className="mx-auto mt-12 w-full max-w-2xl">
         
         {/* LEFT / MAIN AUTH FORM */}
-        <div className="space-y-12">
+        <div className="space-y-8">
           
           {/* TAB SWITCH */}
-          <div className="flex border-b border-gray-200 dark:border-white/10">
+          <div className="grid grid-cols-2 border border-[#123D2A]/15 bg-white/65 p-1 dark:border-white/10 dark:bg-white/[0.03]">
             <button
               onClick={() => setMode('login')}
-              className={`flex-1 py-4 text-[11px] font-bold uppercase tracking-widest transition-all border-b-2 ${
+                className={`py-4 text-[11px] font-bold uppercase tracking-widest transition-all ${
                 mode === 'login'
-                  ? 'border-[#F4C430] text-[#123D2A] dark:text-[#F4C430]'
-                  : 'border-transparent text-gray-400 hover:text-[#171A17] dark:hover:text-white'
+                  ? 'bg-[#123D2A] text-[#F5F1E8]'
+                  : 'text-gray-400 hover:bg-[#F4C430]/15 hover:text-[#171A17] dark:hover:text-white'
               }`}
             >
-              Anmelden
+              {t.login}
             </button>
             <button
               onClick={() => setMode('register')}
-              className={`flex-1 py-4 text-[11px] font-bold uppercase tracking-widest transition-all border-b-2 ${
+                className={`py-4 text-[11px] font-bold uppercase tracking-widest transition-all ${
                 mode === 'register'
-                  ? 'border-[#F4C430] text-[#123D2A] dark:text-[#F4C430]'
-                  : 'border-transparent text-gray-400 hover:text-[#171A17] dark:hover:text-white'
+                  ? 'bg-[#123D2A] text-[#F5F1E8]'
+                  : 'text-gray-400 hover:bg-[#F4C430]/15 hover:text-[#171A17] dark:hover:text-white'
               }`}
             >
-              Registrieren
+              {t.register}
             </button>
           </div>
 
           {mode === 'login' ? (
-            <form onSubmit={handleLoginSubmit} className="space-y-8 animate-fade-in">
+            <form onSubmit={handleLoginSubmit} className="animate-fade-in space-y-6">
+              <section className={authSectionClass}>
               <div className="space-y-2">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                  E-Mail-Adresse
+                  {ui('E-Mail-Adresse')}
                 </label>
                 <div className="relative">
                   <input
                     type="email"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-lg font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
+                    className={authInputClass}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                  Passwort
+                  {ui('Passwort')}
                 </label>
                 <div className="relative">
                   <input
                     type="password"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
-                    className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-lg font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
+                    className={authInputClass}
                   />
                 </div>
               </div>
@@ -233,98 +239,100 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                   }}
                   className="text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430] hover:opacity-70 transition-opacity"
                 >
-                  Passwort vergessen?
+                  {ui('Passwort vergessen?')}
                 </button>
               </div>
+              </section>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
                 className="w-full py-4 bg-[#F4C430] text-[#123D2A] text-[11px] font-bold uppercase tracking-widest hover:bg-[#E4B528] transition-colors"
               >
-                Anmelden
+                {t.login}
               </button>
             </form>
           ) : mode === 'reset' ? (
-            <form onSubmit={handleResetSubmit} className="space-y-8 animate-fade-in">
-              <div className="border border-[#123D2A]/15 dark:border-white/10 bg-white/70 dark:bg-white/5 px-5 py-5">
+            <form onSubmit={handleResetSubmit} className="animate-fade-in space-y-6">
+              <section className={authSectionClass}>
                 <div className="flex items-start gap-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FAF2CC] text-[#123D2A] dark:bg-[#F4C430] dark:text-[#123D2A] shrink-0">
                     <Mail className="w-5 h-5" />
                   </div>
                   <div>
                     <h2 className="text-sm font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">
-                      Reset-Link anfordern
+                      {ui('Reset-Link anfordern')}
                     </h2>
                     <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-                      Gib deine E-Mail-Adresse ein. Du erhältst anschließend eine Nachricht mit einem Link, um dein Passwort zurückzusetzen.
+                      {ui('Gib deine E-Mail-Adresse ein. Du erhältst anschließend eine Nachricht mit einem Link, um dein Passwort zurückzusetzen.')}
                     </p>
                   </div>
                 </div>
-              </div>
+              </section>
 
               <div className="space-y-2">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                  E-Mail-Adresse
+                  {ui('E-Mail-Adresse')}
                 </label>
                 <input
                   type="email"
                   required
                   value={resetEmail}
                   onChange={(e) => setResetEmail(e.target.value)}
-                  className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-lg font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
+                  className={authInputClass}
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]">
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="py-4 bg-[#F4C430] text-[#123D2A] text-[11px] font-bold uppercase tracking-widest hover:bg-[#E4B528] transition-colors"
                 >
-                  Nachricht senden
+                  {ui('Nachricht senden')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode('login')}
                   className="px-5 py-4 border border-[#123D2A]/20 text-[#123D2A] dark:border-white/20 dark:text-white text-[11px] font-bold uppercase tracking-widest hover:bg-[#123D2A]/5 transition-colors"
                 >
-                  Zurück
+                  {ui('Zurück')}
                 </button>
               </div>
             </form>
           ) : (
-            <form onSubmit={handleRegisterSubmit} className="space-y-8 animate-fade-in">
-              <div className="grid grid-cols-2 gap-8">
+            <form onSubmit={handleRegisterSubmit} className="animate-fade-in space-y-6">
+              <section className={authSectionClass}>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                    Vorname *
+                    {ui('Vorname *')}
                   </label>
                   <input
                     type="text"
                     required
                     value={regFirstName}
                     onChange={(e) => setRegFirstName(e.target.value)}
-                    className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
+                    className={authInputClass}
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                    Nachname *
+                    {ui('Nachname *')}
                   </label>
                   <input
                     type="text"
                     required
                     value={regLastName}
                     onChange={(e) => setRegLastName(e.target.value)}
-                    className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
+                    className={authInputClass}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                  Benutzername (@username) *
+                  {ui('Benutzername (@username) *')}
                 </label>
                 <input
                   type="text"
@@ -332,24 +340,24 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                   placeholder="amina_wien"
                   value={regUsername}
                   onChange={(e) => setRegUsername(e.target.value)}
-                  className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors placeholder:font-sans placeholder:font-normal placeholder:uppercase placeholder:text-[10px]"
+                  className={authInputClass}
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                  E-Mail-Adresse *
+                  {ui('E-Mail-Adresse *')}
                 </label>
                 <input
                   type="email"
                   required
                   value={regEmail}
                   onChange={(e) => setRegEmail(e.target.value)}
-                  className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
+                  className={authInputClass}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
                     PLZ *
@@ -359,7 +367,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                     required
                     value={regPostalCode}
                     onChange={(e) => setRegPostalCode(e.target.value)}
-                    className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
+                    className={authInputClass}
                   />
                 </div>
                 <div className="space-y-2">
@@ -371,18 +379,20 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                     required
                     value={regCity}
                     onChange={(e) => setRegCity(e.target.value)}
-                    className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
+                    className={authInputClass}
                   />
                 </div>
               </div>
 
-              <div className="space-y-4 border border-[#123D2A]/15 dark:border-white/10 bg-white/70 dark:bg-white/5 px-5 py-5">
+              </section>
+
+              <section className="space-y-4 border border-[#F4C430]/70 bg-white/65 p-5 dark:bg-white/[0.03] sm:p-7">
                 <div>
                   <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">
-                    Passwortanforderungen
+                    {ui('Passwortanforderungen')}
                   </h2>
                   <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-                    Dein Passwort muss vor dem Absenden alle Kriterien erfüllen.
+                    {ui('Dein Passwort muss vor dem Absenden alle Kriterien erfüllen.')}
                   </p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -393,24 +403,24 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                     </div>
                   ))}
                 </div>
-              </div>
+              </section>
 
               <div className="space-y-2">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                  Passwort *
+                  {ui('Passwort *')}
                 </label>
                 <input
                   type="password"
                   required
                   value={regPassword}
                   onChange={(e) => setRegPassword(e.target.value)}
-                  className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
+                  className={authInputClass}
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                  Passwort wiederholen *
+                  {ui('Passwort wiederholen *')}
                 </label>
                 <input
                   type="password"
@@ -418,16 +428,16 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                   value={regPasswordRepeat}
                   onChange={(e) => setRegPasswordRepeat(e.target.value)}
                   aria-invalid={regPasswordRepeat.length > 0 && !passwordsMatch}
-                  className="w-full pb-2 bg-transparent border-b border-gray-300 dark:border-white/20 text-sm font-bold text-[#171A17] dark:text-white focus:outline-none focus:border-[#123D2A] dark:focus:border-[#F4C430] transition-colors"
+                  className={authInputClass}
                 />
                 {regPasswordRepeat.length > 0 && (
                   <p className={`text-xs font-bold ${passwordsMatch ? 'text-[#123D2A] dark:text-[#F4C430]' : 'text-red-600 dark:text-red-400'}`}>
-                    {passwordsMatch ? 'Die Passwörter stimmen überein.' : 'Die Passwörter stimmen noch nicht überein.'}
+                    {passwordsMatch ? ui('Die Passwörter stimmen überein.') : ui('Die Passwörter stimmen noch nicht überein.')}
                   </p>
                 )}
               </div>
 
-              <div className="pt-4 space-y-4">
+              <section className="space-y-4 border border-[#123D2A]/15 bg-white/65 p-5 dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
                 <button
                   type="button"
                   onClick={() => setShowRulesModal(true)}
@@ -437,15 +447,15 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                     <ShieldCheck className="w-5 h-5 text-[#123D2A] dark:text-[#F4C430] shrink-0" />
                     <span>
                       <span className="block text-xs font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">
-                        Community-Regeln lesen
+                        {ui('Community-Regeln lesen')}
                       </span>
                       <span className="block text-xs text-gray-600 dark:text-gray-400 mt-1">
-                        Bitte öffne die Regeln, lies sie durch und bestätige sie anschließend.
+                        {ui('Bitte öffne die Regeln, lies sie durch und bestätige sie anschließend.')}
                       </span>
                     </span>
                   </span>
                   <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430]">
-                    {hasReadRules ? 'Gelesen' : 'Öffnen'}
+                    {hasReadRules ? ui('Gelesen') : ui('Öffnen')}
                     {hasReadRules ? <CheckCircle2 className="w-5 h-5 shrink-0" /> : <ChevronRight className="w-5 h-5 shrink-0" />}
                   </span>
                 </button>
@@ -457,7 +467,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                   {regAcceptRules && <CheckCircle2 className="w-3.5 h-3.5 text-white dark:text-[#171A17]" />}
                 </div>
                 <span className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed max-w-sm">
-                  Ich akzeptiere die redaktionellen Community-Regeln (keine verbotenen Artikel, fairer und respektvoller Handel).
+                  {ui('Ich akzeptiere die redaktionellen Community-Regeln (keine verbotenen Artikel, fairer und respektvoller Handel).')}
                 </span>
                 <input
                   type="checkbox"
@@ -468,14 +478,14 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                   className="sr-only"
                 />
                 </label>
-              </div>
+              </section>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
                 className="w-full py-4 bg-[#F4C430] text-[#123D2A] text-[11px] font-bold uppercase tracking-widest hover:bg-[#E4B528] transition-colors"
               >
-                Konto erstellen & loslegen
+                {ui('Konto erstellen & loslegen')}
               </button>
             </form>
           )}
@@ -500,7 +510,7 @@ export const AuthPage: React.FC<Props> = ({ initialMode = 'login' }) => {
                 type="button"
                 onClick={() => setShowRulesModal(false)}
                 className="p-2 text-[#F5F1E8]/70 hover:text-[#F5F1E8] transition-colors"
-                aria-label="Community-Regeln schließen"
+                aria-label={ui('Community-Regeln schließen')}
               >
                 <X className="w-6 h-6" />
               </button>

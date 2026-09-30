@@ -3,6 +3,7 @@ import { ArrowRight, CheckCircle2, Clock3, CreditCard, LoaderCircle, ShieldCheck
 import { useApp } from '../context/AppContext';
 import { getListingPaymentStatus } from '../utils/stripe';
 import { storage } from '../services/storage';
+import { localizeText } from '../i18n/translations';
 
 interface PaymentResultPageProps {
   success: boolean;
@@ -15,7 +16,8 @@ interface PaymentDetails {
 }
 
 export const PaymentResultPage: React.FC<PaymentResultPageProps> = ({ success }) => {
-  const { navigate } = useApp();
+  const { navigate, language } = useApp();
+  const ui = (value: string) => localizeText(value, language);
   const [details, setDetails] = useState<PaymentDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const sessionId = new URLSearchParams(window.location.search).get('session_id');
@@ -50,10 +52,10 @@ export const PaymentResultPage: React.FC<PaymentResultPageProps> = ({ success })
           attempts += 1;
           window.setTimeout(loadStatus, 1500);
         } else if (!nextDetails.paid) {
-          setError('Stripe hat die Rückkehr bestätigt, aber der Webhook wurde noch nicht verarbeitet. Bitte prüfe die Webhook-Zustellung in Stripe und starte den Vorgang gegebenenfalls erneut.');
+          setError(ui('Stripe hat die Rückkehr bestätigt, aber der Webhook wurde noch nicht verarbeitet. Bitte prüfe die Webhook-Zustellung in Stripe und starte den Vorgang gegebenenfalls erneut.'));
         }
       } catch (loadError) {
-        if (!cancelled) setError(loadError instanceof Error ? loadError.message : 'Zahlungsstatus nicht verfügbar.');
+        if (!cancelled) setError(loadError instanceof Error ? loadError.message : ui('Zahlungsstatus nicht verfügbar.'));
       }
     };
 
