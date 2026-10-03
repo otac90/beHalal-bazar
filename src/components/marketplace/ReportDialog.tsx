@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { X, ShieldAlert, AlertTriangle } from 'lucide-react';
 import { ReportReason } from '../../types';
-import { storage } from '../../services/storage';
 import { useApp } from '../../context/AppContext';
 import { localizeText } from '../../i18n/translations';
+import { createClient } from '../../utils/supabase/client';
 
 interface Props {
   isOpen: boolean;
@@ -42,7 +42,7 @@ export const ReportDialog: React.FC<Props> = ({
     { value: 'OTHER', label: 'Sonstiger Grund' },
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
       showToast(t.closedCommunityNotice, 'warning');
@@ -53,19 +53,24 @@ export const ReportDialog: React.FC<Props> = ({
       return;
     }
     setIsSubmitting(true);
-    storage.addReport({
-      reporterId: user.id,
-      reporterName: `${user.firstName} ${user.lastName}`,
-      reportedUserId,
-      listingId,
-      listingTitle,
-      reason,
-      description,
-    });
-    setIsSubmitting(false);
-    showToast(ui('Vielen Dank. Deine Meldung wurde an das Moderationsteam übermittelt.'), 'success');
-    setDescription('');
-    onClose();
+    try {
+      const { error } = await createClient().from('moderation_reports').insert({
+        source: listingId ? 'LISTING' : 'USER',
+        reporter_id: user.id,
+        reported_user_id: reportedUserId ?? null,
+        listing_id: listingId ?? null,
+        reason,
+        description: description.trim(),
+      });
+      if (error) throw error;
+      showToast(ui('Vielen Dank. Deine Meldung wurde an das Moderationsteam übermittelt.'), 'success');
+      setDescription('');
+      onClose();
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : ui('Die Meldung konnte nicht übermittelt werden.'), 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

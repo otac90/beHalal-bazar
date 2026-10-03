@@ -7,6 +7,7 @@ import { useApp } from '../context/AppContext';
 import { PRIVACY_POLICY_SECTIONS } from '../data/privacyPolicy';
 import { TERMS_OF_SERVICE_SECTIONS } from '../data/termsOfService';
 import { IMPRINT_SECTIONS } from '../data/imprint';
+import { submitSupportTicket } from '../utils/supabase/controlCenter';
 
 interface Props {
   pageType: 'about' | 'rules' | 'safety' | 'faq' | 'contact' | 'impressum' | 'datenschutz' | 'agb';
@@ -25,14 +26,19 @@ export const StaticPages: React.FC<Props> = ({ pageType }) => {
   const [contactMessage, setContactMessage] = useState('');
   const [contactSent, setContactSent] = useState(false);
 
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!contactName || !contactEmail || !contactMessage) {
       showToast(t.contactFillFields || 'Bitte fülle alle Pflichtfelder aus.', 'warning');
       return;
     }
-    setContactSent(true);
-    showToast(t.contactSuccess || 'Nachricht gesendet', 'success');
+    try {
+      await submitSupportTicket(contactName, contactEmail, language === 'de' ? 'Kontaktanfrage über Online Bazar' : 'Contact request from Online Bazar', contactMessage);
+      setContactSent(true);
+      showToast(t.contactSuccess || 'Nachricht gesendet', 'success');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : (language === 'de' ? 'Anfrage konnte nicht gesendet werden.' : 'Request could not be sent.'), 'error');
+    }
   };
 
   return (
