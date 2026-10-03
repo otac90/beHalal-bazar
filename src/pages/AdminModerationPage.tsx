@@ -1,323 +1,68 @@
-import React, { useState } from 'react';
-import { 
-  ShieldCheck, ShieldAlert, Check, X, Trash2, Plus, 
-  AlertTriangle, Users, Package, FileText, Ban
-} from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, Ban, Check, CheckCircle2, ChevronRight, ClipboardList, Clock3, Flag, Headphones, LayoutDashboard, Loader2, LockKeyhole, LogOut, MessageSquare, MoreHorizontal, Package, Search, ShieldCheck, Users, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { storage } from '../services/storage';
-import { Report } from '../types';
+import { ConfirmDialog } from '../components/common/ConfirmDialog';
+import { banUser, ControlCenterAuditLog, ControlCenterListing, ControlCenterListingImage, ControlCenterProfile, ControlCenterReport, ControlCenterTicket, loadControlCenterData, loadConversationMessages, loadSupportMessages, ModerationConversationMessage, replyToSupportTicket, setProfileRole, softDeleteUser, StaffRole, subscribeToControlCenter, suspendUser, SupportMessage, SupportTicketStatus, updateListingStatus, updateModerationReport, updateSupportTicket, warnUser } from '../utils/supabase/controlCenter';
+
+type CenterTab = 'dashboard' | 'reports' | 'users' | 'support' | 'listings' | 'conversations' | 'moderation' | 'settings';
+type ActionType = 'WARN' | 'SUSPEND' | 'BAN' | 'DELETE';
+const tabLabels: Record<CenterTab, string> = { dashboard: 'Übersicht', reports: 'Meldungen', users: 'Benutzer', support: 'Support', listings: 'Angebote', conversations: 'Unterhaltungen', moderation: 'Moderation', settings: 'Einstellungen' };
+const formatDate = (value?: string | null) => value ? new Date(value).toLocaleString('de-AT', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+const shortDate = (value?: string | null) => value ? new Date(value).toLocaleDateString('de-AT') : '—';
+const statusClass = (status: string) => ['OPEN', 'NEW', 'WARNED'].includes(status) ? 'bg-amber-100 text-amber-900 dark:bg-amber-950/40 dark:text-amber-300' : ['IN_PROGRESS', 'TEMPORARILY_SUSPENDED'].includes(status) ? 'bg-blue-100 text-blue-900 dark:bg-blue-950/40 dark:text-blue-300' : ['RESOLVED', 'ACTIVE', 'MEMBER'].includes(status) ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300' : ['REJECTED', 'BANNED', 'BLOCKED', 'DELETED'].includes(status) ? 'bg-red-100 text-red-900 dark:bg-red-950/40 dark:text-red-300' : 'bg-gray-100 text-gray-700 dark:bg-white/10 dark:text-gray-300';
+const StatusBadge = ({ value }: { value: string }) => <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${statusClass(value)}`}>{value.replaceAll('_', ' ')}</span>;
+const EmptyState = ({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) => <div className="flex min-h-48 flex-col items-center justify-center border border-dashed border-[#123D2A]/20 px-6 py-10 text-center dark:border-white/15"><Icon className="mb-4 h-8 w-8 text-[#F4C430]" /><h3 className="font-serif text-xl font-bold text-[#171A17] dark:text-white">{title}</h3><p className="mt-2 max-w-md text-sm text-gray-500 dark:text-gray-400">{description}</p></div>;
+
+const ActionModal = ({ action, user, reportId, onClose, onDone }: { action: ActionType; user: ControlCenterProfile; reportId?: string; onClose: () => void; onDone: () => Promise<void> }) => {
+  const { showToast } = useApp();
+  const [reason, setReason] = useState(''); const [duration, setDuration] = useState('7'); const [saving, setSaving] = useState(false);
+  const labels = { WARN: 'Verwarnen', SUSPEND: 'Temporär sperren', BAN: 'Dauerhaft sperren', DELETE: 'Account deaktivieren' };
+  const submit = async (event: React.FormEvent) => { event.preventDefault(); if (!reason.trim()) return; setSaving(true); try { if (action === 'WARN') await warnUser(user.id, reason.trim(), undefined, reportId); if (action === 'SUSPEND') await suspendUser(user.id, new Date(Date.now() + Number(duration) * 86400000).toISOString(), reason.trim(), reportId); if (action === 'BAN') await banUser(user.id, reason.trim(), reportId); if (action === 'DELETE') await softDeleteUser(user.id, reason.trim()); await onDone(); showToast('Moderationsmaßnahme wurde gespeichert.', 'success'); onClose(); } catch (cause) { showToast(cause instanceof Error ? cause.message : 'Moderationsmaßnahme konnte nicht gespeichert werden.', 'error'); } finally { setSaving(false); } };
+  return <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"><div className="w-full max-w-lg border border-[#123D2A]/15 bg-[#F5F1E8] p-6 shadow-2xl dark:border-white/10 dark:bg-[#111511] sm:p-8"><div className="mb-6 flex items-start justify-between border-b border-[#123D2A]/10 pb-5 dark:border-white/10"><div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#F4C430]">Moderationsmaßnahme</p><h2 className="mt-2 font-serif text-2xl font-bold text-[#171A17] dark:text-white">{labels[action]}</h2><p className="mt-1 text-sm text-gray-500">@{user.username}</p></div><button type="button" onClick={onClose} aria-label="Dialog schließen"><X className="h-5 w-5 text-gray-500" /></button></div><form onSubmit={submit} className="space-y-5"><div className="border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-900 dark:text-amber-300">Diese Aktion wird protokolliert und ist für das Moderationsteam nachvollziehbar.</div>{action === 'SUSPEND' && <label className="block"><span className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-500">Dauer</span><select value={duration} onChange={(event) => setDuration(event.target.value)} className="h-12 w-full border border-[#123D2A]/25 bg-white px-3 text-sm dark:border-white/20 dark:bg-[#151B15] dark:text-white"><option value="1">24 Stunden</option><option value="3">3 Tage</option><option value="7">7 Tage</option><option value="30">30 Tage</option></select></label>}<label className="block"><span className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-gray-500">Grund *</span><textarea required rows={4} value={reason} onChange={(event) => setReason(event.target.value)} className="w-full border border-[#123D2A]/25 bg-white p-3 text-sm dark:border-white/20 dark:bg-[#151B15] dark:text-white" placeholder="Dokumentiere den Grund für die Maßnahme ..." /></label><div className="flex justify-end gap-3 border-t border-[#123D2A]/10 pt-5 dark:border-white/10"><button type="button" onClick={onClose} className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest">Abbrechen</button><button disabled={saving} className="bg-[#123D2A] px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-white disabled:opacity-50 dark:bg-[#F4C430] dark:text-[#123D2A]">{saving ? 'Wird gespeichert ...' : labels[action]}</button></div></form></div></div>;
+};
 
 export const AdminModerationPage: React.FC = () => {
-  const { user, config, setConfig, showToast, navigate, t } = useApp();
-
-  const [reports, setReports] = useState<Report[]>(storage.getReports());
-  const [newKeyword, setNewKeyword] = useState('');
-  const [selectedStatusFilter, setSelectedStatusFilter] = useState<'ALL' | 'PENDING' | 'RESOLVED'>('PENDING');
-
-  const listings = storage.getListings();
-  const allUsers = storage.getUsers();
-
-  const isAdminOrMod = user?.role === 'ADMIN' || user?.role === 'MODERATOR';
-
-  const handleResolveReport = (reportId: string, action: 'DISMISSED' | 'DELETED_LISTING' | 'BANNED_USER') => {
-    const rep = reports.find((r) => r.id === reportId);
-    if (!rep) return;
-
-    if (action === 'DELETED_LISTING' && rep.listingId) {
-      storage.deleteListing(rep.listingId);
-      showToast('Inserat wurde gelöscht und Meldung als erledigt markiert.', 'success');
-    } else if (action === 'BANNED_USER' && rep.reportedUserId) {
-      storage.banUser(rep.reportedUserId);
-      if (rep.listingId) storage.deleteListing(rep.listingId);
-      showToast('Nutzer wurde gesperrt.', 'success');
-    } else {
-      showToast('Meldung abgewiesen.', 'info');
-    }
-
-    storage.updateReportStatus(reportId, 'RESOLVED', action);
-    setReports(storage.getReports());
-  };
-
-  const handleAddKeyword = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newKeyword.trim()) return;
-
-    const lower = newKeyword.trim().toLowerCase();
-    if (config.bannedKeywords.includes(lower)) {
-      showToast('Schlagwort bereits in der Sperrliste vorhanden.', 'warning');
-      return;
-    }
-
-    const updated = {
-      ...config,
-      bannedKeywords: [...config.bannedKeywords, lower],
-    };
-    storage.saveConfig(updated);
-    setConfig(updated);
-    setNewKeyword('');
-    showToast(`"${lower}" zur Sperrliste hinzugefügt.`, 'success');
-  };
-
-  const handleRemoveKeyword = (keyword: string) => {
-    const updated = {
-      ...config,
-      bannedKeywords: config.bannedKeywords.filter((k) => k !== keyword),
-    };
-    storage.saveConfig(updated);
-    setConfig(updated);
-    showToast(`"${keyword}" aus der Sperrliste entfernt.`, 'info');
-  };
-
-  if (!isAdminOrMod) {
-    return (
-      <div className="max-w-md mx-auto py-16 px-4 text-center space-y-4">
-        <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-950/50 text-red-600 mx-auto flex items-center justify-center">
-          <ShieldAlert className="w-6 h-6" />
-        </div>
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-          Zugang nur für Moderatoren & Admins
-        </h2>
-        <p className="text-xs text-gray-500">
-          Dieser Bereich ist dem ONLINE BAZAR Plattform-Team vorbehalten.
-        </p>
-      </div>
-    );
-  }
-
-  const filteredReports = reports.filter((r) => {
-    if (selectedStatusFilter === 'ALL') return true;
-    return r.status === selectedStatusFilter;
-  });
-
-  return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      
-      {/* HEADER & METRICS */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 text-[10px] font-extrabold uppercase tracking-wide">
-                Admin Panel
-              </span>
-              <h1 className="text-xl md:text-2xl font-extrabold text-gray-900 dark:text-white font-heading">
-                Moderation & Sicherheit
-              </h1>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Verwalte Inseratsmeldungen, automatische Filtersperren und Plattformregeln.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-emerald-800 dark:text-[#F5C518] font-semibold">
-              Angemeldet als: {user.firstName} ({user.role})
-            </span>
-          </div>
-        </div>
-
-        {/* METRICS ROW */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-4 rounded-2xl bg-white dark:bg-[#161E18] border border-gray-200/80 dark:border-white/10 shadow-xs">
-            <span className="text-[11px] text-gray-400 font-semibold block">Offene Meldungen</span>
-            <span className="text-2xl font-extrabold text-red-600 dark:text-red-400">
-              {reports.filter((r) => r.status === 'PENDING').length}
-            </span>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-white dark:bg-[#161E18] border border-gray-200/80 dark:border-white/10 shadow-xs">
-            <span className="text-[11px] text-gray-400 font-semibold block">Aktive Inserate</span>
-            <span className="text-2xl font-extrabold text-gray-900 dark:text-white">
-              {listings.filter((l) => l.status === 'ACTIVE').length}
-            </span>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-white dark:bg-[#161E18] border border-gray-200/80 dark:border-white/10 shadow-xs">
-            <span className="text-[11px] text-gray-400 font-semibold block">Registrierte Mitglieder</span>
-            <span className="text-2xl font-extrabold text-gray-900 dark:text-white">
-              {allUsers.length}
-            </span>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-white dark:bg-[#161E18] border border-gray-200/80 dark:border-white/10 shadow-xs">
-            <span className="text-[11px] text-gray-400 font-semibold block">Gesperrte Wörter</span>
-            <span className="text-2xl font-extrabold text-[#123D2A] dark:text-[#F5C518]">
-              {config.bannedKeywords.length}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* SECTION 1: INCOMING REPORTS */}
-      <div className="p-6 rounded-3xl bg-white dark:bg-[#161E18] border border-gray-200/80 dark:border-white/10 space-y-4 shadow-sm">
-        
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100 dark:border-white/10">
-          <div className="flex items-center gap-2 font-bold text-sm text-gray-900 dark:text-white">
-            <ShieldAlert className="w-5 h-5 text-red-600" />
-            <span>Community-Meldungen</span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setSelectedStatusFilter('PENDING')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold ${
-                selectedStatusFilter === 'PENDING'
-                  ? 'bg-red-600 text-white'
-                  : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300'
-              }`}
-            >
-              Offen
-            </button>
-            <button
-              onClick={() => setSelectedStatusFilter('RESOLVED')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold ${
-                selectedStatusFilter === 'RESOLVED'
-                  ? 'bg-emerald-700 text-white'
-                  : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300'
-              }`}
-            >
-              Erledigt
-            </button>
-            <button
-              onClick={() => setSelectedStatusFilter('ALL')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold ${
-                selectedStatusFilter === 'ALL'
-                  ? 'bg-gray-800 text-white'
-                  : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300'
-              }`}
-            >
-              Alle
-            </button>
-          </div>
-        </div>
-
-        {filteredReports.length > 0 ? (
-          <div className="space-y-3">
-            {filteredReports.map((rep) => (
-              <div
-                key={rep.id}
-                className="p-4 rounded-2xl border border-gray-200/70 dark:border-white/10 bg-gray-50/50 dark:bg-white/5 space-y-3"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300">
-                      {rep.reason}
-                    </span>
-                    {rep.status === 'RESOLVED' && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                        Erledigt ({rep.actionTaken})
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[11px] text-gray-400">
-                    Gemeldet von {rep.reporterName} am {new Date(rep.createdAt).toLocaleString('de-AT')}
-                  </span>
-                </div>
-
-                {rep.listingTitle && (
-                  <div className="text-xs">
-                    <span className="font-semibold text-gray-500">Betroffener Artikel: </span>
-                    <strong className="text-gray-900 dark:text-white">{rep.listingTitle}</strong>
-                    {rep.listingId && (
-                      <button
-                        onClick={() => navigate('listing-detail', { id: rep.listingId })}
-                        className="ml-2 text-xs text-[#123D2A] dark:text-[#F5C518] underline font-semibold"
-                      >
-                        Inserat ansehen
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                <p className="text-xs text-gray-700 dark:text-gray-300 bg-white dark:bg-[#161E18] p-3 rounded-xl border border-gray-200/50 dark:border-white/5">
-                  "{rep.description}"
-                </p>
-
-                {rep.status === 'PENDING' && (
-                  <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
-                    <button
-                      onClick={() => handleResolveReport(rep.id, 'DISMISSED')}
-                      className="px-3 py-1.5 rounded-xl border border-gray-300 dark:border-white/10 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5"
-                    >
-                      Meldung ablehnen (Freigeben)
-                    </button>
-                    <button
-                      onClick={() => handleResolveReport(rep.id, 'DELETED_LISTING')}
-                      className="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-xs"
-                    >
-                      Inserat sofort löschen
-                    </button>
-                    <button
-                      onClick={() => handleResolveReport(rep.id, 'BANNED_USER')}
-                      className="px-3 py-1.5 rounded-xl bg-gray-900 hover:bg-black text-white text-xs font-bold shadow-xs"
-                    >
-                      Nutzer sperren & Inserat löschen
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="p-8 text-center text-xs text-gray-400">
-            Keine Meldungen im gewählten Filter.
-          </div>
-        )}
-
-      </div>
-
-      {/* SECTION 2: BANNED KEYWORDS & AUTO-MODERATION ENGINE */}
-      <div className="p-6 rounded-3xl bg-white dark:bg-[#161E18] border border-gray-200/80 dark:border-white/10 space-y-4 shadow-sm">
-        
-        <div className="pb-3 border-b border-gray-100 dark:border-white/10">
-          <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Ban className="w-4 h-4 text-[#123D2A] dark:text-[#F5C518]" />
-            <span>Automatische Wortfilter & Sperrliste</span>
-          </h2>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Inserate mit diesen Begriffen werden vom System automatisch vor der Veröffentlichung blockiert.
-          </p>
-        </div>
-
-        {/* ADD KEYWORD FORM */}
-        <form onSubmit={handleAddKeyword} className="flex gap-2">
-          <input
-            type="text"
-            value={newKeyword}
-            onChange={(e) => setNewKeyword(e.target.value)}
-            placeholder="Neues verbotenes Wort oder Phrase hinzufügen (z.B. replica, shisha, job)"
-            className="flex-1 h-10 px-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-[#123D2A]"
-          />
-          <button
-            type="submit"
-            className="px-4 h-10 rounded-xl bg-[#123D2A] dark:bg-[#F5C518] text-white dark:text-[#123D2A] text-xs font-bold flex items-center gap-1.5 shadow-xs"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Hinzufügen</span>
-          </button>
-        </form>
-
-        {/* KEYWORDS CHIPS */}
-        <div className="flex flex-wrap gap-2 pt-2">
-          {config.bannedKeywords.map((kw) => (
-            <span
-              key={kw}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-white/5"
-            >
-              <span>{kw}</span>
-              <button
-                onClick={() => handleRemoveKeyword(kw)}
-                className="text-gray-400 hover:text-red-600 transition-colors"
-                title="Wort entfernen"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </span>
-          ))}
-        </div>
-
-      </div>
-
-    </div>
-  );
+  const { user, showToast, navigate } = useApp(); const [tab, setTab] = useState<CenterTab>('dashboard'); const [data, setData] = useState<Awaited<ReturnType<typeof loadControlCenterData>> | null>(null); const [loading, setLoading] = useState(true); const [error, setError] = useState<string | null>(null); const [search, setSearch] = useState(''); const [reportFilter, setReportFilter] = useState('ALL'); const [reportSource, setReportSource] = useState<'ALL' | ControlCenterReport['source']>('ALL'); const [ticketFilter, setTicketFilter] = useState('ALL'); const [selectedReportId, setSelectedReportId] = useState<string | null>(null); const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null); const [selectedUserId, setSelectedUserId] = useState<string | null>(null); const [actionState, setActionState] = useState<{ action: ActionType; user: ControlCenterProfile; reportId?: string } | null>(null); const [roleChange, setRoleChange] = useState<{ user: ControlCenterProfile; role: StaffRole } | null>(null); const [listingAction, setListingAction] = useState<{ listing: ControlCenterListing; status: 'ACTIVE' | 'REJECTED' | 'BLOCKED' | 'DELETED' } | null>(null); const [supportMessages, setSupportMessages] = useState<SupportMessage[]>([]); const [conversationMessages, setConversationMessages] = useState<ModerationConversationMessage[]>([]); const [selectedListingId, setSelectedListingId] = useState<string | null>(null); const [reply, setReply] = useState(''); const [saving, setSaving] = useState(false);
+  const isStaff = user?.role === 'ADMIN' || user?.role === 'MODERATOR' || user?.role === 'SUPPORT'; const isAdmin = user?.role === 'ADMIN';
+  const reload = async () => { setLoading(true); try { setData(await loadControlCenterData()); setError(null); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Control Center konnte nicht geladen werden.'); } finally { setLoading(false); } };
+  useEffect(() => { if (isStaff) void reload(); else setLoading(false); }, [isStaff]); useEffect(() => { if (!isStaff) return undefined; return subscribeToControlCenter(() => { void reload(); }); }, [isStaff]); useEffect(() => { if (!selectedTicketId) { setSupportMessages([]); return; } void loadSupportMessages(selectedTicketId).then(setSupportMessages).catch((cause) => showToast(cause instanceof Error ? cause.message : 'Verlauf konnte nicht geladen werden.', 'error')); }, [selectedTicketId]); useEffect(() => { const conversationReport = data?.reports.find((item) => item.id === selectedReportId); if (!conversationReport?.conversation_id) { setConversationMessages([]); return; } void loadConversationMessages(conversationReport.conversation_id).then(setConversationMessages).catch((cause) => showToast(cause instanceof Error ? cause.message : 'Nachrichtenkontext konnte nicht geladen werden.', 'error')); }, [selectedReportId, data]);
+  const maps = useMemo(() => ({ profiles: new Map((data?.profiles ?? []).map((item) => [item.id, item])), listings: new Map((data?.listings ?? []).map((item) => [item.id, item])), listingImages: new Map((data?.listingImages ?? []).map((item) => [item.listing_id, [...(data?.listingImages ?? []).filter((image) => image.listing_id === item.listing_id)]])) }), [data]); const reports = useMemo(() => (data?.reports ?? []).filter((item) => (reportFilter === 'ALL' || item.status === reportFilter) && (reportSource === 'ALL' || item.source === reportSource) && JSON.stringify(item).toLowerCase().includes(search.toLowerCase())), [data, reportFilter, reportSource, search]); const tickets = useMemo(() => (data?.tickets ?? []).filter((item) => (ticketFilter === 'ALL' || item.status === ticketFilter) && JSON.stringify(item).toLowerCase().includes(search.toLowerCase())), [data, ticketFilter, search]); const users = useMemo(() => (data?.profiles ?? []).filter((item) => JSON.stringify(item).toLowerCase().includes(search.toLowerCase())), [data, search]); const selectedReport = data?.reports.find((item) => item.id === selectedReportId) ?? null; const selectedTicket = data?.tickets.find((item) => item.id === selectedTicketId) ?? null; const selectedUser = data?.profiles.find((item) => item.id === selectedUserId) ?? null;
+  const performReportUpdate = async (status: 'IN_PROGRESS' | 'RESOLVED' | 'REJECTED') => { if (!selectedReport || !user) return; setSaving(true); try { await updateModerationReport(selectedReport.id, status, undefined, status === 'IN_PROGRESS' ? user.id : undefined); await reload(); showToast('Meldung wurde aktualisiert.', 'success'); } catch (cause) { showToast(cause instanceof Error ? cause.message : 'Meldung konnte nicht aktualisiert werden.', 'error'); } finally { setSaving(false); } };
+  const performListingUpdate = async (listing: ControlCenterListing, status: 'ACTIVE' | 'REJECTED' | 'BLOCKED' | 'DELETED') => { setSaving(true); try { await updateListingStatus(listing.id, status, status === 'ACTIVE' ? undefined : `Durch ${user?.username ?? 'Moderation'} geändert`); await reload(); showToast('Inseratstatus wurde aktualisiert.', 'success'); } catch (cause) { showToast(cause instanceof Error ? cause.message : 'Inserat konnte nicht aktualisiert werden.', 'error'); } finally { setSaving(false); } };
+  const updateTicket = async (ticketId: string, status: SupportTicketStatus, assignedTo?: string | null) => { await updateSupportTicket(ticketId, status, assignedTo); };
+  const sendReply = async (event: React.FormEvent) => { event.preventDefault(); if (!selectedTicket || !user || !reply.trim()) return; setSaving(true); try { await replyToSupportTicket(selectedTicket.id, user.id, reply); await updateTicket(selectedTicket.id, 'IN_PROGRESS', user.id); setReply(''); setSupportMessages(await loadSupportMessages(selectedTicket.id)); await reload(); showToast('Antwort wurde gespeichert.', 'success'); } catch (cause) { showToast(cause instanceof Error ? cause.message : 'Antwort konnte nicht gespeichert werden.', 'error'); } finally { setSaving(false); } };
+  if (!isStaff) return <div className="mx-auto max-w-md px-4 py-24 text-center"><LockKeyhole className="mx-auto h-12 w-12 text-red-600" /><h1 className="mt-5 font-serif text-3xl font-bold text-[#171A17] dark:text-white">Kein Zugriff</h1><p className="mt-3 text-sm text-gray-500">Das Bazar Control Center ist nur für berechtigte Teammitglieder verfügbar.</p></div>;
+  if (loading && !data) return <div className="mx-auto flex max-w-7xl items-center justify-center px-4 py-32"><Loader2 className="h-8 w-8 animate-spin text-[#F4C430]" /></div>;
+  if (error) return <div className="mx-auto max-w-xl px-4 py-24 text-center"><AlertTriangle className="mx-auto h-12 w-12 text-red-600" /><h1 className="mt-5 font-serif text-3xl font-bold text-[#171A17] dark:text-white">Control Center nicht verfügbar</h1><p className="mt-3 text-sm text-gray-500">{error}</p><p className="mt-3 text-xs text-gray-400">Bitte führe zuerst die Migration <code>supabase/control_center.sql</code> im Supabase SQL Editor aus.</p><button onClick={() => void reload()} className="mt-6 bg-[#123D2A] px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-white">Erneut versuchen</button></div>;
+  const navGroups: { title: string; items: { id: CenterTab; icon: React.ElementType; label: string }[] }[] = [{ title: 'Arbeitsbereich', items: [{ id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' }, { id: 'reports', icon: Flag, label: 'Meldungen' }, { id: 'support', icon: Headphones, label: 'Support' }] }, { title: 'Plattform', items: [{ id: 'users', icon: Users, label: 'Benutzer' }, { id: 'listings', icon: Package, label: 'Angebote' }, { id: 'conversations', icon: MessageSquare, label: 'Unterhaltungen' }] }, { title: 'Verwaltung', items: [{ id: 'moderation', icon: ShieldCheck, label: 'Moderation' }, ...(isAdmin ? [{ id: 'settings' as CenterTab, icon: LockKeyhole, label: 'Einstellungen' }] : [])] }]; const openReports = data?.reports.filter((item) => item.status === 'OPEN').length ?? 0; const inProgressReports = data?.reports.filter((item) => item.status === 'IN_PROGRESS').length ?? 0; const openTickets = data?.tickets.filter((item) => ['NEW', 'OPEN', 'IN_PROGRESS'].includes(item.status)).length ?? 0; const activeSuspensions = data?.suspensions.filter((item) => !item.revoked_at && (!item.ends_at || new Date(item.ends_at) > new Date())).length ?? 0;
+  return <div className="mx-auto flex max-w-[1500px] gap-6 px-4 py-6 sm:px-6 lg:px-8"><aside className="hidden w-60 shrink-0 flex-col border-r border-[#123D2A]/15 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03] lg:flex"><div className="border-b border-[#123D2A]/10 px-2 pb-5 dark:border-white/10"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#F4C430]">Internal workspace</p><h1 className="mt-2 font-serif text-2xl font-bold text-[#171A17] dark:text-white">Bazar Control Center</h1><p className="mt-1 text-xs text-gray-500">{user?.username} · {user?.role}</p></div><nav className="mt-5 space-y-6">{navGroups.map((group) => <div key={group.title}><p className="px-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">{group.title}</p><div className="mt-2 space-y-1">{group.items.map(({ id, icon: Icon, label }) => <button key={id} onClick={() => setTab(id)} className={`flex w-full items-center justify-between px-3 py-2.5 text-left text-sm font-semibold transition-colors ${tab === id ? 'bg-[#123D2A] text-white dark:bg-[#F4C430] dark:text-[#123D2A]' : 'text-gray-600 hover:bg-[#FAF2CC] dark:text-gray-300 dark:hover:bg-white/10'}`}><span className="flex items-center gap-3"><Icon className="h-4 w-4" />{label}</span>{id === 'reports' && openReports > 0 && <span className="rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] text-white">{openReports}</span>}{id === 'support' && openTickets > 0 && <span className="rounded-full bg-[#F4C430] px-1.5 py-0.5 text-[10px] text-[#123D2A]">{openTickets}</span>}</button>)}</div></div>)}</nav><button onClick={() => navigate('home')} className="mt-auto flex items-center gap-3 border-t border-[#123D2A]/10 px-3 pt-5 text-left text-xs font-bold uppercase tracking-widest text-gray-600 hover:text-[#123D2A] dark:border-white/10 dark:text-gray-300 dark:hover:text-[#F4C430]"><LogOut className="h-4 w-4" />Control Center verlassen</button></aside><main className="min-w-0 flex-1 space-y-6"><div className="flex flex-col gap-4 border-b border-[#123D2A]/15 pb-5 dark:border-white/10 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#123D2A] dark:text-[#F4C430]">Internal workspace</p><h2 className="mt-1 font-serif text-3xl font-bold text-[#171A17] dark:text-white">{tabLabels[tab]}</h2><p className="mt-1 text-sm text-gray-500">Verwalte den Online Bazar sicher und nachvollziehbar.</p></div><div className="flex items-center gap-3"><div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Suchen ..." className="h-10 w-48 border border-[#123D2A]/20 bg-white pl-9 pr-3 text-sm dark:border-white/15 dark:bg-white/[0.03] dark:text-white" /></div><button onClick={() => void reload()} title="Daten aktualisieren" className="flex h-10 w-10 items-center justify-center border border-[#123D2A]/20 text-[#123D2A] hover:bg-[#FAF2CC] dark:border-white/15 dark:text-[#F4C430]"><Clock3 className="h-4 w-4" /></button></div></div><div className="flex gap-2 overflow-x-auto border-b border-[#123D2A]/10 pb-2 dark:border-white/10 lg:hidden">{navGroups.flatMap((group) => group.items).map(({ id, icon: Icon, label }) => <button key={id} onClick={() => setTab(id)} className={`flex shrink-0 items-center gap-2 px-3 py-2 text-xs font-bold ${tab === id ? 'bg-[#123D2A] text-white' : 'bg-white/60 text-gray-600 dark:bg-white/5 dark:text-gray-300'}`}><Icon className="h-4 w-4" />{label}</button>)}</div>
+      {tab === 'dashboard' && <DashboardSection data={data} openReports={openReports} inProgressReports={inProgressReports} openTickets={openTickets} activeSuspensions={activeSuspensions} setTab={setTab} maps={maps} />}
+       {tab === 'reports' && <ReportsSection reports={reports} selectedReport={selectedReport} profiles={maps.profiles} listings={maps.listings} listingImages={maps.listingImages} conversationMessages={conversationMessages} currentUser={user?.id} isAdmin={isAdmin} saving={saving} onSelect={setSelectedReportId} onClaim={() => void performReportUpdate('IN_PROGRESS')} onResolve={(status) => void performReportUpdate(status)} onAction={(action, profile) => setActionState({ action, user: profile, reportId: selectedReport?.id })} reportFilter={reportFilter} setReportFilter={setReportFilter} reportSource={reportSource} setReportSource={setReportSource} />}
+      {tab === 'users' && <UsersSection users={users} selectedUser={selectedUser} warnings={data?.warnings ?? []} suspensions={data?.suspensions ?? []} isAdmin={isAdmin} onSelect={setSelectedUserId} onAction={(action, profile) => setActionState({ action, user: profile })} onClose={() => setSelectedUserId(null)} onRole={(role, profile) => setRoleChange({ user: profile, role })} />}
+      {tab === 'support' && <SupportSection tickets={tickets} selectedTicket={selectedTicket} messages={supportMessages} reply={reply} setReply={setReply} saving={saving} onSelect={setSelectedTicketId} onReply={sendReply} onStatus={async (status) => { if (!selectedTicket) return; try { await updateTicket(selectedTicket.id, status, user?.id); await reload(); } catch (cause) { showToast(cause instanceof Error ? cause.message : 'Status konnte nicht geändert werden.', 'error'); } }} ticketFilter={ticketFilter} setTicketFilter={setTicketFilter} />}
+       {tab === 'listings' && <ListingsSection listings={(data?.listings ?? []).filter((item) => JSON.stringify(item).toLowerCase().includes(search.toLowerCase()))} profiles={maps.profiles} listingImages={maps.listingImages} onStatus={async (listing, status) => { if (status === 'ACTIVE') { await performListingUpdate(listing, status); } else { setListingAction({ listing, status }); } }} />}
+      {tab === 'conversations' && <ConversationsSection reports={data?.reports.filter((item) => item.source === 'CONVERSATION') ?? []} onOpen={(id) => { setTab('reports'); setSelectedReportId(id); }} />}
+      {tab === 'moderation' && <ModerationSection logs={data?.auditLogs ?? []} suspensions={data?.suspensions ?? []} profiles={maps.profiles} />}
+      {tab === 'settings' && <SettingsSection profiles={data?.profiles ?? []} onRole={(role, profile) => setRoleChange({ user: profile, role })} />}
+    </main>{actionState && <ActionModal action={actionState.action} user={actionState.user} reportId={actionState.reportId} onClose={() => setActionState(null)} onDone={reload} />}{roleChange && <ConfirmDialog isOpen title="Rolle ändern?" message={`@${roleChange.user.username} erhält die Rolle ${roleChange.role}. Diese Änderung beeinflusst den Zugriff auf interne Funktionen.`} confirmLabel="Rolle ändern" onClose={() => setRoleChange(null)} onConfirm={async () => { try { await setProfileRole(roleChange.user.id, roleChange.role); await reload(); showToast('Rolle wurde geändert.', 'success'); } catch (cause) { showToast(cause instanceof Error ? cause.message : 'Rolle konnte nicht geändert werden.', 'error'); } finally { setRoleChange(null); } }} />}{listingAction && <ConfirmDialog isOpen title={listingAction.status === 'DELETED' ? 'Inserat löschen?' : 'Inserat blockieren?'} message={`Das Inserat „${listingAction.listing.title}“ wird für andere Nutzer nicht mehr normal verfügbar sein. Diese Moderationsaktion wird protokolliert.`} confirmLabel={listingAction.status === 'DELETED' ? 'Inserat löschen' : 'Inserat blockieren'} onClose={() => setListingAction(null)} onConfirm={async () => { const pending = listingAction; setListingAction(null); await performListingUpdate(pending.listing, pending.status); }} />}</div>;
 };
+
+const DashboardSection = ({ data, openReports, inProgressReports, openTickets, activeSuspensions, setTab, maps }: { data: Awaited<ReturnType<typeof loadControlCenterData>> | null; openReports: number; inProgressReports: number; openTickets: number; activeSuspensions: number; setTab: (tab: CenterTab) => void; maps: { profiles: Map<string, ControlCenterProfile> } }) => <section className="space-y-6"><div className="grid grid-cols-2 gap-3 xl:grid-cols-4">{[{ label: 'Offene Meldungen', value: openReports, icon: Flag, color: 'text-red-600' }, { label: 'In Bearbeitung', value: inProgressReports, icon: Clock3, color: 'text-blue-600' }, { label: 'Offene Supportfälle', value: openTickets, icon: Headphones, color: 'text-[#123D2A]' }, { label: 'Aktive Sperren', value: activeSuspensions, icon: Ban, color: 'text-amber-600' }].map(({ label, value, icon: Icon, color }) => <div key={label} className="border border-[#123D2A]/15 bg-white/70 p-5 dark:border-white/10 dark:bg-white/[0.03]"><Icon className={`h-5 w-5 ${color}`} /><p className="mt-5 text-xs font-semibold text-gray-500">{label}</p><p className="mt-1 font-serif text-3xl font-bold text-[#171A17] dark:text-white">{value}</p></div>)}</div><div className="grid gap-6 xl:grid-cols-[1.3fr_1fr]"><section className="border border-[#123D2A]/15 bg-white/70 p-5 dark:border-white/10 dark:bg-white/[0.03]"><div className="mb-5 flex items-center justify-between"><h3 className="flex items-center gap-2 font-serif text-xl font-bold text-[#171A17] dark:text-white"><ClipboardList className="h-5 w-5 text-[#F4C430]" />Aktuelle Aktivitäten</h3><button onClick={() => setTab('moderation')} className="text-xs font-bold text-[#123D2A] dark:text-[#F4C430]">Alle ansehen</button></div>{(data?.auditLogs ?? []).length === 0 ? <EmptyState icon={ClipboardList} title="Noch keine Aktivitäten" description="Moderationsaktionen werden hier automatisch protokolliert." /> : <div className="space-y-1">{data?.auditLogs.slice(0, 7).map((entry) => <div key={entry.id} className="flex items-start gap-3 border-b border-[#123D2A]/10 py-3 last:border-0 dark:border-white/10"><div className="mt-1 h-2 w-2 shrink-0 bg-[#F4C430]" /><div><p className="text-sm font-semibold text-[#171A17] dark:text-white">{entry.action.replaceAll('_', ' ')}</p><p className="text-xs text-gray-500">{entry.reason || 'Keine interne Notiz'} · {formatDate(entry.created_at)}</p></div></div>)}</div>}</section><section className="border border-[#123D2A]/15 bg-[#FAF2CC]/60 p-5 dark:border-white/10 dark:bg-[#191E19]"><h3 className="font-serif text-xl font-bold text-[#171A17] dark:text-white">Schnellzugriff</h3><div className="mt-5 grid gap-2">{([{ id: 'reports', label: 'Offene Meldungen prüfen', icon: Flag }, { id: 'support', label: 'Support-Posteingang öffnen', icon: Headphones }, { id: 'users', label: 'Benutzer suchen', icon: Users }] as { id: CenterTab; label: string; icon: React.ElementType }[]).map(({ id, label, icon: Icon }) => <button key={id} onClick={() => setTab(id)} className="flex items-center justify-between border border-[#123D2A]/15 bg-white/70 px-4 py-3 text-left text-sm font-semibold text-[#171A17] hover:border-[#F4C430] dark:border-white/10 dark:bg-white/5 dark:text-white"><span className="flex items-center gap-3"><Icon className="h-4 w-4 text-[#123D2A] dark:text-[#F4C430]" />{label}</span><ChevronRight className="h-4 w-4" /></button>)}</div></section></div></section>;
+
+const ReportsSection = ({ reports, selectedReport, profiles, listings, listingImages, conversationMessages, reportSource, setReportSource, currentUser, isAdmin, saving, onSelect, onClaim, onResolve, onAction, reportFilter, setReportFilter }: { reports: ControlCenterReport[]; selectedReport: ControlCenterReport | null; profiles: Map<string, ControlCenterProfile>; listings: Map<string, ControlCenterListing>; listingImages: Map<string, ControlCenterListingImage[]>; conversationMessages: ModerationConversationMessage[]; reportSource: 'ALL' | ControlCenterReport['source']; setReportSource: (value: 'ALL' | ControlCenterReport['source']) => void; currentUser?: string; isAdmin: boolean; saving: boolean; onSelect: (id: string) => void; onClaim: () => void; onResolve: (status: 'RESOLVED' | 'REJECTED') => void; onAction: (action: ActionType, profile: ControlCenterProfile) => void; reportFilter: string; setReportFilter: (value: string) => void }) => <section className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,.9fr)]"><div className="border border-[#123D2A]/15 bg-white/70 p-5 dark:border-white/10 dark:bg-white/[0.03]"><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><h3 className="font-serif text-xl font-bold text-[#171A17] dark:text-white">Moderations-Inbox</h3><div className="flex flex-wrap gap-2"><select value={reportFilter} onChange={(event) => setReportFilter(event.target.value)} className="h-9 border border-[#123D2A]/20 bg-transparent px-3 text-xs dark:border-white/15 dark:text-white"><option value="ALL">Alle Status</option><option value="OPEN">Offen</option><option value="IN_PROGRESS">In Bearbeitung</option><option value="RESOLVED">Erledigt</option><option value="REJECTED">Abgelehnt</option></select><div role="tablist" aria-label="Meldungsquelle" className="flex flex-wrap border border-[#123D2A]/15 dark:border-white/15"><button role="tab" aria-selected={reportSource === 'ALL'} onClick={() => setReportSource('ALL')} className={`px-3 py-2 text-[10px] font-bold uppercase tracking-widest ${reportSource === 'ALL' ? 'bg-[#123D2A] text-white dark:bg-[#F4C430] dark:text-[#123D2A]' : 'text-gray-600 hover:bg-[#FAF2CC] dark:text-gray-300 dark:hover:bg-white/10'}`}>Alle</button><button role="tab" aria-selected={reportSource === 'CONVERSATION'} onClick={() => setReportSource('CONVERSATION')} className={`px-3 py-2 text-[10px] font-bold uppercase tracking-widest ${reportSource === 'CONVERSATION' ? 'bg-[#123D2A] text-white dark:bg-[#F4C430] dark:text-[#123D2A]' : 'text-gray-600 hover:bg-[#FAF2CC] dark:text-gray-300 dark:hover:bg-white/10'}`}>Unterhaltungen</button><button role="tab" aria-selected={reportSource === 'LISTING'} onClick={() => setReportSource('LISTING')} className={`px-3 py-2 text-[10px] font-bold uppercase tracking-widest ${reportSource === 'LISTING' ? 'bg-[#123D2A] text-white dark:bg-[#F4C430] dark:text-[#123D2A]' : 'text-gray-600 hover:bg-[#FAF2CC] dark:text-gray-300 dark:hover:bg-white/10'}`}>Inserate</button></div></div></div>{reports.length === 0 ? <EmptyState icon={CheckCircle2} title="Keine Meldungen" description="Im gewählten Filter gibt es keine Meldungen." /> : <div className="space-y-2">{reports.map((item) => <button key={item.id} onClick={() => onSelect(item.id)} className={`w-full border p-4 text-left transition-colors ${selectedReport?.id === item.id ? 'border-[#F4C430] bg-[#FAF2CC]/50' : 'border-[#123D2A]/10 hover:border-[#F4C430]/70 dark:border-white/10 dark:hover:border-[#F4C430]'}`}><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><StatusBadge value={item.status} /><span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{item.source}</span></div><p className="mt-2 truncate text-sm font-bold text-[#171A17] dark:text-white">{item.reason}</p><p className="mt-1 line-clamp-2 text-xs text-gray-500">{item.description}</p></div><span className="shrink-0 text-[10px] text-gray-400">{shortDate(item.created_at)}</span></div></button>)}</div>}</div><ReportDetail report={selectedReport} profiles={profiles} listings={listings} listingImages={listingImages} conversationMessages={conversationMessages} currentUser={currentUser} isAdmin={isAdmin} saving={saving} onClaim={onClaim} onResolve={onResolve} onAction={onAction} /></section>;
+
+const ReportDetail = ({ report, profiles, listings, listingImages, conversationMessages, currentUser, isAdmin, saving, onClaim, onResolve, onAction }: { report: ControlCenterReport | null; profiles: Map<string, ControlCenterProfile>; listings: Map<string, ControlCenterListing>; listingImages: Map<string, ControlCenterListingImage[]>; conversationMessages: ModerationConversationMessage[]; currentUser?: string; isAdmin: boolean; saving: boolean; onClaim: () => void; onResolve: (status: 'RESOLVED' | 'REJECTED') => void; onAction: (action: ActionType, profile: ControlCenterProfile) => void }) => { if (!report) return <EmptyState icon={Flag} title="Meldung auswählen" description="Wähle eine Meldung aus der Inbox aus, um den vollständigen Moderationskontext zu sehen." />; const target = report.reported_user_id ? profiles.get(report.reported_user_id) : undefined; const listing = report.listing_id ? listings.get(report.listing_id) : undefined; return <section className="border border-[#123D2A]/15 bg-white/70 p-5 dark:border-white/10 dark:bg-white/[0.03]"><div className="flex items-start justify-between gap-3 border-b border-[#123D2A]/10 pb-5 dark:border-white/10"><div><p className="text-[10px] font-bold uppercase tracking-widest text-[#F4C430]">Meldungsdetail</p><h3 className="mt-2 font-serif text-2xl font-bold text-[#171A17] dark:text-white">{report.reason}</h3></div><StatusBadge value={report.status} /></div><dl className="grid grid-cols-2 gap-4 border-b border-[#123D2A]/10 py-5 text-sm dark:border-white/10"><div><dt className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Erstellt</dt><dd className="mt-1 text-gray-700 dark:text-gray-300">{formatDate(report.created_at)}</dd></div><div><dt className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Quelle</dt><dd className="mt-1 text-gray-700 dark:text-gray-300">{report.source}</dd></div><div><dt className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Meldender Benutzer</dt><dd className="mt-1 text-gray-700 dark:text-gray-300">@{report.reporter_id ? profiles.get(report.reporter_id)?.username ?? 'unbekannt' : 'Gast'}</dd></div><div><dt className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Zuständig</dt><dd className="mt-1 text-gray-700 dark:text-gray-300">{report.assigned_to ? `@${profiles.get(report.assigned_to)?.username ?? 'Teammitglied'}` : 'Noch nicht übernommen'}</dd></div></dl><div className="space-y-5 py-5"><div><p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Beschreibung</p><p className="mt-2 whitespace-pre-wrap border border-[#123D2A]/10 bg-[#FAF2CC]/40 p-4 text-sm leading-relaxed text-gray-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-300">{report.description}</p></div>{report.source === 'CONVERSATION' && <div className="border border-[#123D2A]/10 p-4 dark:border-white/10"><p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Gemeldete Unterhaltung</p><div className="mt-3 max-h-72 space-y-2 overflow-y-auto">{conversationMessages.length === 0 ? <p className="text-sm text-gray-500">Keine Nachrichten gefunden.</p> : conversationMessages.map((message) => <div key={message.id} className="border-l-2 border-[#F4C430] bg-[#FAF2CC]/40 p-3 text-sm dark:bg-white/5"><p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{message.content}</p><p className="mt-2 text-[10px] text-gray-400">{formatDate(message.created_at)} · @{profiles.get(message.sender_id)?.username ?? 'unbekannt'}</p></div>)}</div></div>}{target && <div className="border border-[#123D2A]/10 p-4 dark:border-white/10"><div className="flex items-center gap-3"><img src={target.avatar_url || '/assets/default-avatar.svg'} alt="" className="h-10 w-10 object-cover" /><div><p className="font-bold text-[#171A17] dark:text-white">{target.first_name} {target.last_name}</p><p className="text-xs text-gray-500">@{target.username}</p></div><StatusBadge value={target.status} /></div><div className="mt-4 flex flex-wrap gap-2">{currentUser && <button disabled={saving} onClick={onClaim} className="border border-[#123D2A]/20 px-3 py-2 text-[10px] font-bold uppercase tracking-widest dark:border-white/15">Übernehmen</button>}<button onClick={() => onAction('WARN', target)} className="border border-amber-500/40 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-amber-800 dark:text-amber-300">Verwarnen</button><button onClick={() => onAction('SUSPEND', target)} className="border border-blue-500/40 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-blue-800 dark:text-blue-300">Temporär sperren</button>{isAdmin && <button onClick={() => onAction('BAN', target)} className="border border-red-500/40 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-red-700 dark:text-red-300">Dauerhaft sperren</button>}</div></div>}{listing && <div className="border border-[#123D2A]/10 p-4 dark:border-white/10"><p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Betroffenes Inserat</p><p className="mt-2 font-serif text-xl font-bold text-[#171A17] dark:text-white">{listing.title}</p><p className="mt-1 text-xs text-gray-500">{Number(listing.price).toLocaleString('de-AT', { style: 'currency', currency: 'EUR' })} · {listing.status}</p><p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300">{listing.description}</p><div className="mt-4 grid gap-2 sm:grid-cols-3">{(listingImages.get(listing.id) ?? []).map((image) => <img key={image.id} src={image.url} alt={listing.title} className="h-28 w-full object-cover" />)}</div></div>}</div><div className="flex flex-wrap justify-end gap-2 border-t border-[#123D2A]/10 pt-5 dark:border-white/10"><button disabled={saving} onClick={() => onResolve('REJECTED')} className="border border-gray-300 px-4 py-2 text-[10px] font-bold uppercase tracking-widest dark:border-white/15">Ablehnen</button><button disabled={saving} onClick={() => onResolve('RESOLVED')} className="bg-[#123D2A] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white dark:bg-[#F4C430] dark:text-[#123D2A]">Erledigen</button></div></section>; };
+
+const UsersSection = ({ users, selectedUser, warnings, suspensions, isAdmin, onSelect, onAction, onClose, onRole }: { users: ControlCenterProfile[]; selectedUser: ControlCenterProfile | null; warnings: { id: string; user_id: string; reason: string; created_at: string }[]; suspensions: { id: string; user_id: string; reason: string; ends_at: string | null }[]; isAdmin: boolean; onSelect: (id: string) => void; onAction: (action: ActionType, profile: ControlCenterProfile) => void; onClose: () => void; onRole: (role: StaffRole, profile: ControlCenterProfile) => void }) => <section className="border border-[#123D2A]/15 bg-white/70 p-5 dark:border-white/10 dark:bg-white/[0.03]"><h3 className="mb-5 font-serif text-xl font-bold text-[#171A17] dark:text-white">Benutzerverwaltung</h3>{users.length === 0 ? <EmptyState icon={Users} title="Keine Benutzer gefunden" description="Passe deine Suche an." /> : <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm"><thead className="border-b border-[#123D2A]/10 text-[10px] uppercase tracking-widest text-gray-400 dark:border-white/10"><tr><th className="px-3 py-3">Benutzer</th><th className="px-3 py-3">Status</th><th className="px-3 py-3">Rolle</th><th className="px-3 py-3">Registriert</th><th className="px-3 py-3">Aktion</th></tr></thead><tbody>{users.map((item) => <tr key={item.id} className="border-b border-[#123D2A]/10 last:border-0 dark:border-white/10"><td className="px-3 py-4"><button onClick={() => onSelect(item.id)} className="flex items-center gap-3 text-left"><img src={item.avatar_url || '/assets/default-avatar.svg'} alt="" className="h-9 w-9 object-cover" /><span><strong className="block text-[#171A17] dark:text-white">{item.first_name} {item.last_name}</strong><span className="text-xs text-gray-500">@{item.username}</span></span></button></td><td className="px-3 py-4"><StatusBadge value={item.status} /></td><td className="px-3 py-4"><span className="text-xs font-bold text-gray-600 dark:text-gray-300">{item.role}</span></td><td className="px-3 py-4 text-xs text-gray-500">{shortDate(item.created_at)}</td><td className="px-3 py-4"><button onClick={() => onSelect(item.id)} className="p-2 text-gray-500 hover:text-[#123D2A] dark:hover:text-[#F4C430]" title="Benutzer öffnen"><MoreHorizontal className="h-4 w-4" /></button></td></tr>)}</tbody></table></div>}{selectedUser && <UserDetail user={selectedUser} warnings={warnings.filter((item) => item.user_id === selectedUser.id)} suspensions={suspensions.filter((item) => item.user_id === selectedUser.id)} isAdmin={isAdmin} onAction={(action) => onAction(action, selectedUser)} onClose={onClose} onRole={(role) => onRole(role, selectedUser)} />}</section>;
+
+const UserDetail = ({ user, warnings, suspensions, isAdmin, onAction, onClose, onRole }: { user: ControlCenterProfile; warnings: { id: string; reason: string; created_at: string }[]; suspensions: { id: string; reason: string; ends_at: string | null }[]; isAdmin: boolean; onAction: (action: ActionType) => void; onClose: () => void; onRole: (role: StaffRole) => void }) => <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}><div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto border border-[#123D2A]/15 bg-[#F5F1E8] p-6 shadow-2xl dark:border-white/10 dark:bg-[#111511]" onClick={(event) => event.stopPropagation()}><div className="flex items-start justify-between"><div className="flex items-center gap-3"><img src={user.avatar_url || '/assets/default-avatar.svg'} alt="" className="h-14 w-14 object-cover" /><div><p className="font-serif text-2xl font-bold text-[#171A17] dark:text-white">{user.first_name} {user.last_name}</p><p className="text-sm text-gray-500">@{user.username} · {user.role}</p></div></div><button onClick={onClose} aria-label="Benutzerdetail schließen"><X className="h-5 w-5 text-gray-500" /></button></div><div className="mt-6 grid gap-4 sm:grid-cols-2"><div className="border border-[#123D2A]/10 p-4 dark:border-white/10"><p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Status</p><div className="mt-2"><StatusBadge value={user.status} /></div><p className="mt-3 text-xs text-gray-500">Registriert am {shortDate(user.created_at)}</p></div><div className="border border-[#123D2A]/10 p-4 dark:border-white/10"><p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Moderationshistorie</p><p className="mt-2 text-sm font-bold text-[#171A17] dark:text-white">{warnings.length} Verwarnungen · {suspensions.length} Sperren</p></div></div><div className="mt-5 flex flex-wrap gap-2"><button onClick={() => onAction('WARN')} className="border border-amber-500/40 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-amber-800 dark:text-amber-300">Verwarnen</button><button onClick={() => onAction('SUSPEND')} className="border border-blue-500/40 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-blue-800 dark:text-blue-300">Temporär sperren</button>{isAdmin && <><button onClick={() => onAction('BAN')} className="border border-red-500/40 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-red-700 dark:text-red-300">Dauerhaft sperren</button><button onClick={() => onAction('DELETE')} className="border border-red-700/40 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-red-800 dark:text-red-300">Account deaktivieren</button></>}</div>{isAdmin && <div className="mt-6 border-t border-[#123D2A]/10 pt-5 dark:border-white/10"><p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Rolle verwalten</p><div className="mt-2 flex items-center gap-3"><select defaultValue={user.role} onChange={(event) => onRole(event.target.value as StaffRole)} className="h-10 border border-[#123D2A]/20 bg-transparent px-3 text-sm dark:border-white/15 dark:text-white"><option value="USER">USER</option><option value="MEMBER">MEMBER</option><option value="MODERATOR">MODERATOR</option><option value="SUPPORT">SUPPORT</option><option value="ADMIN">ADMIN</option></select><span className="text-xs text-gray-500">Änderung erfordert Bestätigung.</span></div></div>}<div className="mt-6 border-t border-[#123D2A]/10 pt-5 dark:border-white/10"><p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Letzte Verwarnungen</p>{warnings.length === 0 ? <p className="mt-2 text-sm text-gray-500">Keine Verwarnungen vorhanden.</p> : <div className="mt-2 space-y-2">{warnings.slice(0, 5).map((warning) => <div key={warning.id} className="border border-[#123D2A]/10 p-3 text-sm dark:border-white/10"><p className="font-semibold text-[#171A17] dark:text-white">{warning.reason}</p><p className="mt-1 text-xs text-gray-500">{formatDate(warning.created_at)}</p></div>)}</div>}</div></div></div>;
+
+const SupportSection = ({ tickets, selectedTicket, messages, reply, setReply, saving, onSelect, onReply, onStatus, ticketFilter, setTicketFilter }: { tickets: ControlCenterTicket[]; selectedTicket: ControlCenterTicket | null; messages: SupportMessage[]; reply: string; setReply: (value: string) => void; saving: boolean; onSelect: (id: string) => void; onReply: (event: React.FormEvent) => void; onStatus: (status: SupportTicketStatus) => void; ticketFilter: string; setTicketFilter: (value: string) => void }) => <section className="grid gap-6 xl:grid-cols-[minmax(280px,.75fr)_minmax(0,1.25fr)]"><div className="border border-[#123D2A]/15 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]"><div className="mb-4 flex items-center justify-between"><h3 className="font-serif text-xl font-bold text-[#171A17] dark:text-white">Posteingang</h3><select value={ticketFilter} onChange={(event) => setTicketFilter(event.target.value)} className="h-8 border border-[#123D2A]/20 bg-transparent px-2 text-[10px] dark:border-white/15 dark:text-white"><option value="ALL">Alle</option><option value="NEW">Neu</option><option value="IN_PROGRESS">In Bearbeitung</option><option value="RESOLVED">Erledigt</option></select></div>{tickets.length === 0 ? <EmptyState icon={Headphones} title="Posteingang ist leer" description="Neue Kontaktanfragen erscheinen hier." /> : <div className="space-y-1">{tickets.map((item) => <button key={item.id} onClick={() => onSelect(item.id)} className={`w-full border p-3 text-left ${selectedTicket?.id === item.id ? 'border-[#F4C430] bg-[#FAF2CC]/50' : 'border-transparent hover:border-[#123D2A]/15 dark:hover:border-white/10'}`}><div className="flex items-start justify-between gap-2"><strong className="truncate text-sm text-[#171A17] dark:text-white">{item.requester_name}</strong><span className="text-[10px] text-gray-400">{shortDate(item.created_at)}</span></div><p className="mt-1 truncate text-xs font-semibold text-gray-600 dark:text-gray-300">{item.subject}</p><div className="mt-2"><StatusBadge value={item.status} /></div></button>)}</div>}</div><TicketDetail ticket={selectedTicket} messages={messages} reply={reply} setReply={setReply} saving={saving} onReply={onReply} onStatus={onStatus} /></section>;
+
+const TicketDetail = ({ ticket, messages, reply, setReply, saving, onReply, onStatus }: { ticket: ControlCenterTicket | null; messages: SupportMessage[]; reply: string; setReply: (value: string) => void; saving: boolean; onReply: (event: React.FormEvent) => void; onStatus: (status: SupportTicketStatus) => void }) => { if (!ticket) return <EmptyState icon={Headphones} title="Anfrage auswählen" description="Wähle eine Support-Anfrage aus dem Posteingang aus." />; return <section className="border border-[#123D2A]/15 bg-white/70 p-5 dark:border-white/10 dark:bg-white/[0.03]"><div className="flex items-start justify-between gap-3 border-b border-[#123D2A]/10 pb-5 dark:border-white/10"><div><p className="text-[10px] font-bold uppercase tracking-widest text-[#F4C430]">Support-Anfrage</p><h3 className="mt-2 font-serif text-2xl font-bold text-[#171A17] dark:text-white">{ticket.subject}</h3><p className="mt-1 text-xs text-gray-500">{ticket.requester_name} · {ticket.requester_email}</p></div><StatusBadge value={ticket.status} /></div><div className="py-5"><p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300">{ticket.message}</p><p className="mt-4 text-[10px] uppercase tracking-widest text-gray-400">Eingegangen {formatDate(ticket.created_at)}</p></div><div className="max-h-64 space-y-2 overflow-y-auto border-y border-[#123D2A]/10 py-4 dark:border-white/10">{messages.length === 0 ? <p className="text-sm text-gray-500">Noch keine interne Antwort.</p> : messages.map((item) => <div key={item.id} className="bg-[#FAF2CC]/50 p-3 text-sm dark:bg-white/5"><p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{item.body}</p><p className="mt-2 text-[10px] text-gray-400">{formatDate(item.created_at)}</p></div>)}</div><form onSubmit={onReply} className="mt-5 space-y-3"><textarea required rows={4} value={reply} onChange={(event) => setReply(event.target.value)} placeholder="Antwort oder interne Notiz ..." className="w-full border border-[#123D2A]/20 bg-white p-3 text-sm dark:border-white/15 dark:bg-white/5 dark:text-white" /><div className="flex flex-wrap justify-between gap-2"><div className="flex gap-2"><button type="button" onClick={() => onStatus('OPEN')} className="border border-[#123D2A]/20 px-3 py-2 text-[10px] font-bold uppercase tracking-widest dark:border-white/15">Offen</button><button type="button" onClick={() => onStatus('WAITING_USER')} className="border border-[#123D2A]/20 px-3 py-2 text-[10px] font-bold uppercase tracking-widest dark:border-white/15">Wartet</button><button type="button" onClick={() => onStatus('RESOLVED')} className="border border-emerald-600/40 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-300">Erledigt</button></div><button disabled={saving} className="bg-[#123D2A] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white dark:bg-[#F4C430] dark:text-[#123D2A]">Antwort speichern</button></div></form></section>; };
+
+const ListingsSection = ({ listings, profiles, listingImages, onStatus }: { listings: ControlCenterListing[]; profiles: Map<string, ControlCenterProfile>; listingImages: Map<string, ControlCenterListingImage[]>; onStatus: (listing: ControlCenterListing, status: 'ACTIVE' | 'REJECTED' | 'BLOCKED' | 'DELETED') => Promise<void> }) => { const [selected, setSelected] = useState<ControlCenterListing | null>(null); const images = selected ? (listingImages.get(selected.id) ?? []) : []; return <section className="border border-[#123D2A]/15 bg-white/70 p-5 dark:border-white/10 dark:bg-white/[0.03]"><h3 className="mb-2 font-serif text-xl font-bold text-[#171A17] dark:text-white">Angebote durchsuchen</h3><p className="mb-5 text-sm text-gray-500">Klicke auf ein Inserat, um den vollständigen Prüfkontext zu öffnen.</p><div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm"><thead className="border-b border-[#123D2A]/10 text-[10px] uppercase tracking-widest text-gray-400 dark:border-white/10"><tr><th className="px-3 py-3">Titel</th><th className="px-3 py-3">Anbieter</th><th className="px-3 py-3">Status</th><th className="px-3 py-3">Preis</th><th className="px-3 py-3">Aktion</th></tr></thead><tbody>{listings.map((item) => <tr key={item.id} className="border-b border-[#123D2A]/10 dark:border-white/10"><td className="px-3 py-4"><button onClick={() => setSelected(item)} className="text-left font-semibold text-[#171A17] hover:text-[#123D2A] dark:text-white dark:hover:text-[#F4C430]">{item.title}</button></td><td className="px-3 py-4 text-xs text-gray-500">@{profiles.get(item.user_id)?.username ?? 'unbekannt'}</td><td className="px-3 py-4"><StatusBadge value={item.status} /></td><td className="px-3 py-4 text-xs">{Number(item.price).toLocaleString('de-AT', { style: 'currency', currency: 'EUR' })}</td><td className="px-3 py-4"><div className="flex gap-1"><button onClick={() => void onStatus(item, 'ACTIVE')} title="Freigeben" className="p-2 text-emerald-700"><Check className="h-4 w-4" /></button><button onClick={() => void onStatus(item, 'BLOCKED')} title="Blockieren" className="p-2 text-red-700"><Ban className="h-4 w-4" /></button></div></td></tr>)}</tbody></table></div>{selected && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setSelected(null)}><div role="dialog" aria-modal="true" className="max-h-[92vh] w-full max-w-4xl overflow-y-auto border border-[#123D2A]/15 bg-[#F5F1E8] p-6 shadow-2xl dark:border-white/10 dark:bg-[#111511]" onClick={(event) => event.stopPropagation()}><div className="flex items-start justify-between gap-4 border-b border-[#123D2A]/10 pb-5 dark:border-white/10"><div><p className="text-[10px] font-bold uppercase tracking-widest text-[#F4C430]">Inseratsprüfung</p><h3 className="mt-2 break-words font-serif text-2xl font-bold text-[#171A17] dark:text-white">{selected.title}</h3></div><button onClick={() => setSelected(null)} aria-label="Inseratsdetail schließen"><X className="h-5 w-5 text-gray-500" /></button></div><div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,.9fr)]"><div>{images.length === 0 ? <div className="flex aspect-[4/3] items-center justify-center border border-dashed border-[#123D2A]/20 text-sm text-gray-500">Keine Bilder vorhanden</div> : <div className="grid gap-3 sm:grid-cols-2">{images.map((image) => <img key={image.id} src={image.url} alt={selected.title} className="max-h-80 w-full object-cover" />)}</div>}</div><dl className="space-y-4 text-sm"><div><dt className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Anzeigenpreis</dt><dd className="mt-1 text-xl font-bold text-[#123D2A] dark:text-[#F4C430]">{Number(selected.price).toLocaleString('de-AT', { style: 'currency', currency: 'EUR' })}</dd></div><div><dt className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Kategorie</dt><dd className="mt-1 text-gray-700 dark:text-gray-300">{selected.category_id}{selected.subcategory_id && <> · {selected.subcategory_id}</>}</dd></div><div><dt className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Zustand</dt><dd className="mt-1 text-gray-700 dark:text-gray-300">{selected.condition || '—'}</dd></div><div><dt className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Standort</dt><dd className="mt-1 text-gray-700 dark:text-gray-300">{selected.postal_code} {selected.city}, {selected.country}</dd></div><div><dt className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Status</dt><dd className="mt-1"><StatusBadge value={selected.status} /></dd></div></dl></div><div className="mt-6 border-t border-[#123D2A]/10 pt-5 dark:border-white/10"><p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Beschreibung</p><p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300">{selected.description}</p>{selected.brand && <p className="mt-4 text-sm text-gray-600 dark:text-gray-400"><strong>Marke:</strong> {selected.brand}</p>}{selected.delivery_type && <p className="mt-2 text-sm text-gray-600 dark:text-gray-400"><strong>Übergabe:</strong> {selected.delivery_type}</p>}</div></div></div>}</section>; };
+const ConversationsSection = ({ reports, onOpen }: { reports: ControlCenterReport[]; onOpen: (id: string) => void }) => <section className="border border-[#123D2A]/15 bg-white/70 p-5 dark:border-white/10 dark:bg-white/[0.03]"><h3 className="mb-5 font-serif text-xl font-bold text-[#171A17] dark:text-white">Moderationsrelevante Unterhaltungen</h3><div className="space-y-2">{reports.map((item) => <button key={item.id} onClick={() => onOpen(item.id)} className="flex w-full items-center justify-between border border-[#123D2A]/10 p-4 text-left hover:border-[#F4C430] dark:border-white/10"><span><StatusBadge value={item.status} /><strong className="mt-2 block text-sm text-[#171A17] dark:text-white">{item.reason}</strong><span className="text-xs text-gray-500">{item.description}</span></span><ChevronRight className="h-4 w-4" /></button>)}</div>{reports.length === 0 && <EmptyState icon={MessageSquare} title="Keine gemeldeten Unterhaltungen" description="Gemeldete Chats erscheinen hier mit ihrem Moderationskontext." />}</section>;
+const auditActionLabel = (action: string) => ({ USER_WARNED: 'Benutzer verwarnt', USER_SUSPENDED: 'Benutzer temporär gesperrt', USER_BANNED: 'Benutzer dauerhaft gesperrt', USER_SOFT_DELETED: 'Benutzerkonto deaktiviert', REPORT_UPDATED: 'Meldungsstatus geändert', ROLE_CHANGED: 'Benutzerrolle geändert', LISTING_STATUS_CHANGED: 'Inseratsstatus geändert', SUPPORT_TICKET_UPDATED: 'Support-Ticket aktualisiert', SUPPORT_TICKET_REPLIED: 'Auf Support-Ticket geantwortet' } as Record<string, string>)[action] ?? action.replaceAll('_', ' ');
+const ModerationSection = ({ logs, suspensions, profiles }: { logs: ControlCenterAuditLog[]; suspensions: { id: string; user_id: string; reason: string; ends_at: string | null; revoked_at: string | null }[]; profiles: Map<string, ControlCenterProfile> }) => <section className="grid gap-6 xl:grid-cols-2"><section className="border border-[#123D2A]/15 bg-white/70 p-5 dark:border-white/10 dark:bg-white/[0.03]"><h3 className="mb-5 flex items-center gap-2 font-serif text-xl font-bold text-[#171A17] dark:text-white"><ClipboardList className="h-5 w-5 text-[#F4C430]" />Audit-Log</h3>{logs.length === 0 ? <EmptyState icon={ClipboardList} title="Noch keine Einträge" description="Jede wichtige Moderationsaktion wird hier dokumentiert." /> : <div className="space-y-2">{logs.map((log) => { const actor = log.actor_id ? profiles.get(log.actor_id) : undefined; const metadata = Object.entries(log.metadata ?? {}).filter(([, value]) => value !== null && value !== undefined); return <div key={log.id} className="border-b border-[#123D2A]/10 py-3 last:border-0 dark:border-white/10"><p className="text-sm font-semibold text-[#171A17] dark:text-white">{auditActionLabel(log.action)}</p><p className="mt-1 text-xs text-gray-500">Durch: {actor ? `@${actor.username} · ${actor.role}` : 'System'} · {formatDate(log.created_at)}</p><p className="mt-1 text-xs text-gray-500">Ziel: {log.target_type}{log.target_id ? ` · ${log.target_id}` : ''}</p>{log.reason && <p className="mt-1 text-xs text-gray-700 dark:text-gray-300">Grund: {log.reason}</p>}{metadata.length > 0 && <p className="mt-1 break-words text-[11px] text-gray-500">Details: {metadata.map(([key, value]) => `${key}=${typeof value === 'object' ? JSON.stringify(value) : String(value)}`).join(' · ')}</p>}</div>; })}</div>}</section><section className="border border-[#123D2A]/15 bg-white/70 p-5 dark:border-white/10 dark:bg-white/[0.03]"><h3 className="mb-5 font-serif text-xl font-bold text-[#171A17] dark:text-white">Aktive Maßnahmen</h3>{suspensions.filter((item) => !item.revoked_at && (!item.ends_at || new Date(item.ends_at) > new Date())).length === 0 ? <EmptyState icon={ShieldCheck} title="Keine aktiven Sperren" description="Temporäre Sperren werden hier angezeigt, solange sie gültig sind." /> : <div className="space-y-2">{suspensions.filter((item) => !item.revoked_at && (!item.ends_at || new Date(item.ends_at) > new Date())).map((item) => <div key={item.id} className="border border-[#123D2A]/10 p-4 dark:border-white/10"><div className="flex items-center justify-between"><strong className="text-sm text-[#171A17] dark:text-white">@{profiles.get(item.user_id)?.username ?? 'unbekannt'}</strong><StatusBadge value="TEMPORARILY_SUSPENDED" /></div><p className="mt-2 text-xs text-gray-500">{item.reason}</p><p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">Bis {formatDate(item.ends_at)}</p></div>)}</div>}</section></section>;
+const SettingsSection = ({ profiles, onRole }: { profiles: ControlCenterProfile[]; onRole: (role: StaffRole, profile: ControlCenterProfile) => void }) => <section className="border border-[#123D2A]/15 bg-white/70 p-5 dark:border-white/10 dark:bg-white/[0.03]"><h3 className="mb-2 font-serif text-xl font-bold text-[#171A17] dark:text-white">Rollen und Berechtigungen</h3><p className="mb-5 text-sm text-gray-500">Rollenänderungen sind ausschließlich für Administratoren möglich und werden protokolliert.</p><div className="overflow-x-auto"><table className="w-full min-w-[680px] text-left text-sm"><thead className="border-b border-[#123D2A]/10 text-[10px] uppercase tracking-widest text-gray-400 dark:border-white/10"><tr><th className="px-3 py-3">Benutzer</th><th className="px-3 py-3">Aktuelle Rolle</th><th className="px-3 py-3">Neue Rolle</th></tr></thead><tbody>{profiles.filter((item) => ['ADMIN', 'MODERATOR', 'SUPPORT'].includes(item.role)).map((item) => <tr key={item.id} className="border-b border-[#123D2A]/10 dark:border-white/10"><td className="px-3 py-4 font-semibold text-[#171A17] dark:text-white">@{item.username}</td><td className="px-3 py-4"><StatusBadge value={item.role} /></td><td className="px-3 py-4"><select value={item.role} onChange={(event) => onRole(event.target.value as StaffRole, item)} className="h-9 border border-[#123D2A]/20 bg-transparent px-2 text-xs dark:border-white/15 dark:text-white"><option value="USER">USER</option><option value="MEMBER">MEMBER</option><option value="MODERATOR">MODERATOR</option><option value="SUPPORT">SUPPORT</option><option value="ADMIN">ADMIN</option></select></td></tr>)}</tbody></table></div></section>;
