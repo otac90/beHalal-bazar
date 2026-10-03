@@ -282,7 +282,7 @@ export const MarketplaceHeader: React.FC = () => {
                       <button onClick={() => { navigate('account'); setShowUserMenu(false); }} className="w-full px-5 py-3 text-left text-xs font-bold uppercase tracking-widest text-[#171A17] dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-colors border-b border-gray-100 dark:border-white/5">
                         {t.myAccount}
                       </button>
-                      {(user.role === 'ADMIN' || user.role === 'MODERATOR') && (
+                      {(user.role === 'ADMIN' || user.role === 'MODERATOR' || user.role === 'SUPPORT') && (
                         <button onClick={() => { navigate('admin'); setShowUserMenu(false); }} className="w-full px-5 py-3 text-left text-xs font-bold uppercase tracking-widest text-[#123D2A] dark:text-[#F4C430] hover:bg-gray-50 dark:hover:bg-white/5 transition-colors border-b border-gray-100 dark:border-white/5">
                           {t.adminPanel}
                         </button>

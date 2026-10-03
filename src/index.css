@@ -71,6 +71,39 @@
   background: #ffffff;
 }
 
+/* The internal moderation workspace owns the entire viewport. */
+.control-center-app > .flex-1 {
+  min-height: 100vh;
+}
+
+.control-center-app > .flex-1 > div {
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.control-center-app main {
+  padding: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .control-center-app aside {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    min-height: 100vh;
+    border-top: 0;
+    border-bottom: 0;
+    border-left: 0;
+  }
+
+  .control-center-app main {
+    padding: 1.5rem;
+  }
+}
+
 /* Glassmorphism token - strictly limited */
 .liquid-glass {
   background:

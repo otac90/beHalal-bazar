@@ -24,7 +24,9 @@ import { StaticPages } from './pages/StaticPages';
 import { PaymentResultPage } from './pages/PaymentResultPage';
 
 const MainContent: React.FC = () => {
-  const { currentRoute } = useApp();
+  const { currentRoute, user } = useApp();
+  const isControlCenter = (currentRoute === 'admin' || currentRoute === 'admin-moderation')
+    && ['ADMIN', 'MODERATOR', 'SUPPORT'].includes(user?.role ?? '');
 
   const renderRoute = () => {
     switch (currentRoute) {
@@ -50,6 +52,7 @@ const MainContent: React.FC = () => {
       case 'user-profile':
         return <UserProfilePage />;
       
+      case 'admin':
       case 'admin-moderation':
         return <AdminModerationPage />;
       
@@ -84,15 +87,15 @@ const MainContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F7F9F6] dark:bg-[#0D1410] text-gray-900 dark:text-gray-100 transition-colors duration-200">
-      <MarketplaceHeader />
+    <div className={`${isControlCenter ? 'control-center-app' : ''} min-h-screen flex flex-col bg-[#F7F9F6] dark:bg-[#0D1410] text-gray-900 dark:text-gray-100 transition-colors duration-200`}>
+      {!isControlCenter && <MarketplaceHeader />}
       
       <div className="flex-1">
         {renderRoute()}
       </div>
 
-      <Footer />
-      <MobileNav />
+      {!isControlCenter && <Footer />}
+      {!isControlCenter && <MobileNav />}
       <Toast />
     </div>
   );
