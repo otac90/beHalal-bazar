@@ -1,4 +1,4 @@
-export type Role = 'USER' | 'MEMBER' | 'MODERATOR' | 'ADMIN';
+export type Role = 'USER' | 'MEMBER' | 'MODERATOR' | 'SUPPORT' | 'ADMIN';
 
 export type UserStatus = 'ACTIVE' | 'WARNED' | 'TEMPORARILY_SUSPENDED' | 'BANNED';
 

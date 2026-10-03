@@ -13,7 +13,7 @@ create table if not exists public.profiles (
   postal_code text not null default '',
   city text not null default '',
   language text not null default 'de' check (language in ('de', 'en')),
-  role text not null default 'MEMBER' check (role in ('USER', 'MEMBER', 'MODERATOR', 'ADMIN')),
+  role text not null default 'MEMBER' check (role in ('USER', 'MEMBER', 'MODERATOR', 'SUPPORT', 'ADMIN')),
   status text not null default 'ACTIVE' check (status in ('ACTIVE', 'WARNED', 'TEMPORARILY_SUSPENDED', 'BANNED')),
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
